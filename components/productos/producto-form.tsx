@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -47,9 +48,11 @@ export function ProductoForm({
   onCancel,
 }: ProductoFormProps) {
   const isEditing = !!producto;
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   const form = useForm<ProductoFormValues>({
     resolver: zodResolver(productoSchema),
+    mode: "onChange",
     defaultValues: {
       nombre: producto?.nombre ?? "",
       descripcion: producto?.descripcion ?? "",
@@ -172,6 +175,7 @@ export function ProductoForm({
                   value={field.value}
                   categoriaId={form.watch("categoria_id")}
                   onChange={(url) => field.onChange(url ?? "")}
+                  onUploadingChange={setIsImageUploading}
                   disabled={form.formState.isSubmitting}
                 />
               </FormControl>
@@ -210,7 +214,14 @@ export function ProductoForm({
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
+          <Button
+            type="submit"
+            disabled={
+              form.formState.isSubmitting ||
+              isImageUploading ||
+              !form.formState.isValid
+            }
+          >
             {form.formState.isSubmitting
               ? "Guardando..."
               : isEditing

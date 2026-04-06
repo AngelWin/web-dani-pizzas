@@ -10,6 +10,7 @@ interface ImageUploadProps {
   value?: string | null;
   categoriaId?: string | null;
   onChange: (url: string | null) => void;
+  onUploadingChange?: (isUploading: boolean) => void;
   disabled?: boolean;
 }
 
@@ -17,6 +18,7 @@ export function ImageUpload({
   value,
   categoriaId,
   onChange,
+  onUploadingChange,
   disabled,
 }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -27,6 +29,7 @@ export function ImageUpload({
   const uploadImage = useCallback(
     async (file: File) => {
       setIsUploading(true);
+      onUploadingChange?.(true);
       setUploadError(null);
 
       try {
@@ -36,30 +39,37 @@ export function ImageUpload({
         const folder = categoriaId ?? "sin-categoria";
         const path = `${folder}/${uuid}.${ext}`;
 
-        const { error: uploadErr } = await supabase.storage
+        const uploadPromise = supabase.storage
           .from("productos")
           .upload(path, file, { upsert: false });
 
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Tiempo de espera agotado (30s)")),
+            30000,
+          ),
+        );
+
+        const { error: uploadErr } = await Promise.race([
+          uploadPromise,
+          timeout,
+        ]);
+
         if (uploadErr) throw uploadErr;
 
-        // 10 años en segundos
-        const { data, error: signErr } = await supabase.storage
-          .from("productos")
-          .createSignedUrl(path, 315360000);
+        const { data } = supabase.storage.from("productos").getPublicUrl(path);
 
-        if (signErr || !data?.signedUrl)
-          throw signErr ?? new Error("No se pudo generar la URL firmada");
-
-        onChange(data.signedUrl);
+        onChange(data.publicUrl);
       } catch (err) {
         setUploadError(
           err instanceof Error ? err.message : "Error al subir la imagen",
         );
       } finally {
         setIsUploading(false);
+        onUploadingChange?.(false);
       }
     },
-    [categoriaId, onChange],
+    [categoriaId, onChange, onUploadingChange],
   );
 
   const handleFile = useCallback(
