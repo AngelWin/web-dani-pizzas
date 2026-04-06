@@ -34,7 +34,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Obtener rol desde profiles → roles (JOIN)
+  // Obtener rol desde profiles → roles (JOIN), con fallback a user_metadata
   let roleName: string | null = null;
   if (user) {
     const { data } = await supabase
@@ -45,6 +45,7 @@ export async function updateSession(request: NextRequest) {
 
     roleName =
       (data as { roles: { nombre: string } | null } | null)?.roles?.nombre ??
+      (user.user_metadata?.display_name as string | undefined) ??
       null;
   }
 

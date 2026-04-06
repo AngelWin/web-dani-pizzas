@@ -37,7 +37,7 @@ export async function loginAction(
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Obtener rol desde profiles → roles (JOIN)
+  // Obtener rol desde profiles → roles (JOIN), con fallback a user_metadata
   let role: Role | null = null;
   if (user) {
     const { data } = await supabase
@@ -46,14 +46,17 @@ export async function loginAction(
       .eq("id", user.id)
       .single();
 
-    const roleName = (data as { roles: { nombre: string } | null } | null)
-      ?.roles?.nombre as Role | undefined;
+    const roleFromJoin = (data as { roles: { nombre: string } | null } | null)
+      ?.roles?.nombre;
+    const roleFromMeta = user.user_metadata?.display_name as string | undefined;
+    const roleName = (roleFromJoin ?? roleFromMeta) as Role | undefined;
+
     if (roleName && Object.values(ROLES).includes(roleName)) {
       role = roleName;
     }
   }
 
-  const defaultRoute = role ? getDefaultRoute(role) : "/login";
+  const defaultRoute = role ? getDefaultRoute(role) : "/dashboard";
 
   redirect(defaultRoute);
 }
@@ -76,7 +79,7 @@ export async function forgotPasswordAction(
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
     {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback?next=/reset-password`,
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")}/auth/callback?next=/reset-password`,
     },
   );
 
