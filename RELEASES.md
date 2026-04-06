@@ -75,17 +75,17 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 
 ## Release 2: Layout Principal (Sidebar + Header)
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 1
 **Objetivo:** Estructura visual del backoffice con navegacion por rol.
 
 ### Commits esperados:
-- [ ] Layout del dashboard con sidebar + header
-- [ ] Sidebar con navegacion filtrada por rol
-- [ ] Header con info de usuario, sucursal y logout
-- [ ] Componentes shared (page-header, sucursal-selector)
-- [ ] Hooks (use-user, use-sucursal)
-- [ ] Auth provider
+- [x] Layout del dashboard con sidebar + header
+- [x] Sidebar con navegacion filtrada por rol
+- [x] Header con info de usuario, sucursal y logout
+- [x] Componentes shared (page-header, sucursal-selector)
+- [x] Hooks (use-user, use-sucursal)
+- [x] Auth provider
 
 ### Criterio de exito:
 - Sidebar muestra solo items permitidos por rol
