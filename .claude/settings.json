@@ -1,0 +1,64 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(git *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__get_project",
+      "mcp__supabase__generate_typescript_types",
+      "mcp__supabase__list_extensions",
+      "mcp__supabase__get_logs",
+      "WebFetch",
+      "Edit(/.claude/skills/test-as-administrador/**)",
+      "Edit(/.claude/skills/test-as-cajero/**)",
+      "Edit(/.claude/skills/test-as-mesero/**)",
+      "Edit(/.claude/skills/test-as-repartidor/**)",
+      "Edit(/.claude/skills/unit-tests/**)",
+      "Bash(gh auth:*)",
+      "Read(//Users/angelabad/Documents/IAProjects/project-dani-pizzas/**)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Edit(.env)",
+      "Edit(.env.local)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE_PATH=$(jq -r '.tool_input.file_path // empty'); if [ -n \"$FILE_PATH\" ] && echo \"$FILE_PATH\" | grep -qE '\\.(ts|tsx|js|jsx|json|css)$'; then npx prettier --write \"$FILE_PATH\" 2>/dev/null || true; fi",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude Code necesita tu atención\" with title \"DANI PIZZAS\"'"
+          }
+        ]
+      }
+    ]
+  }
+}
