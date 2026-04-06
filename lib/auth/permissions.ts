@@ -32,7 +32,12 @@ export function isProtectedRoute(pathname: string): boolean {
 }
 
 /** Rutas públicas que no requieren autenticación */
-const PUBLIC_ROUTES = ["/login", "/auth/callback"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/auth/callback",
+  "/forgot-password",
+  "/reset-password",
+];
 
 /** Verifica si una ruta es pública */
 export function isPublicRoute(pathname: string): boolean {

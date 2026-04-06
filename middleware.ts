@@ -28,10 +28,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Ruta protegida + sin sesión → redirigir a login
+  // Ruta protegida + sin sesión → redirigir a login con mensaje de sesión expirada
   if (isProtectedRoute(pathname) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("expired", "true");
     return NextResponse.redirect(url);
   }
 

@@ -1,14 +1,7 @@
 import Image from "next/image";
-import { LoginForm } from "./login-form";
-import { LoginAlerts } from "./login-alerts";
+import { ResetPasswordForm } from "./reset-password-form";
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ expired?: string; message?: string }>;
-}) {
-  const params = await searchParams;
-
+export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -23,11 +16,10 @@ export default async function LoginPage({
           />
           <h1 className="text-3xl font-bold text-primary">DANI PIZZAS</h1>
           <p className="mt-2 text-muted-foreground">
-            Ingresa a tu cuenta para continuar
+            Establece tu nueva contraseña
           </p>
         </div>
-        <LoginAlerts expired={params.expired} message={params.message} />
-        <LoginForm />
+        <ResetPasswordForm />
       </div>
     </div>
   );
