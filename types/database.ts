@@ -6,486 +6,741 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserEstado = "activo" | "inactivo" | "eliminado";
-
-export interface Database {
+export type Database = {
+  __InternalSupabase: {
+    PostgrestVersion: "14.5";
+  };
   public: {
     Tables: {
-      roles: {
-        Row: {
-          id: string;
-          nombre: string;
-          descripcion: string | null;
-          activo: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          nombre: string;
-          descripcion?: string | null;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          nombre?: string;
-          descripcion?: string | null;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      sucursales: {
-        Row: {
-          id: string;
-          nombre: string;
-          direccion: string;
-          telefono: string | null;
-          activa: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          nombre: string;
-          direccion: string;
-          telefono?: string | null;
-          activa?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          nombre?: string;
-          direccion?: string;
-          telefono?: string | null;
-          activa?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      profiles: {
-        Row: {
-          id: string;
-          email: string;
-          nombre: string;
-          segundo_nombre: string | null;
-          apellido_paterno: string;
-          apellido_materno: string | null;
-          tipo_documento: string;
-          numero_documento: string | null;
-          fecha_nacimiento: string | null;
-          edad: number | null;
-          sexo: string | null;
-          foto_url: string | null;
-          celular: string | null;
-          codigo_pais: string;
-          codigo_qr: string | null;
-          estado: UserEstado;
-          rol_id: string | null;
-          sucursal_id: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          email: string;
-          nombre: string;
-          segundo_nombre?: string | null;
-          apellido_paterno: string;
-          apellido_materno?: string | null;
-          tipo_documento?: string;
-          numero_documento?: string | null;
-          fecha_nacimiento?: string | null;
-          edad?: number | null;
-          sexo?: string | null;
-          foto_url?: string | null;
-          celular?: string | null;
-          codigo_pais?: string;
-          codigo_qr?: string | null;
-          estado?: UserEstado;
-          rol_id?: string | null;
-          sucursal_id?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          email?: string;
-          nombre?: string;
-          segundo_nombre?: string | null;
-          apellido_paterno?: string;
-          apellido_materno?: string | null;
-          tipo_documento?: string;
-          numero_documento?: string | null;
-          fecha_nacimiento?: string | null;
-          edad?: number | null;
-          sexo?: string | null;
-          foto_url?: string | null;
-          celular?: string | null;
-          codigo_pais?: string;
-          codigo_qr?: string | null;
-          estado?: UserEstado;
-          rol_id?: string | null;
-          sucursal_id?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
       categorias: {
         Row: {
+          activa: boolean | null;
+          created_at: string | null;
           id: string;
           nombre: string;
-          orden: number;
+          orden: number | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          activa?: boolean | null;
+          created_at?: string | null;
+          id?: string;
+          nombre: string;
+          orden?: number | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          activa?: boolean | null;
+          created_at?: string | null;
+          id?: string;
+          nombre?: string;
+          orden?: number | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      delivery_fees_config: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          monto: number;
+          sucursal_id: string;
+          tipo: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          monto?: number;
+          sucursal_id: string;
+          tipo: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          monto?: number;
+          sucursal_id?: string;
+          tipo?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "delivery_fees_config_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      membresias: {
+        Row: {
           activa: boolean;
           created_at: string;
+          fecha_fin: string | null;
+          fecha_inicio: string;
+          id: string;
+          nivel_id: string;
+          perfil_id: string;
+          puntos_acumulados: number;
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          nombre: string;
-          orden?: number;
           activa?: boolean;
           created_at?: string;
+          fecha_fin?: string | null;
+          fecha_inicio?: string;
+          id?: string;
+          nivel_id: string;
+          perfil_id: string;
+          puntos_acumulados?: number;
           updated_at?: string;
         };
         Update: {
-          id?: string;
-          nombre?: string;
-          orden?: number;
           activa?: boolean;
           created_at?: string;
+          fecha_fin?: string | null;
+          fecha_inicio?: string;
+          id?: string;
+          nivel_id?: string;
+          perfil_id?: string;
+          puntos_acumulados?: number;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "membresias_nivel_id_fkey";
+            columns: ["nivel_id"];
+            isOneToOne: false;
+            referencedRelation: "membresias_niveles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "membresias_perfil_id_fkey";
+            columns: ["perfil_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      membresias_niveles: {
+        Row: {
+          beneficios: string | null;
+          created_at: string | null;
+          descuento_porcentaje: number | null;
+          id: string;
+          nombre: string;
+          orden: number | null;
+          puntos_requeridos: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          beneficios?: string | null;
+          created_at?: string | null;
+          descuento_porcentaje?: number | null;
+          id?: string;
+          nombre: string;
+          orden?: number | null;
+          puntos_requeridos?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          beneficios?: string | null;
+          created_at?: string | null;
+          descuento_porcentaje?: number | null;
+          id?: string;
+          nombre?: string;
+          orden?: number | null;
+          puntos_requeridos?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [];
       };
       productos: {
         Row: {
-          id: string;
-          nombre: string;
-          descripcion: string | null;
-          precio: number;
           categoria_id: string | null;
+          created_at: string | null;
+          descripcion: string | null;
+          disponible: boolean | null;
+          id: string;
           imagen_url: string | null;
-          disponible: boolean;
-          created_at: string;
-          updated_at: string;
+          nombre: string;
+          precio: number;
+          updated_at: string | null;
         };
         Insert: {
-          id?: string;
-          nombre: string;
-          descripcion?: string | null;
-          precio: number;
           categoria_id?: string | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean | null;
+          id?: string;
           imagen_url?: string | null;
-          disponible?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          nombre: string;
+          precio: number;
+          updated_at?: string | null;
         };
         Update: {
+          categoria_id?: string | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean | null;
+          id?: string;
+          imagen_url?: string | null;
+          nombre?: string;
+          precio?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "productos_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profiles: {
+        Row: {
+          apellido_materno: string | null;
+          apellido_paterno: string;
+          celular: string | null;
+          codigo_pais: string;
+          codigo_qr: string | null;
+          created_at: string | null;
+          edad: number | null;
+          email: string;
+          estado: Database["public"]["Enums"]["user_estado"];
+          fecha_nacimiento: string | null;
+          foto_url: string | null;
+          id: string;
+          nombre: string;
+          numero_documento: string | null;
+          rol_id: string | null;
+          segundo_nombre: string | null;
+          sexo: string | null;
+          sucursal_id: string | null;
+          tipo_documento: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          apellido_materno?: string | null;
+          apellido_paterno: string;
+          celular?: string | null;
+          codigo_pais?: string;
+          codigo_qr?: string | null;
+          created_at?: string | null;
+          edad?: number | null;
+          email: string;
+          estado?: Database["public"]["Enums"]["user_estado"];
+          fecha_nacimiento?: string | null;
+          foto_url?: string | null;
+          id: string;
+          nombre: string;
+          numero_documento?: string | null;
+          rol_id?: string | null;
+          segundo_nombre?: string | null;
+          sexo?: string | null;
+          sucursal_id?: string | null;
+          tipo_documento?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          apellido_materno?: string | null;
+          apellido_paterno?: string;
+          celular?: string | null;
+          codigo_pais?: string;
+          codigo_qr?: string | null;
+          created_at?: string | null;
+          edad?: number | null;
+          email?: string;
+          estado?: Database["public"]["Enums"]["user_estado"];
+          fecha_nacimiento?: string | null;
+          foto_url?: string | null;
           id?: string;
           nombre?: string;
-          descripcion?: string | null;
-          precio?: number;
-          categoria_id?: string | null;
-          imagen_url?: string | null;
-          disponible?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          numero_documento?: string | null;
+          rol_id?: string | null;
+          segundo_nombre?: string | null;
+          sexo?: string | null;
+          sucursal_id?: string | null;
+          tipo_documento?: string;
+          updated_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "profiles_rol_id_fkey";
+            columns: ["rol_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profiles_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       promociones: {
         Row: {
+          activa: boolean | null;
+          created_at: string | null;
+          descripcion: string | null;
+          fecha_fin: string;
+          fecha_inicio: string;
           id: string;
           nombre: string;
-          descripcion: string | null;
           tipo_descuento: string;
+          updated_at: string | null;
           valor_descuento: number;
-          fecha_inicio: string;
-          fecha_fin: string;
-          activa: boolean;
-          created_at: string;
-          updated_at: string;
         };
         Insert: {
+          activa?: boolean | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          fecha_fin: string;
+          fecha_inicio: string;
           id?: string;
           nombre: string;
-          descripcion?: string | null;
           tipo_descuento: string;
+          updated_at?: string | null;
           valor_descuento: number;
-          fecha_inicio: string;
-          fecha_fin: string;
-          activa?: boolean;
-          created_at?: string;
-          updated_at?: string;
         };
         Update: {
+          activa?: boolean | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          fecha_fin?: string;
+          fecha_inicio?: string;
           id?: string;
           nombre?: string;
-          descripcion?: string | null;
           tipo_descuento?: string;
+          updated_at?: string | null;
           valor_descuento?: number;
-          fecha_inicio?: string;
-          fecha_fin?: string;
-          activa?: boolean;
-          created_at?: string;
-          updated_at?: string;
         };
+        Relationships: [];
       };
       promociones_productos: {
         Row: {
           id: string;
-          promocion_id: string;
-          producto_id: string;
+          producto_id: string | null;
+          promocion_id: string | null;
         };
         Insert: {
           id?: string;
-          promocion_id: string;
-          producto_id: string;
+          producto_id?: string | null;
+          promocion_id?: string | null;
         };
         Update: {
           id?: string;
-          promocion_id?: string;
-          producto_id?: string;
+          producto_id?: string | null;
+          promocion_id?: string | null;
         };
-      };
-      membresias_niveles: {
-        Row: {
-          id: string;
-          nombre: string;
-          puntos_requeridos: number;
-          descuento_porcentaje: number;
-          beneficios: string | null;
-          orden: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          nombre: string;
-          puntos_requeridos?: number;
-          descuento_porcentaje?: number;
-          beneficios?: string | null;
-          orden?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          nombre?: string;
-          puntos_requeridos?: number;
-          descuento_porcentaje?: number;
-          beneficios?: string | null;
-          orden?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      membresias: {
-        Row: {
-          id: string;
-          perfil_id: string;
-          nivel_id: string;
-          puntos_acumulados: number;
-          fecha_inicio: string;
-          fecha_fin: string | null;
-          activa: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          perfil_id: string;
-          nivel_id: string;
-          puntos_acumulados?: number;
-          fecha_inicio?: string;
-          fecha_fin?: string | null;
-          activa?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          perfil_id?: string;
-          nivel_id?: string;
-          puntos_acumulados?: number;
-          fecha_inicio?: string;
-          fecha_fin?: string | null;
-          activa?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
+        Relationships: [
+          {
+            foreignKeyName: "promociones_productos_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "promociones_productos_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       reglas_puntos: {
         Row: {
+          activa: boolean | null;
+          created_at: string | null;
+          descripcion: string | null;
           id: string;
           nombre: string;
-          descripcion: string | null;
-          soles_por_punto: number;
           puntos_otorgados: number;
-          activa: boolean;
-          created_at: string;
-          updated_at: string;
+          soles_por_punto: number;
+          updated_at: string | null;
         };
         Insert: {
+          activa?: boolean | null;
+          created_at?: string | null;
+          descripcion?: string | null;
           id?: string;
           nombre: string;
-          descripcion?: string | null;
-          soles_por_punto?: number;
           puntos_otorgados?: number;
-          activa?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          soles_por_punto?: number;
+          updated_at?: string | null;
         };
         Update: {
+          activa?: boolean | null;
+          created_at?: string | null;
+          descripcion?: string | null;
           id?: string;
           nombre?: string;
-          descripcion?: string | null;
-          soles_por_punto?: number;
           puntos_otorgados?: number;
-          activa?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          soles_por_punto?: number;
+          updated_at?: string | null;
         };
+        Relationships: [];
       };
-      ventas: {
+      roles: {
         Row: {
-          id: string;
-          numero_venta: number;
-          tipo_pedido: string;
-          subtotal: number;
-          descuento: number;
-          delivery_fee: number;
-          total: number;
-          metodo_pago: string;
-          delivery_method: string | null;
-          delivery_address: string | null;
-          delivery_referencia: string | null;
-          delivery_status: string | null;
-          delivery_status_updated_at: string | null;
-          repartidor_id: string | null;
-          third_party_name: string | null;
-          sucursal_origen_id: string;
-          cajero_id: string;
-          promocion_id: string | null;
-          mesa_referencia: string | null;
-          notas: string | null;
+          activo: boolean;
           created_at: string;
+          descripcion: string | null;
+          id: string;
+          nombre: string;
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          numero_venta?: number;
-          tipo_pedido: string;
-          subtotal: number;
-          descuento?: number;
-          delivery_fee?: number;
-          total: number;
-          metodo_pago: string;
-          delivery_method?: string | null;
-          delivery_address?: string | null;
-          delivery_referencia?: string | null;
-          delivery_status?: string | null;
-          delivery_status_updated_at?: string | null;
-          repartidor_id?: string | null;
-          third_party_name?: string | null;
-          sucursal_origen_id: string;
-          cajero_id: string;
-          promocion_id?: string | null;
-          mesa_referencia?: string | null;
-          notas?: string | null;
+          activo?: boolean;
           created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre: string;
           updated_at?: string;
         };
         Update: {
-          id?: string;
-          numero_venta?: number;
-          tipo_pedido?: string;
-          subtotal?: number;
-          descuento?: number;
-          delivery_fee?: number;
-          total?: number;
-          metodo_pago?: string;
-          delivery_method?: string | null;
-          delivery_address?: string | null;
-          delivery_referencia?: string | null;
-          delivery_status?: string | null;
-          delivery_status_updated_at?: string | null;
-          repartidor_id?: string | null;
-          third_party_name?: string | null;
-          sucursal_origen_id?: string;
-          cajero_id?: string;
-          promocion_id?: string | null;
-          mesa_referencia?: string | null;
-          notas?: string | null;
+          activo?: boolean;
           created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre?: string;
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      sucursales: {
+        Row: {
+          activa: boolean | null;
+          created_at: string | null;
+          direccion: string;
+          id: string;
+          nombre: string;
+          telefono: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          activa?: boolean | null;
+          created_at?: string | null;
+          direccion: string;
+          id?: string;
+          nombre: string;
+          telefono?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          activa?: boolean | null;
+          created_at?: string | null;
+          direccion?: string;
+          id?: string;
+          nombre?: string;
+          telefono?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
       };
       venta_items: {
         Row: {
+          cantidad: number;
+          created_at: string | null;
           id: string;
-          venta_id: string;
           producto_id: string;
           producto_nombre: string;
           producto_precio: number;
-          cantidad: number;
           subtotal: number;
-          created_at: string;
+          venta_id: string;
         };
         Insert: {
+          cantidad: number;
+          created_at?: string | null;
           id?: string;
-          venta_id: string;
           producto_id: string;
           producto_nombre: string;
           producto_precio: number;
-          cantidad: number;
           subtotal: number;
-          created_at?: string;
+          venta_id: string;
         };
         Update: {
+          cantidad?: number;
+          created_at?: string | null;
           id?: string;
-          venta_id?: string;
           producto_id?: string;
           producto_nombre?: string;
           producto_precio?: number;
-          cantidad?: number;
           subtotal?: number;
-          created_at?: string;
+          venta_id?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "venta_items_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "venta_items_venta_id_fkey";
+            columns: ["venta_id"];
+            isOneToOne: false;
+            referencedRelation: "ventas";
+            referencedColumns: ["id"];
+          },
+        ];
       };
-      delivery_fees_config: {
+      ventas: {
         Row: {
+          cajero_id: string;
+          created_at: string | null;
+          delivery_address: string | null;
+          delivery_fee: number | null;
+          delivery_method: string | null;
+          delivery_referencia: string | null;
+          delivery_status: string | null;
+          delivery_status_updated_at: string | null;
+          descuento: number | null;
           id: string;
-          sucursal_id: string;
-          tipo: string;
-          monto: number;
-          created_at: string;
-          updated_at: string;
+          mesa_referencia: string | null;
+          metodo_pago: string;
+          notas: string | null;
+          numero_venta: number;
+          promocion_id: string | null;
+          repartidor_id: string | null;
+          subtotal: number;
+          sucursal_origen_id: string;
+          third_party_name: string | null;
+          tipo_pedido: string;
+          total: number;
+          updated_at: string | null;
         };
         Insert: {
+          cajero_id: string;
+          created_at?: string | null;
+          delivery_address?: string | null;
+          delivery_fee?: number | null;
+          delivery_method?: string | null;
+          delivery_referencia?: string | null;
+          delivery_status?: string | null;
+          delivery_status_updated_at?: string | null;
+          descuento?: number | null;
           id?: string;
-          sucursal_id: string;
-          tipo: string;
-          monto?: number;
-          created_at?: string;
-          updated_at?: string;
+          mesa_referencia?: string | null;
+          metodo_pago: string;
+          notas?: string | null;
+          numero_venta?: number;
+          promocion_id?: string | null;
+          repartidor_id?: string | null;
+          subtotal: number;
+          sucursal_origen_id: string;
+          third_party_name?: string | null;
+          tipo_pedido: string;
+          total: number;
+          updated_at?: string | null;
         };
         Update: {
+          cajero_id?: string;
+          created_at?: string | null;
+          delivery_address?: string | null;
+          delivery_fee?: number | null;
+          delivery_method?: string | null;
+          delivery_referencia?: string | null;
+          delivery_status?: string | null;
+          delivery_status_updated_at?: string | null;
+          descuento?: number | null;
           id?: string;
-          sucursal_id?: string;
-          tipo?: string;
-          monto?: number;
-          created_at?: string;
-          updated_at?: string;
+          mesa_referencia?: string | null;
+          metodo_pago?: string;
+          notas?: string | null;
+          numero_venta?: number;
+          promocion_id?: string | null;
+          repartidor_id?: string | null;
+          subtotal?: number;
+          sucursal_origen_id?: string;
+          third_party_name?: string | null;
+          tipo_pedido?: string;
+          total?: number;
+          updated_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "ventas_cajero_id_fkey";
+            columns: ["cajero_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ventas_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ventas_repartidor_id_fkey";
+            columns: ["repartidor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ventas_sucursal_origen_id_fkey";
+            columns: ["sucursal_origen_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      generate_codigo_qr: { Args: never; Returns: string };
+      get_user_role: { Args: never; Returns: string };
+      get_user_sucursal: { Args: never; Returns: string };
+    };
     Enums: {
-      user_estado: UserEstado;
+      user_estado: "activo" | "inactivo" | "eliminado";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
+};
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
+type DefaultSchema = DatabaseWithoutInternals["public"];
+
+export type UserEstado = Database["public"]["Enums"]["user_estado"];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
 }
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = {
+  public: {
+    Enums: {
+      user_estado: ["activo", "inactivo", "eliminado"],
+    },
+  },
+} as const;

@@ -116,17 +116,17 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 
 ## Release 4: Gestion de Productos (CRUD)
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 2
 **Objetivo:** Admin puede gestionar productos y categorias.
 
 ### Commits esperados:
-- [ ] Listado de productos con tabla paginada
-- [ ] Formulario de crear/editar producto
-- [ ] CRUD de categorias
-- [ ] Server Actions + servicio de productos
-- [ ] Validaciones Zod
-- [ ] Componentes shared (data-table, confirm-dialog, empty-state)
+- [x] Listado de productos con tabla paginada
+- [x] Formulario de crear/editar producto
+- [x] CRUD de categorias
+- [x] Server Actions + servicio de productos
+- [x] Validaciones Zod
+- [x] Componentes shared (data-table, confirm-dialog, empty-state)
 
 ### Criterio de exito:
 - CRUD completo de productos y categorias
