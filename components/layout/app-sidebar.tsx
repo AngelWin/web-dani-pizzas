@@ -28,7 +28,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { role, nombreCompleto, fotoUrl } = useUser();
+  const { role, nombreCompleto, fotoUrl, email } = useUser();
 
   const navItems = role ? getNavItemsByRole(role) : [];
 
@@ -93,11 +93,16 @@ export function AppSidebar() {
             className="h-9 w-9 rounded-full object-cover"
           />
           <div className="flex flex-col overflow-hidden">
-            <span className="truncate text-sm font-medium">
-              {nombreCompleto}
+            {nombreCompleto && (
+              <span className="truncate text-sm font-medium">
+                {nombreCompleto}
+              </span>
+            )}
+            <span className="truncate text-xs text-muted-foreground">
+              {email}
             </span>
             {role && (
-              <Badge variant="secondary" className="w-fit text-xs">
+              <Badge variant="secondary" className="mt-1 w-fit text-xs">
                 {ROLE_LABELS[role] ?? role}
               </Badge>
             )}
