@@ -97,15 +97,15 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 
 ## Release 3: Dashboard
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 2
 **Objetivo:** Pagina principal con metricas del dia.
 
 ### Commits esperados:
-- [ ] Pagina de dashboard con widgets
-- [ ] Componentes: ventas-hoy, grafico de ventas, resumen sucursal, pedidos recientes
-- [ ] Servicio de reportes (agregaciones basicas)
-- [ ] Filtro por sucursal (admin)
+- [x] Pagina de dashboard con widgets
+- [x] Componentes: ventas-hoy, grafico de ventas, resumen sucursal, pedidos recientes
+- [x] Servicio de reportes (agregaciones basicas)
+- [x] Filtro por sucursal (admin)
 
 ### Criterio de exito:
 - Dashboard renderiza correctamente (con estado vacio si no hay ventas)
