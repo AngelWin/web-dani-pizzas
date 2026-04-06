@@ -26,7 +26,8 @@
       "Edit(/.claude/skills/test-as-repartidor/**)",
       "Edit(/.claude/skills/unit-tests/**)",
       "Bash(gh auth:*)",
-      "Read(//Users/angelabad/Documents/IAProjects/project-dani-pizzas/**)"
+      "Read(//Users/angelabad/Documents/IAProjects/project-dani-pizzas/**)",
+      "Bash(brew install:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",

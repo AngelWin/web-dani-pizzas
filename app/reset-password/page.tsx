@@ -7,7 +7,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <Image
-            src="/images/logo-dani-pizzas.jpeg"
+            src="/images/logo-dani-pizzas.png"
             alt="DANI PIZZAS"
             width={120}
             height={120}

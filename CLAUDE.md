@@ -33,6 +33,8 @@ El rol de cada usuario se almacena en `auth.users.raw_user_meta_data->>'display_
 | Ruta | Descripción |
 |------|-------------|
 | `/login` | Autenticación con Supabase Auth |
+| `/forgot-password` | Solicitar enlace para resetear contraseña |
+| `/reset-password` | Establecer nueva contraseña |
 | `/dashboard` | Ventas del día, gráficos, filtro por sucursal |
 | `/pos` | Punto de venta tactil-friendly |
 | `/productos` | Gestión de productos |

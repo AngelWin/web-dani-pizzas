@@ -38,7 +38,7 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <Link href="/dashboard" className="flex items-center gap-3">
           <Image
-            src="/images/logo-dani-pizzas.jpeg"
+            src="/images/logo-dani-pizzas.png"
             alt="DANI PIZZAS"
             width={40}
             height={40}
