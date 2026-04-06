@@ -47,23 +47,29 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 
 ## Release 1: Login + Auth + Middleware
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 0
 **Objetivo:** Autenticacion funcional con redireccion por rol.
 
 ### Commits esperados:
-- [ ] Middleware de autenticacion y proteccion de rutas
-- [ ] Pagina de login con formulario
-- [ ] Server Actions de auth (login, logout)
-- [ ] Sistema de permisos RBAC (permissions.ts, roles.ts)
-- [ ] Validaciones Zod para auth
-- [ ] Callback route para OAuth
+- [x] Middleware de autenticacion y proteccion de rutas
+- [x] Pagina de login con formulario
+- [x] Server Actions de auth (login, logout)
+- [x] Sistema de permisos RBAC (permissions.ts, roles.ts)
+- [x] Validaciones Zod para auth
+- [x] Callback route para OAuth
+- [x] Paginas placeholder para rutas protegidas
+- [x] Pagina "Olvide mi contrasena" (envio de enlace de reset)
+- [x] Pagina de reset de contrasena (nueva contrasena)
+- [x] Manejo de sesion expirada (redireccion con mensaje)
 
 ### Criterio de exito:
 - Login con email/password funciona
 - Redireccion por rol correcta (admin->dashboard, mesero->pos, etc.)
 - Rutas protegidas redirigen a /login sin sesion
 - Rutas no permitidas redirigen a la primera ruta permitida del rol
+- Flujo "Olvide mi contrasena" envia email y permite resetear
+- Sesion expirada redirige a /login con aviso
 
 ---
 
@@ -263,12 +269,16 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 - [ ] Asignacion de rol y sucursal
 - [ ] Service role client (admin.ts) para crear usuarios
 - [ ] Proteccion: no eliminar ultimo administrador
+- [ ] Cambiar contrasena propia (disponible para todos los roles)
+- [ ] Editar perfil propio (nombre)
 
 ### Criterio de exito:
 - CRUD de usuarios con roles (administrador, cajero, mesero, repartidor)
 - Asignacion de sucursal
 - No se puede eliminar el ultimo admin
-- Solo admin puede acceder
+- Solo admin puede acceder al CRUD de usuarios
+- Cualquier usuario puede cambiar su propia contrasena
+- Cualquier usuario puede editar su nombre
 
 ---
 
