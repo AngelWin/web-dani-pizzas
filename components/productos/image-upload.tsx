@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { Upload, X, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
+import { uploadProductoImageAction } from "@/actions/productos";
 
 interface ImageUploadProps {
   value?: string | null;
@@ -33,33 +33,15 @@ export function ImageUpload({
       setUploadError(null);
 
       try {
-        const supabase = createClient();
-        const ext = file.name.split(".").pop() ?? "jpg";
-        const uuid = crypto.randomUUID();
-        const folder = categoriaId ?? "sin-categoria";
-        const path = `${folder}/${uuid}.${ext}`;
+        const formData = new FormData();
+        formData.append("file", file);
+        if (categoriaId) formData.append("categoriaId", categoriaId);
 
-        const uploadPromise = supabase.storage
-          .from("productos")
-          .upload(path, file, { upsert: false });
+        const result = await uploadProductoImageAction(formData);
 
-        const timeout = new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Tiempo de espera agotado (30s)")),
-            30000,
-          ),
-        );
+        if (result.error) throw new Error(result.error);
 
-        const { error: uploadErr } = await Promise.race([
-          uploadPromise,
-          timeout,
-        ]);
-
-        if (uploadErr) throw uploadErr;
-
-        const { data } = supabase.storage.from("productos").getPublicUrl(path);
-
-        onChange(data.publicUrl);
+        onChange(result.data!.url);
       } catch (err) {
         setUploadError(
           err instanceof Error ? err.message : "Error al subir la imagen",

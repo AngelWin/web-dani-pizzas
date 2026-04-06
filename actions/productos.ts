@@ -10,6 +10,46 @@ import {
 } from "@/lib/validations/productos";
 import type { ActionResult } from "@/types";
 
+// ─── Imágenes ──────────────────────────────────────────────────────────────
+
+export async function uploadProductoImageAction(
+  formData: FormData,
+): Promise<ActionResult<{ url: string }>> {
+  const file = formData.get("file");
+  const categoriaId = formData.get("categoriaId");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { data: null, error: "Archivo no válido" };
+  }
+
+  if (!file.type.startsWith("image/")) {
+    return { data: null, error: "El archivo debe ser una imagen" };
+  }
+
+  const supabase = await createClient();
+
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const uuid = crypto.randomUUID();
+  const folder =
+    typeof categoriaId === "string" && categoriaId
+      ? categoriaId
+      : "sin-categoria";
+  const path = `${folder}/${uuid}.${ext}`;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = new Uint8Array(arrayBuffer);
+
+  const { error: uploadErr } = await supabase.storage
+    .from("productos")
+    .upload(path, buffer, { contentType: file.type, upsert: false });
+
+  if (uploadErr) return { data: null, error: uploadErr.message };
+
+  const { data } = supabase.storage.from("productos").getPublicUrl(path);
+
+  return { data: { url: data.publicUrl }, error: null };
+}
+
 // ─── Categorías ────────────────────────────────────────────────────────────
 
 export async function createCategoriaAction(
