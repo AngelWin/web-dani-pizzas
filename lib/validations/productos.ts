@@ -23,12 +23,7 @@ export const productoSchema = z.object({
     .number({ invalid_type_error: "El precio debe ser un número" })
     .min(0.01, "El precio debe ser mayor a 0"),
   categoria_id: z.string().uuid("Categoría inválida").optional().nullable(),
-  imagen_url: z
-    .string()
-    .url("URL de imagen inválida")
-    .optional()
-    .nullable()
-    .or(z.literal("")),
+  imagen_url: z.string().optional().nullable(),
   disponible: z.boolean(),
 });
 

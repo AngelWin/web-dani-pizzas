@@ -31,6 +31,7 @@ import {
   updateProductoAction,
 } from "@/actions/productos";
 import type { Categoria, Producto } from "@/lib/services/productos";
+import { ImageUpload } from "@/components/productos/image-upload";
 
 interface ProductoFormProps {
   producto?: Producto | null;
@@ -165,12 +166,13 @@ export function ProductoForm({
           name="imagen_url"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>URL de imagen</FormLabel>
+              <FormLabel>Imagen del producto</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="https://..."
-                  {...field}
-                  value={field.value ?? ""}
+                <ImageUpload
+                  value={field.value}
+                  categoriaId={form.watch("categoria_id")}
+                  onChange={(url) => field.onChange(url ?? "")}
+                  disabled={form.formState.isSubmitting}
                 />
               </FormControl>
               <FormMessage />
