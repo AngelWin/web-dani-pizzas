@@ -14,6 +14,7 @@ interface AuthContextType {
   profile: Profile | null;
   sucursal: Sucursal | null;
   role: Role | null;
+  roleName: string | null;
   isLoading: boolean;
 }
 
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   sucursal: null,
   role: null,
+  roleName: null,
   isLoading: true,
 });
 
@@ -38,6 +40,7 @@ interface AuthProviderProps {
   initialUser: User | null;
   initialProfile: Profile | null;
   initialSucursal: Sucursal | null;
+  initialRoleName: string | null;
 }
 
 export function AuthProvider({
@@ -45,15 +48,15 @@ export function AuthProvider({
   initialUser,
   initialProfile,
   initialSucursal,
+  initialRoleName,
 }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser);
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
   const [sucursal, setSucursal] = useState<Sucursal | null>(initialSucursal);
+  const [roleName, setRoleName] = useState<string | null>(initialRoleName);
   const [isLoading, setIsLoading] = useState(false);
 
-  const role = (profile?.role ??
-    user?.user_metadata?.display_name ??
-    null) as Role | null;
+  const role = (roleName as Role) ?? null;
 
   useEffect(() => {
     const supabase = createClient();
@@ -65,24 +68,29 @@ export function AuthProvider({
         setUser(null);
         setProfile(null);
         setSucursal(null);
+        setRoleName(null);
       } else if (session?.user) {
         setUser(session.user);
 
-        // Refrescar perfil y sucursal
+        // Refrescar perfil con rol via JOIN
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("*")
+          .select("*, roles(nombre)")
           .eq("id", session.user.id)
-          .single<Profile>();
+          .single();
 
         if (profileData) {
-          setProfile(profileData);
+          const { roles: roleData, ...profileOnly } = profileData as Profile & {
+            roles: { nombre: string } | null;
+          };
+          setProfile(profileOnly);
+          setRoleName(roleData?.nombre ?? null);
 
-          if (profileData.sucursal_id) {
+          if (profileOnly.sucursal_id) {
             const { data: sucursalData } = await supabase
               .from("sucursales")
               .select("*")
-              .eq("id", profileData.sucursal_id)
+              .eq("id", profileOnly.sucursal_id)
               .single<Sucursal>();
             setSucursal(sucursalData);
           }
@@ -94,7 +102,9 @@ export function AuthProvider({
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profile, sucursal, role, isLoading }}>
+    <AuthContext.Provider
+      value={{ user, profile, sucursal, role, roleName, isLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );

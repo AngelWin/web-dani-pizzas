@@ -6,9 +6,37 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type UserEstado = "activo" | "inactivo" | "eliminado";
+
 export interface Database {
   public: {
     Tables: {
+      roles: {
+        Row: {
+          id: string;
+          nombre: string;
+          descripcion: string | null;
+          activo: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          nombre: string;
+          descripcion?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          nombre?: string;
+          descripcion?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       sucursales: {
         Row: {
           id: string;
@@ -42,30 +70,66 @@ export interface Database {
         Row: {
           id: string;
           email: string;
-          nombre_completo: string;
-          role: string;
+          nombre: string;
+          segundo_nombre: string | null;
+          apellido_paterno: string;
+          apellido_materno: string | null;
+          tipo_documento: string;
+          numero_documento: string | null;
+          fecha_nacimiento: string | null;
+          edad: number | null;
+          sexo: string | null;
+          foto_url: string | null;
+          celular: string | null;
+          codigo_pais: string;
+          codigo_qr: string | null;
+          estado: UserEstado;
+          rol_id: string | null;
           sucursal_id: string | null;
-          activo: boolean;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
           email: string;
-          nombre_completo: string;
-          role: string;
+          nombre: string;
+          segundo_nombre?: string | null;
+          apellido_paterno: string;
+          apellido_materno?: string | null;
+          tipo_documento?: string;
+          numero_documento?: string | null;
+          fecha_nacimiento?: string | null;
+          edad?: number | null;
+          sexo?: string | null;
+          foto_url?: string | null;
+          celular?: string | null;
+          codigo_pais?: string;
+          codigo_qr?: string | null;
+          estado?: UserEstado;
+          rol_id?: string | null;
           sucursal_id?: string | null;
-          activo?: boolean;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           email?: string;
-          nombre_completo?: string;
-          role?: string;
+          nombre?: string;
+          segundo_nombre?: string | null;
+          apellido_paterno?: string;
+          apellido_materno?: string | null;
+          tipo_documento?: string;
+          numero_documento?: string | null;
+          fecha_nacimiento?: string | null;
+          edad?: number | null;
+          sexo?: string | null;
+          foto_url?: string | null;
+          celular?: string | null;
+          codigo_pais?: string;
+          codigo_qr?: string | null;
+          estado?: UserEstado;
+          rol_id?: string | null;
           sucursal_id?: string | null;
-          activo?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -169,6 +233,23 @@ export interface Database {
           updated_at?: string;
         };
       };
+      promociones_productos: {
+        Row: {
+          id: string;
+          promocion_id: string;
+          producto_id: string;
+        };
+        Insert: {
+          id?: string;
+          promocion_id: string;
+          producto_id: string;
+        };
+        Update: {
+          id?: string;
+          promocion_id?: string;
+          producto_id?: string;
+        };
+      };
       membresias_niveles: {
         Row: {
           id: string;
@@ -197,6 +278,41 @@ export interface Database {
           descuento_porcentaje?: number;
           beneficios?: string | null;
           orden?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      membresias: {
+        Row: {
+          id: string;
+          perfil_id: string;
+          nivel_id: string;
+          puntos_acumulados: number;
+          fecha_inicio: string;
+          fecha_fin: string | null;
+          activa: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          perfil_id: string;
+          nivel_id: string;
+          puntos_acumulados?: number;
+          fecha_inicio?: string;
+          fecha_fin?: string | null;
+          activa?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          perfil_id?: string;
+          nivel_id?: string;
+          puntos_acumulados?: number;
+          fecha_inicio?: string;
+          fecha_fin?: string | null;
+          activa?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -365,26 +481,11 @@ export interface Database {
           updated_at?: string;
         };
       };
-      promociones_productos: {
-        Row: {
-          id: string;
-          promocion_id: string;
-          producto_id: string;
-        };
-        Insert: {
-          id?: string;
-          promocion_id: string;
-          producto_id: string;
-        };
-        Update: {
-          id?: string;
-          promocion_id?: string;
-          producto_id?: string;
-        };
-      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Enums: {
+      user_estado: UserEstado;
+    };
   };
 }

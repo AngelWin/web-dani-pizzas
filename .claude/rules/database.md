@@ -11,21 +11,29 @@ paths: "app/actions/**/*.ts,lib/supabase/**/*.ts,supabase/**/*.sql"
 
 ## Tablas Principales
 
+- `roles` — Tabla dinámica de roles (administrador, cajero, mesero, repartidor, etc.)
 - `sucursales` — Casma Av. Reina, Villa Hermosa Calle Uno
-- `profiles` — Extiende auth.users con role + sucursal_id
+- `profiles` — Extiende auth.users con datos personales + rol_id FK a roles + sucursal_id
 - `productos` — Catálogo de productos
 - `promociones` — Promociones con fecha inicio/fin
 - `membresias_niveles` — Niveles de membresía
+- `membresias` — Relación 1:N profiles ↔ membresias_niveles (puntos, nivel activo)
 - `reglas_puntos` — Reglas del programa de puntos
 - `ventas` — Ventas con tipo_pedido, delivery info, sucursal
 - `delivery_fees_config` — Tarifas de delivery por sucursal
 
-## Roles (desde auth.users.raw_user_meta_data->>'display_name')
+## Roles (desde tabla `roles`, dinámicos)
 
-- `administrador` — Acceso total
-- `cajero` — POS + reportes básicos (solo su sucursal)
-- `mesero` — POS para pedidos en local (solo su sucursal)
-- `repartidor` — Solo sus deliveries asignados
+- Los roles se gestionan en la tabla `public.roles` (escalable, no hardcodeados)
+- `profiles.rol_id` → FK a `roles.id`
+- Función `get_user_role()` hace JOIN profiles → roles para obtener el nombre del rol
+- Roles iniciales: administrador, cajero, mesero, repartidor
+
+## Profiles
+
+- Campos: nombre, segundo_nombre, apellido_paterno, apellido_materno, tipo_documento (DNI/CE), numero_documento, fecha_nacimiento, edad, sexo, foto_url, celular, codigo_pais, codigo_qr, estado (enum: activo/inactivo/eliminado)
+- Trigger `handle_new_user()` crea perfil automáticamente al registrarse
+- Storage bucket `perfiles` para fotos (RLS por auth.uid())
 
 ## Convenciones SQL
 

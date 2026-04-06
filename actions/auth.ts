@@ -36,12 +36,24 @@ export async function loginAction(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = user?.user_metadata?.display_name as Role;
 
-  const defaultRoute =
-    role && Object.values(ROLES).includes(role)
-      ? getDefaultRoute(role)
-      : "/login";
+  // Obtener rol desde profiles → roles (JOIN)
+  let role: Role | null = null;
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("roles(nombre)")
+      .eq("id", user.id)
+      .single();
+
+    const roleName = (data as { roles: { nombre: string } | null } | null)
+      ?.roles?.nombre as Role | undefined;
+    if (roleName && Object.values(ROLES).includes(roleName)) {
+      role = roleName;
+    }
+  }
+
+  const defaultRoute = role ? getDefaultRoute(role) : "/login";
 
   redirect(defaultRoute);
 }

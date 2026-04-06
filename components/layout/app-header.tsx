@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useTransition } from "react";
-import { LogOut, Moon, Sun, User } from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useUser } from "@/hooks/use-user";
 import { useSucursal } from "@/hooks/use-sucursal";
@@ -20,7 +21,7 @@ import {
 import { SucursalSelector } from "@/components/shared/sucursal-selector";
 
 export function AppHeader() {
-  const { nombreCompleto, email, role } = useUser();
+  const { nombreCompleto, email, role, fotoUrl } = useUser();
   const { canSelectSucursal } = useSucursal();
   const { theme, setTheme } = useTheme();
   const [isPending, startTransition] = useTransition();
@@ -55,21 +56,44 @@ export function AppHeader() {
         {/* Menu de usuario */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <User className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full p-0"
+            >
+              <Image
+                src={fotoUrl}
+                alt={nombreCompleto}
+                width={36}
+                height={36}
+                className="h-9 w-9 rounded-full object-cover"
+              />
               <span className="sr-only">Menú de usuario</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">{nombreCompleto}</span>
-                <span className="text-xs text-muted-foreground">{email}</span>
-                {role && (
-                  <span className="mt-1 text-xs capitalize text-primary">
-                    {role}
+              <div className="flex items-center gap-3">
+                <Image
+                  src={fotoUrl}
+                  alt={nombreCompleto}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+                <div className="flex flex-col overflow-hidden">
+                  <span className="truncate text-sm font-medium">
+                    {nombreCompleto}
                   </span>
-                )}
+                  <span className="truncate text-xs text-muted-foreground">
+                    {email}
+                  </span>
+                  {role && (
+                    <span className="mt-0.5 text-xs capitalize text-primary">
+                      {role}
+                    </span>
+                  )}
+                </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

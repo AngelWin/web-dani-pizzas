@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Pizza } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-user";
 import { getNavItemsByRole } from "@/lib/navigation";
@@ -29,7 +28,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { role, nombreCompleto } = useUser();
+  const { role, nombreCompleto, fotoUrl } = useUser();
 
   const navItems = role ? getNavItemsByRole(role) : [];
 
@@ -86,9 +85,13 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-            <Pizza className="h-5 w-5 text-primary" />
-          </div>
+          <Image
+            src={fotoUrl}
+            alt={nombreCompleto}
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-full object-cover"
+          />
           <div className="flex flex-col overflow-hidden">
             <span className="truncate text-sm font-medium">
               {nombreCompleto}

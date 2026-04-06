@@ -25,25 +25,30 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // Obtener perfil
+  // Obtener perfil con rol via JOIN
   let profile: Profile | null = null;
   let sucursal: Sucursal | null = null;
+  let roleName: string | null = null;
 
   const { data: profileData } = await supabase
     .from("profiles")
-    .select("*")
+    .select("*, roles(nombre)")
     .eq("id", user.id)
-    .single<Profile>();
+    .single();
 
   if (profileData) {
-    profile = profileData;
+    const { roles: roleData, ...profileOnly } = profileData as Profile & {
+      roles: { nombre: string } | null;
+    };
+    profile = profileOnly;
+    roleName = roleData?.nombre ?? null;
 
     // Obtener sucursal del perfil
-    if (profileData.sucursal_id) {
+    if (profileOnly.sucursal_id) {
       const { data: sucursalData } = await supabase
         .from("sucursales")
         .select("*")
-        .eq("id", profileData.sucursal_id)
+        .eq("id", profileOnly.sucursal_id)
         .single<Sucursal>();
 
       sucursal = sucursalData;
@@ -55,6 +60,7 @@ export default async function DashboardLayout({
       initialUser={user}
       initialProfile={profile}
       initialSucursal={sucursal}
+      initialRoleName={roleName}
     >
       <TooltipProvider>
         <SidebarProvider>

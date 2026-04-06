@@ -34,5 +34,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { response, user };
+  // Obtener rol desde profiles → roles (JOIN)
+  let roleName: string | null = null;
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("roles(nombre)")
+      .eq("id", user.id)
+      .single();
+
+    roleName =
+      (data as { roles: { nombre: string } | null } | null)?.roles?.nombre ??
+      null;
+  }
+
+  return { response, user, roleName };
 }

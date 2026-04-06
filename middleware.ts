@@ -15,15 +15,14 @@ function isValidRole(role: unknown): role is Role {
 }
 
 export async function middleware(request: NextRequest) {
-  const { response, user } = await updateSession(request);
+  const { response, user, roleName } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
   // Ruta pública + usuario autenticado → redirigir al default del rol
   if (isPublicRoute(pathname) && user) {
-    const role = user.user_metadata?.display_name;
-    if (isValidRole(role)) {
+    if (isValidRole(roleName)) {
       const url = request.nextUrl.clone();
-      url.pathname = getDefaultRoute(role);
+      url.pathname = getDefaultRoute(roleName);
       return NextResponse.redirect(url);
     }
   }
@@ -38,17 +37,15 @@ export async function middleware(request: NextRequest) {
 
   // Ruta protegida + usuario autenticado → verificar RBAC
   if (isProtectedRoute(pathname) && user) {
-    const role = user.user_metadata?.display_name;
-
-    if (!isValidRole(role)) {
+    if (!isValidRole(roleName)) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
 
-    if (!hasAccess(role, pathname)) {
+    if (!hasAccess(roleName, pathname)) {
       const url = request.nextUrl.clone();
-      url.pathname = getDefaultRoute(role);
+      url.pathname = getDefaultRoute(roleName);
       return NextResponse.redirect(url);
     }
   }

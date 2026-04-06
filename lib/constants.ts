@@ -1,3 +1,4 @@
+/** Roles conocidos del sistema. Los roles se gestionan en la tabla `roles` de Supabase. */
 export const ROLES = {
   ADMINISTRADOR: "administrador",
   CAJERO: "cajero",
@@ -6,6 +7,8 @@ export const ROLES = {
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
+
+export const DEFAULT_USER_IMAGE = "/images/default-user-image.png";
 
 export const TIPO_PEDIDO = {
   EN_LOCAL: "en_local",
