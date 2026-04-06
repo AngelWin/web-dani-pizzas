@@ -56,7 +56,7 @@ export function ProductoForm({
     defaultValues: {
       nombre: producto?.nombre ?? "",
       descripcion: producto?.descripcion ?? "",
-      precio: producto?.precio ?? 0,
+      precio: producto?.precio ? Number(producto.precio) : ("" as unknown as number),
       categoria_id: producto?.categoria_id ?? null,
       imagen_url: producto?.imagen_url ?? "",
       disponible: producto?.disponible ?? true,
@@ -127,6 +127,11 @@ export function ProductoForm({
                     min="0"
                     placeholder="0.00"
                     {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      field.onChange(val === "" ? "" : Number(val));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
