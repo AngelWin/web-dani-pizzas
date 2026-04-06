@@ -10,9 +10,6 @@ import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
 } from "@/lib/validations/auth";
-import { getDefaultRoute } from "@/lib/auth/permissions";
-import type { Role } from "@/lib/constants";
-import { ROLES } from "@/lib/constants";
 import type { ActionResult } from "@/types";
 
 export async function loginAction(
@@ -33,32 +30,8 @@ export async function loginAction(
     return { data: null, error: "Credenciales incorrectas" };
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Obtener rol desde profiles → roles (JOIN), con fallback a user_metadata
-  let role: Role | null = null;
-  if (user) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("roles(nombre)")
-      .eq("id", user.id)
-      .single();
-
-    const roleFromJoin = (data as { roles: { nombre: string } | null } | null)
-      ?.roles?.nombre;
-    const roleFromMeta = user.user_metadata?.display_name as string | undefined;
-    const roleName = (roleFromJoin ?? roleFromMeta) as Role | undefined;
-
-    if (roleName && Object.values(ROLES).includes(roleName)) {
-      role = roleName;
-    }
-  }
-
-  const defaultRoute = role ? getDefaultRoute(role) : "/dashboard";
-
-  redirect(defaultRoute);
+  // El middleware se encarga de redirigir según el rol
+  redirect("/dashboard");
 }
 
 export async function logoutAction(): Promise<void> {

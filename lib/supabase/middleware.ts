@@ -45,7 +45,6 @@ export async function updateSession(request: NextRequest) {
 
     roleName =
       (data as { roles: { nombre: string } | null } | null)?.roles?.nombre ??
-      (user.user_metadata?.display_name as string | undefined) ??
       null;
   }
 
