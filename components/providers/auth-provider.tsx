@@ -72,25 +72,26 @@ export function AuthProvider({
       } else if (session?.user) {
         setUser(session.user);
 
-        // Refrescar perfil con rol via JOIN
+        // El rol viene del JWT (app_metadata) — sin query extra
+        setRoleName(
+          (session.user.app_metadata?.role as string | undefined) ?? null,
+        );
+
+        // Refrescar perfil
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("*, roles(nombre)")
+          .select("*")
           .eq("id", session.user.id)
-          .single();
+          .single<Profile>();
 
         if (profileData) {
-          const { roles: roleData, ...profileOnly } = profileData as Profile & {
-            roles: { nombre: string } | null;
-          };
-          setProfile(profileOnly);
-          setRoleName(roleData?.nombre ?? null);
+          setProfile(profileData);
 
-          if (profileOnly.sucursal_id) {
+          if (profileData.sucursal_id) {
             const { data: sucursalData } = await supabase
               .from("sucursales")
               .select("*")
-              .eq("id", profileOnly.sucursal_id)
+              .eq("id", profileData.sucursal_id)
               .single<Sucursal>();
             setSucursal(sucursalData);
           }

@@ -34,19 +34,8 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Obtener rol desde profiles → roles (JOIN), con fallback a user_metadata
-  let roleName: string | null = null;
-  if (user) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("roles(nombre)")
-      .eq("id", user.id)
-      .single();
-
-    roleName =
-      (data as { roles: { nombre: string } | null } | null)?.roles?.nombre ??
-      null;
-  }
+  // El rol viene directamente del JWT via app_metadata (sin query DB)
+  const roleName = (user?.app_metadata?.role as string | undefined) ?? null;
 
   return { response, user, roleName };
 }
