@@ -267,6 +267,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      orden_estado_historial: {
+        Row: {
+          cambiado_at: string;
+          cambiado_por: string | null;
+          estado_desde: Database["public"]["Enums"]["estado_orden"] | null;
+          estado_hasta: Database["public"]["Enums"]["estado_orden"];
+          id: string;
+          notas: string | null;
+          orden_id: string;
+        };
+        Insert: {
+          cambiado_at?: string;
+          cambiado_por?: string | null;
+          estado_desde?: Database["public"]["Enums"]["estado_orden"] | null;
+          estado_hasta: Database["public"]["Enums"]["estado_orden"];
+          id?: string;
+          notas?: string | null;
+          orden_id: string;
+        };
+        Update: {
+          cambiado_at?: string;
+          cambiado_por?: string | null;
+          estado_desde?: Database["public"]["Enums"]["estado_orden"] | null;
+          estado_hasta?: Database["public"]["Enums"]["estado_orden"];
+          id?: string;
+          notas?: string | null;
+          orden_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "orden_estado_historial_cambiado_por_fkey";
+            columns: ["cambiado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orden_estado_historial_orden_id_fkey";
+            columns: ["orden_id"];
+            isOneToOne: false;
+            referencedRelation: "ordenes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       orden_items: {
         Row: {
           cantidad: number;

@@ -3,16 +3,23 @@ import type { Database } from "@/types/database";
 
 export type Orden = Database["public"]["Tables"]["ordenes"]["Row"];
 export type OrdenItem = Database["public"]["Tables"]["orden_items"]["Row"];
+export type OrdenEstadoHistorial =
+  Database["public"]["Tables"]["orden_estado_historial"]["Row"];
 export type EstadoOrden = Database["public"]["Enums"]["estado_orden"];
 export type TipoPedido = Database["public"]["Enums"]["tipo_pedido"];
 export type DeliveryMethod =
   Database["public"]["Enums"]["delivery_method_tipo"];
 export type EstadoDelivery = Database["public"]["Enums"]["estado_delivery"];
 
+export type HistorialConUsuario = OrdenEstadoHistorial & {
+  cambiado_por_profile: { nombre: string; apellido_paterno: string } | null;
+};
+
 export type OrdenConItems = Orden & {
   orden_items: OrdenItem[];
   cajero: { nombre: string; apellido_paterno: string } | null;
   repartidor: { nombre: string; apellido_paterno: string } | null;
+  orden_estado_historial: HistorialConUsuario[];
 };
 
 export type FiltroEstadoOrden = EstadoOrden | "todas" | "activas";
@@ -32,7 +39,11 @@ export async function getOrdenes(
       *,
       orden_items (*),
       cajero:profiles!ordenes_cajero_id_fkey (nombre, apellido_paterno),
-      repartidor:profiles!ordenes_repartidor_id_fkey (nombre, apellido_paterno)
+      repartidor:profiles!ordenes_repartidor_id_fkey (nombre, apellido_paterno),
+      orden_estado_historial (
+        *,
+        cambiado_por_profile:profiles!orden_estado_historial_cambiado_por_fkey (nombre, apellido_paterno)
+      )
     `,
     )
     .order("created_at", { ascending: false });
@@ -51,6 +62,26 @@ export async function getOrdenes(
 
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as OrdenConItems[];
+}
+
+export async function getHistorialOrden(
+  ordenId: string,
+): Promise<HistorialConUsuario[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("orden_estado_historial")
+    .select(
+      `
+      *,
+      cambiado_por_profile:profiles!orden_estado_historial_cambiado_por_fkey (nombre, apellido_paterno)
+    `,
+    )
+    .eq("orden_id", ordenId)
+    .order("cambiado_at", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as HistorialConUsuario[];
 }
 
 export async function actualizarEstadoOrden(

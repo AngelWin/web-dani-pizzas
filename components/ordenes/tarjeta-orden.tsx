@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { EstadoOrdenBadge, EstadoDeliveryBadge } from "./estado-badge";
 import { AccionesOrden } from "./acciones-orden";
+import { HistorialTimeline } from "./historial-timeline";
 import type { OrdenConItems } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 
@@ -169,6 +170,8 @@ export function TarjetaOrden({ orden, rol, modeloNegocio }: Props) {
             Notas: {orden.notas}
           </p>
         )}
+
+        <HistorialTimeline historial={orden.orden_estado_historial ?? []} />
       </CardContent>
 
       <Separator />

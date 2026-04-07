@@ -333,7 +333,7 @@ confirmada → en_preparacion → lista → entregada
 
 ## Release 5d: Historial de Estados de Orden (Auditoría)
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5c
 **Objetivo:** Registrar cada transicion de estado de una orden: quien la cambio, desde que estado, hacia cual y cuando. Habilita auditoria y reportes de eficiencia operativa.
 
@@ -372,19 +372,19 @@ notas         text (nullable — para cancelaciones con motivo)
 ### Commits esperados:
 
 **DB:**
-- [ ] Migracion: tabla `orden_estado_historial`
-- [ ] RLS: insert solo via service role o autenticado; select autenticado
-- [ ] Trigger opcional: insertar historial automaticamente al hacer UPDATE en ordenes.estado
-- [ ] Tipos TypeScript actualizados
+- [x] Migracion: tabla `orden_estado_historial`
+- [x] RLS: insert solo via service role o autenticado; select autenticado
+- [x] Trigger automatico al INSERT (creacion) y UPDATE de ordenes.estado
+- [x] Tipos TypeScript actualizados
 
 **Backend:**
-- [ ] Funcion `registrarCambioEstado` en lib/services/ordenes.ts
-- [ ] Actualizar `actualizarEstadoOrden` y `cobrarOrden` para insertar en historial
-- [ ] Actualizar `cancelarOrden` para incluir `notas` en el historial
+- [x] Funcion `getHistorialOrden` en lib/services/ordenes.ts
+- [x] Tipo `HistorialConUsuario` con join a profiles
+- [x] `OrdenConItems` incluye `orden_estado_historial` en el select de `getOrdenes`
 
 **UI:**
-- [ ] Panel de historial colapsable en la tarjeta de orden (timeline visual)
-- [ ] Cada entrada muestra: estado, usuario, hora, tiempo transcurrido desde el anterior
+- [x] Componente `HistorialTimeline` colapsable en tarjeta de orden
+- [x] Cada entrada muestra: transicion de estado, usuario, hora, tiempo transcurrido desde el anterior
 
 ### Criterio de exito:
 - Cada cambio de estado queda registrado con usuario y timestamp
