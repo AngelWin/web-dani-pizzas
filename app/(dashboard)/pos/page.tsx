@@ -5,9 +5,19 @@ import {
   getCategoriasConProductos,
   getRepartidoresSucursal,
 } from "@/lib/services/ventas";
+import type { Database } from "@/types/database";
 
-export default async function PosPage() {
+type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function PosPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const supabase = await createClient();
+  const params = await searchParams;
 
   const {
     data: { user },
@@ -19,11 +29,36 @@ export default async function PosPage() {
     .eq("id", user!.id)
     .single();
 
-  const sucursalId = profile?.sucursal_id ?? null;
   const rol =
     profile?.roles && !Array.isArray(profile.roles)
       ? (profile.roles as { nombre: string }).nombre
       : null;
+
+  const esAdmin = rol === "administrador";
+
+  // Obtener sucursales disponibles
+  let sucursales: Sucursal[] = [];
+  if (esAdmin) {
+    const { data } = await supabase
+      .from("sucursales")
+      .select("*")
+      .eq("activa", true)
+      .order("nombre");
+    sucursales = data ?? [];
+  }
+
+  // Determinar sucursal activa:
+  // 1. Query param (admin cambia desde UI)
+  // 2. Sucursal del perfil (cajero/mesero/repartidor)
+  // 3. Primera sucursal disponible (admin sin sucursal asignada)
+  const sucursalParam =
+    typeof params.sucursal === "string" ? params.sucursal : null;
+
+  let sucursalId: string | null = sucursalParam ?? profile?.sucursal_id ?? null;
+
+  if (!sucursalId && esAdmin && sucursales.length > 0) {
+    sucursalId = sucursales[0].id;
+  }
 
   if (!sucursalId) {
     return (
@@ -47,6 +82,7 @@ export default async function PosPage() {
       categorias={categorias}
       repartidores={repartidores}
       sucursalId={sucursalId}
+      sucursales={esAdmin ? sucursales : []}
       rol={rol}
     />
   );
