@@ -23,10 +23,18 @@ export async function buscarClientePorDni(
 ): Promise<ClienteConMembresia | null> {
   const supabase = await createClient();
 
-  // 1. Buscar cliente por DNI
   const { data: cliente, error } = await supabase
     .from("clientes")
-    .select("*")
+    .select(
+      `
+      *,
+      membresias!membresias_cliente_id_fkey (
+        activa,
+        puntos_acumulados,
+        nivel:membresias_niveles!membresias_nivel_id_fkey (nombre, descuento_porcentaje)
+      )
+    `,
+    )
     .eq("dni", dni.trim())
     .eq("activo", true)
     .maybeSingle();
@@ -34,37 +42,33 @@ export async function buscarClientePorDni(
   if (error) throw new Error(error.message);
   if (!cliente) return null;
 
-  // 2. Si el cliente tiene cuenta de usuario, buscar su membresía activa
-  //    membresias.perfil_id = profiles.id = auth_user_id
+  // Tomar solo la membresía activa (un cliente puede tener a lo sumo una activa)
+  const membresiasArr = Array.isArray(cliente.membresias)
+    ? cliente.membresias
+    : cliente.membresias
+      ? [cliente.membresias]
+      : [];
+
+  const membresiaActiva = membresiasArr.find((m) => m.activa) ?? null;
+
   let membresiaResumen: ResumenMembresia | null = null;
+  if (membresiaActiva) {
+    const nivelRaw = membresiaActiva.nivel;
+    const nivel: NivelMembresia | null = Array.isArray(nivelRaw)
+      ? (nivelRaw[0] ?? null)
+      : (nivelRaw ?? null);
 
-  if (cliente.auth_user_id) {
-    const { data: membresia } = await supabase
-      .from("membresias")
-      .select(
-        `
-        activa,
-        puntos_acumulados,
-        nivel:membresias_niveles!membresias_nivel_id_fkey (nombre, descuento_porcentaje)
-      `,
-      )
-      .eq("perfil_id", cliente.auth_user_id)
-      .eq("activa", true)
-      .maybeSingle();
-
-    if (membresia) {
-      const nivelRaw = membresia.nivel;
-      const nivel: NivelMembresia | null = Array.isArray(nivelRaw)
-        ? (nivelRaw[0] ?? null)
-        : (nivelRaw ?? null);
-
-      membresiaResumen = {
-        activa: membresia.activa,
-        puntos_acumulados: membresia.puntos_acumulados,
-        nivel,
-      };
-    }
+    membresiaResumen = {
+      activa: membresiaActiva.activa,
+      puntos_acumulados: membresiaActiva.puntos_acumulados,
+      nivel,
+    };
   }
 
-  return { ...cliente, membresias: membresiaResumen };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { membresias: _, ...clienteBase } = cliente as typeof cliente & {
+    membresias: unknown;
+  };
+
+  return { ...(clienteBase as Cliente), membresias: membresiaResumen };
 }
