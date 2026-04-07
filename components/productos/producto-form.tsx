@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { DollarSign, Layers } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -16,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -31,12 +33,19 @@ import {
   createProductoAction,
   updateProductoAction,
 } from "@/actions/productos";
-import type { Categoria, Producto } from "@/lib/services/productos";
+import type {
+  Categoria,
+  CategoriaMedida,
+  ProductoCompleto,
+  Sucursal,
+} from "@/lib/services/productos";
 import { ImageUpload } from "@/components/productos/image-upload";
 
 interface ProductoFormProps {
-  producto?: Producto | null;
+  producto?: ProductoCompleto | null;
   categorias: Categoria[];
+  categoriaMedidas: Record<string, CategoriaMedida[]>;
+  sucursales: Sucursal[];
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -44,11 +53,36 @@ interface ProductoFormProps {
 export function ProductoForm({
   producto,
   categorias,
+  categoriaMedidas,
+  sucursales,
   onSuccess,
   onCancel,
 }: ProductoFormProps) {
   const isEditing = !!producto;
   const [isImageUploading, setIsImageUploading] = useState(false);
+
+  // Medidas de la categoría seleccionada actualmente
+  const categoriaIdInicial = producto?.categoria_id ?? null;
+  const medidasIniciales = categoriaIdInicial
+    ? (categoriaMedidas[categoriaIdInicial] ?? [])
+    : [];
+
+  // Variantes iniciales al editar
+  const variantesIniciales = medidasIniciales.map((medida) => {
+    const variante = producto?.producto_variantes?.find(
+      (v) => v.medida_id === medida.id,
+    );
+    return {
+      medida_id: medida.id,
+      medida_nombre: medida.nombre,
+      precio: variante?.precio ?? 0,
+      disponible: variante?.disponible ?? true,
+    };
+  });
+
+  // Sucursales disponibles iniciales al editar
+  const sucursalesIniciales =
+    producto?.producto_sucursal?.map((ps) => ps.sucursal_id) ?? [];
 
   const form = useForm<ProductoFormValues>({
     resolver: zodResolver(productoSchema),
@@ -56,12 +90,64 @@ export function ProductoForm({
     defaultValues: {
       nombre: producto?.nombre ?? "",
       descripcion: producto?.descripcion ?? "",
-      precio: producto?.precio ? Number(producto.precio) : ("" as unknown as number),
-      categoria_id: producto?.categoria_id ?? null,
+      precio: producto?.precio != null ? Number(producto.precio) : null,
+      categoria_id: categoriaIdInicial,
       imagen_url: producto?.imagen_url ?? "",
       disponible: producto?.disponible ?? true,
+      variantes: variantesIniciales,
+      sucursales_ids: sucursalesIniciales,
     },
   });
+
+  const { fields: varianteFields, replace: replaceVariantes } = useFieldArray({
+    control: form.control,
+    name: "variantes",
+  });
+
+  const categoriaIdActual = form.watch("categoria_id");
+  const medidasActuales = categoriaIdActual
+    ? (categoriaMedidas[categoriaIdActual] ?? [])
+    : [];
+  const tieneVariantes = medidasActuales.length > 0;
+
+  // Cuando cambia la categoría, reconstruir las variantes
+  useEffect(() => {
+    const medidas = categoriaIdActual
+      ? (categoriaMedidas[categoriaIdActual] ?? [])
+      : [];
+
+    if (medidas.length === 0) {
+      replaceVariantes([]);
+      return;
+    }
+
+    // Al editar, si la categoría no cambió, mantener los precios existentes
+    const esCategoriaSinCambio =
+      isEditing && categoriaIdActual === producto?.categoria_id;
+
+    const nuevasVariantes = medidas.map((medida) => {
+      if (esCategoriaSinCambio) {
+        const varianteExistente = producto?.producto_variantes?.find(
+          (v) => v.medida_id === medida.id,
+        );
+        return {
+          medida_id: medida.id,
+          medida_nombre: medida.nombre,
+          precio: varianteExistente?.precio ?? 0,
+          disponible: varianteExistente?.disponible ?? true,
+        };
+      }
+      return {
+        medida_id: medida.id,
+        medida_nombre: medida.nombre,
+        precio: 0,
+        disponible: true,
+      };
+    });
+
+    replaceVariantes(nuevasVariantes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoriaIdActual]);
 
   const onSubmit = async (values: ProductoFormValues) => {
     const result = isEditing
@@ -77,9 +163,27 @@ export function ProductoForm({
     onSuccess();
   };
 
+  const sucursalesSeleccionadas = form.watch("sucursales_ids") ?? [];
+
+  const toggleSucursal = (sucursalId: string, checked: boolean) => {
+    const actuales = form.getValues("sucursales_ids") ?? [];
+    if (checked) {
+      form.setValue("sucursales_ids", [...actuales, sucursalId]);
+    } else {
+      form.setValue(
+        "sucursales_ids",
+        actuales.filter((id) => id !== sucursalId),
+      );
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
+      >
+        {/* Nombre */}
         <FormField
           control={form.control}
           name="nombre"
@@ -94,6 +198,7 @@ export function ProductoForm({
           )}
         />
 
+        {/* Descripción */}
         <FormField
           control={form.control}
           name="descripcion"
@@ -103,7 +208,7 @@ export function ProductoForm({
               <FormControl>
                 <Textarea
                   placeholder="Descripción del producto..."
-                  rows={3}
+                  rows={2}
                   {...field}
                   value={field.value ?? ""}
                 />
@@ -113,13 +218,52 @@ export function ProductoForm({
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Categoría */}
+        <FormField
+          control={form.control}
+          name="categoria_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Categoría</FormLabel>
+              <Select
+                onValueChange={(v) => field.onChange(v === "none" ? null : v)}
+                value={field.value ?? "none"}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sin categoría" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Sin categoría</SelectItem>
+                  {categorias.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nombre}
+                      {(categoriaMedidas[c.id]?.length ?? 0) > 0 && (
+                        <span className="text-muted-foreground ml-1 text-xs">
+                          ({categoriaMedidas[c.id].length} medidas)
+                        </span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Precio base (solo si la categoría no tiene medidas) */}
+        {!tieneVariantes && (
           <FormField
             control={form.control}
             name="precio"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Precio (S/) *</FormLabel>
+                <FormLabel className="flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  Precio (S/) *
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -138,37 +282,78 @@ export function ProductoForm({
               </FormItem>
             )}
           />
+        )}
 
-          <FormField
-            control={form.control}
-            name="categoria_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Categoría</FormLabel>
-                <Select
-                  onValueChange={(v) => field.onChange(v === "none" ? null : v)}
-                  value={field.value ?? "none"}
+        {/* Variantes por medida (si la categoría tiene medidas) */}
+        {tieneVariantes && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-sm font-medium">Precios por medida *</p>
+            </div>
+            <div className="rounded-xl border divide-y">
+              {varianteFields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="flex items-center gap-3 px-4 py-3"
                 >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sin categoría" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="none">Sin categoría</SelectItem>
-                    {categorias.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{field.medida_nombre}</p>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name={`variantes.${index}.precio`}
+                    render={({ field: f }) => (
+                      <FormItem className="w-28 space-y-0">
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                              S/
+                            </span>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              className="pl-7 text-right"
+                              {...f}
+                              value={f.value ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                f.onChange(val === "" ? 0 : Number(val));
+                              }}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`variantes.${index}.disponible`}
+                    render={({ field: f }) => (
+                      <FormItem className="space-y-0">
+                        <FormControl>
+                          <Switch
+                            checked={f.value}
+                            onCheckedChange={f.onChange}
+                            title="Disponible"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              El switch indica si esa variante está disponible en el POS.
+            </p>
+          </div>
+        )}
 
+        {/* Imagen */}
         <FormField
           control={form.control}
           name="imagen_url"
@@ -189,6 +374,36 @@ export function ProductoForm({
           )}
         />
 
+        {/* Disponibilidad por sucursal */}
+        {sucursales.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Disponible en sucursales</p>
+            <div className="rounded-xl border divide-y">
+              {sucursales.map((suc) => (
+                <div key={suc.id} className="flex items-center gap-3 px-4 py-3">
+                  <Checkbox
+                    id={`suc-${suc.id}`}
+                    checked={sucursalesSeleccionadas.includes(suc.id)}
+                    onCheckedChange={(checked) =>
+                      toggleSucursal(suc.id, !!checked)
+                    }
+                  />
+                  <label
+                    htmlFor={`suc-${suc.id}`}
+                    className="text-sm cursor-pointer select-none flex-1"
+                  >
+                    {suc.nombre}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Si no seleccionas ninguna, el producto no aparece en el POS.
+            </p>
+          </div>
+        )}
+
+        {/* Disponible global */}
         <FormField
           control={form.control}
           name="disponible"
@@ -210,7 +425,7 @@ export function ProductoForm({
           )}
         />
 
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 pt-2 sticky bottom-0 bg-background pb-1">
           <Button
             type="button"
             variant="outline"
@@ -221,11 +436,7 @@ export function ProductoForm({
           </Button>
           <Button
             type="submit"
-            disabled={
-              form.formState.isSubmitting ||
-              isImageUploading ||
-              !form.formState.isValid
-            }
+            disabled={form.formState.isSubmitting || isImageUploading}
           >
             {form.formState.isSubmitting
               ? "Guardando..."

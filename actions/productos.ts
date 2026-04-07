@@ -4,11 +4,15 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
   categoriaSchema,
+  categoriaMedidaSchema,
   productoSchema,
   type CategoriaFormValues,
+  type CategoriaMedidaFormValues,
   type ProductoFormValues,
 } from "@/lib/validations/productos";
+import { getProductoCompleto } from "@/lib/services/productos";
 import type { ActionResult } from "@/types";
+import type { ProductoCompleto } from "@/lib/services/productos";
 
 // ─── Imágenes ──────────────────────────────────────────────────────────────
 
@@ -95,7 +99,6 @@ export async function deleteCategoriaAction(
 ): Promise<ActionResult<null>> {
   const supabase = await createClient();
 
-  // Verificar si hay productos asociados
   const { count } = await supabase
     .from("productos")
     .select("*", { count: "exact", head: true })
@@ -115,7 +118,86 @@ export async function deleteCategoriaAction(
   return { data: null, error: null };
 }
 
+// ─── Medidas por categoría ─────────────────────────────────────────────────
+
+export async function createMedidaAction(
+  categoriaId: string,
+  values: CategoriaMedidaFormValues,
+): Promise<ActionResult<null>> {
+  const parsed = categoriaMedidaSchema.safeParse(values);
+  if (!parsed.success) {
+    return { data: null, error: parsed.error.errors[0].message };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("categoria_medidas").insert({
+    ...parsed.data,
+    categoria_id: categoriaId,
+  });
+
+  if (error) return { data: null, error: error.message };
+
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}
+
+export async function updateMedidaAction(
+  id: string,
+  values: CategoriaMedidaFormValues,
+): Promise<ActionResult<null>> {
+  const parsed = categoriaMedidaSchema.safeParse(values);
+  if (!parsed.success) {
+    return { data: null, error: parsed.error.errors[0].message };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("categoria_medidas")
+    .update(parsed.data)
+    .eq("id", id);
+
+  if (error) return { data: null, error: error.message };
+
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}
+
+export async function deleteMedidaAction(
+  id: string,
+): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+
+  const { count } = await supabase
+    .from("producto_variantes")
+    .select("*", { count: "exact", head: true })
+    .eq("medida_id", id);
+
+  if (count && count > 0) {
+    return {
+      data: null,
+      error: `No se puede eliminar: ${count} producto(s) usan esta medida`,
+    };
+  }
+
+  const { error } = await supabase
+    .from("categoria_medidas")
+    .delete()
+    .eq("id", id);
+  if (error) return { data: null, error: error.message };
+
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}
+
 // ─── Productos ─────────────────────────────────────────────────────────────
+
+export async function getProductoCompletoAction(
+  id: string,
+): Promise<ActionResult<ProductoCompleto>> {
+  const producto = await getProductoCompleto(id);
+  if (!producto) return { data: null, error: "Producto no encontrado" };
+  return { data: producto, error: null };
+}
 
 export async function createProductoAction(
   values: ProductoFormValues,
@@ -125,14 +207,64 @@ export async function createProductoAction(
     return { data: null, error: parsed.error.errors[0].message };
   }
 
+  const { variantes, sucursales_ids, ...productoData } = parsed.data;
+  const variantesArray = variantes ?? [];
+  const sucursalesArray = sucursales_ids ?? [];
+  const tieneVariantes = variantesArray.length > 0;
+
+  if (!tieneVariantes && !productoData.precio) {
+    return {
+      data: null,
+      error: "El precio es requerido para productos sin variantes",
+    };
+  }
+
   const supabase = await createClient();
+
   const payload = {
-    ...parsed.data,
-    imagen_url: parsed.data.imagen_url || null,
+    nombre: productoData.nombre,
+    descripcion: productoData.descripcion ?? null,
+    precio: tieneVariantes ? null : productoData.precio,
+    categoria_id: productoData.categoria_id ?? null,
+    imagen_url: productoData.imagen_url || null,
+    disponible: productoData.disponible,
   };
 
-  const { error } = await supabase.from("productos").insert(payload);
-  if (error) return { data: null, error: error.message };
+  const { data: producto, error: productoError } = await supabase
+    .from("productos")
+    .insert(payload)
+    .select("id")
+    .single();
+
+  if (productoError) return { data: null, error: productoError.message };
+
+  const productoId = producto.id;
+
+  if (variantesArray.length > 0) {
+    const variantesPayload = variantesArray.map((v, idx) => ({
+      producto_id: productoId,
+      medida_id: v.medida_id,
+      precio: v.precio,
+      disponible: v.disponible,
+      orden: idx,
+    }));
+    const { error: variantesError } = await supabase
+      .from("producto_variantes")
+      .insert(variantesPayload);
+    if (variantesError) return { data: null, error: variantesError.message };
+  }
+
+  if (sucursalesArray.length > 0) {
+    const sucursalesPayload = sucursalesArray.map((sucursalId) => ({
+      producto_id: productoId,
+      sucursal_id: sucursalId,
+      disponible: true,
+    }));
+    const { error: sucursalesError } = await supabase
+      .from("producto_sucursal")
+      .insert(sucursalesPayload);
+    if (sucursalesError) return { data: null, error: sucursalesError.message };
+  }
 
   revalidatePath("/productos");
   return { data: null, error: null };
@@ -147,18 +279,77 @@ export async function updateProductoAction(
     return { data: null, error: parsed.error.errors[0].message };
   }
 
+  const { variantes, sucursales_ids, ...productoData } = parsed.data;
+  const variantesArray = variantes ?? [];
+  const sucursalesArray = sucursales_ids ?? [];
+  const tieneVariantes = variantesArray.length > 0;
+
+  if (!tieneVariantes && !productoData.precio) {
+    return {
+      data: null,
+      error: "El precio es requerido para productos sin variantes",
+    };
+  }
+
   const supabase = await createClient();
+
   const payload = {
-    ...parsed.data,
-    imagen_url: parsed.data.imagen_url || null,
+    nombre: productoData.nombre,
+    descripcion: productoData.descripcion ?? null,
+    precio: tieneVariantes ? null : productoData.precio,
+    categoria_id: productoData.categoria_id ?? null,
+    imagen_url: productoData.imagen_url || null,
+    disponible: productoData.disponible,
   };
 
-  const { error } = await supabase
+  const { error: productoError } = await supabase
     .from("productos")
     .update(payload)
     .eq("id", id);
 
-  if (error) return { data: null, error: error.message };
+  if (productoError) return { data: null, error: productoError.message };
+
+  // Reemplazar variantes: borrar y reinsertar
+  const { error: deleteVariantesError } = await supabase
+    .from("producto_variantes")
+    .delete()
+    .eq("producto_id", id);
+  if (deleteVariantesError)
+    return { data: null, error: deleteVariantesError.message };
+
+  if (variantesArray.length > 0) {
+    const variantesPayload = variantesArray.map((v, idx) => ({
+      producto_id: id,
+      medida_id: v.medida_id,
+      precio: v.precio,
+      disponible: v.disponible,
+      orden: idx,
+    }));
+    const { error: variantesError } = await supabase
+      .from("producto_variantes")
+      .insert(variantesPayload);
+    if (variantesError) return { data: null, error: variantesError.message };
+  }
+
+  // Reemplazar disponibilidad por sucursal: borrar y reinsertar
+  const { error: deleteSucursalesError } = await supabase
+    .from("producto_sucursal")
+    .delete()
+    .eq("producto_id", id);
+  if (deleteSucursalesError)
+    return { data: null, error: deleteSucursalesError.message };
+
+  if (sucursalesArray.length > 0) {
+    const sucursalesPayload = sucursalesArray.map((sucursalId) => ({
+      producto_id: id,
+      sucursal_id: sucursalId,
+      disponible: true,
+    }));
+    const { error: sucursalesError } = await supabase
+      .from("producto_sucursal")
+      .insert(sucursalesPayload);
+    if (sucursalesError) return { data: null, error: sucursalesError.message };
+  }
 
   revalidatePath("/productos");
   return { data: null, error: null };

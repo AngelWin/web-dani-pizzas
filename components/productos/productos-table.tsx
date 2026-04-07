@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Pencil, Trash2, MoreHorizontal, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -32,16 +32,21 @@ import { ProductoForm } from "@/components/productos/producto-form";
 import {
   deleteProductoAction,
   toggleDisponibleAction,
+  getProductoCompletoAction,
 } from "@/actions/productos";
 import type {
   Categoria,
-  Producto,
+  CategoriaMedida,
+  ProductoCompleto,
   ProductoConCategoria,
+  Sucursal,
 } from "@/lib/services/productos";
 
 interface ProductosTableProps {
   productos: ProductoConCategoria[];
   categorias: Categoria[];
+  categoriaMedidas: Record<string, CategoriaMedida[]>;
+  sucursales: Sucursal[];
   total: number;
   page: number;
   totalPages: number;
@@ -53,6 +58,8 @@ interface ProductosTableProps {
 export function ProductosTable({
   productos,
   categorias,
+  categoriaMedidas,
+  sucursales,
   total,
   page,
   totalPages,
@@ -60,9 +67,23 @@ export function ProductosTable({
   onPageChange,
   onRefresh,
 }: ProductosTableProps) {
-  const [editProducto, setEditProducto] = useState<Producto | null>(null);
+  const [editProducto, setEditProducto] = useState<ProductoCompleto | null>(
+    null,
+  );
+  const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const handleEditClick = async (id: string) => {
+    setLoadingEditId(id);
+    const result = await getProductoCompletoAction(id);
+    setLoadingEditId(null);
+    if (result.error || !result.data) {
+      toast.error(result.error ?? "Error al cargar el producto");
+      return;
+    }
+    setEditProducto(result.data);
+  };
 
   const handleToggleDisponible = (id: string, disponible: boolean) => {
     startTransition(async () => {
@@ -136,7 +157,13 @@ export function ProductosTable({
                     )}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    S/ {p.precio.toFixed(2)}
+                    {p.precio != null ? (
+                      `S/ ${Number(p.precio).toFixed(2)}`
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        Por variante
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     <Switch
@@ -151,11 +178,18 @@ export function ProductosTable({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
+                          {loadingEditId === p.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <MoreHorizontal className="h-4 w-4" />
+                          )}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditProducto(p)}>
+                        <DropdownMenuItem
+                          onClick={() => handleEditClick(p.id)}
+                          disabled={loadingEditId === p.id}
+                        >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
@@ -197,6 +231,8 @@ export function ProductosTable({
             <ProductoForm
               producto={editProducto}
               categorias={categorias}
+              categoriaMedidas={categoriaMedidas}
+              sucursales={sucursales}
               onSuccess={() => {
                 setEditProducto(null);
                 onRefresh();

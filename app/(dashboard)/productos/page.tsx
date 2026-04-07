@@ -1,6 +1,11 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductosCliente } from "@/components/productos/productos-cliente";
-import { getCategorias, getProductos } from "@/lib/services/productos";
+import {
+  getCategorias,
+  getProductos,
+  getAllCategoriaMedidas,
+  getSucursales,
+} from "@/lib/services/productos";
 
 interface SearchParams {
   page?: string;
@@ -18,26 +23,34 @@ export default async function ProductosPage({
   const search = sp.search ?? "";
   const categoriaId = sp.categoria ?? "";
 
-  const [{ data: productos, total, totalPages, perPage }, categorias] =
-    await Promise.all([
-      getProductos({
-        page,
-        perPage: 10,
-        search: search || undefined,
-        categoriaId: categoriaId || undefined,
-      }),
-      getCategorias(),
-    ]);
+  const [
+    { data: productos, total, totalPages, perPage },
+    categorias,
+    categoriaMedidas,
+    sucursales,
+  ] = await Promise.all([
+    getProductos({
+      page,
+      perPage: 10,
+      search: search || undefined,
+      categoriaId: categoriaId || undefined,
+    }),
+    getCategorias(),
+    getAllCategoriaMedidas(),
+    getSucursales(),
+  ]);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Productos"
-        description="Gestiona el catálogo de productos y categorías"
+        description="Gestiona el catálogo de productos, categorías y medidas"
       />
       <ProductosCliente
         productos={productos}
         categorias={categorias}
+        categoriaMedidas={categoriaMedidas}
+        sucursales={sucursales}
         total={total}
         page={page}
         totalPages={totalPages}

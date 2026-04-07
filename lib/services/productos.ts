@@ -3,9 +3,26 @@ import type { Database } from "@/types/database";
 
 export type Categoria = Database["public"]["Tables"]["categorias"]["Row"];
 export type Producto = Database["public"]["Tables"]["productos"]["Row"];
+export type CategoriaMedida =
+  Database["public"]["Tables"]["categoria_medidas"]["Row"];
+export type ProductoVariante =
+  Database["public"]["Tables"]["producto_variantes"]["Row"] & {
+    categoria_medidas: Pick<CategoriaMedida, "nombre"> | null;
+  };
+export type ProductoSucursal =
+  Database["public"]["Tables"]["producto_sucursal"]["Row"];
+export type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
+
 export type ProductoConCategoria = Producto & {
   categorias: Pick<Categoria, "id" | "nombre"> | null;
 };
+
+export type ProductoCompleto = ProductoConCategoria & {
+  producto_variantes: ProductoVariante[];
+  producto_sucursal: ProductoSucursal[];
+};
+
+// ─── Categorías ────────────────────────────────────────────────────────────
 
 export async function getCategorias(): Promise<Categoria[]> {
   const supabase = await createClient();
@@ -30,6 +47,61 @@ export async function getCategoria(id: string): Promise<Categoria | null> {
   if (error) return null;
   return data;
 }
+
+// ─── Medidas por categoría ─────────────────────────────────────────────────
+
+export async function getMedidasByCategoria(
+  categoriaId: string,
+): Promise<CategoriaMedida[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categoria_medidas")
+    .select("*")
+    .eq("categoria_id", categoriaId)
+    .order("orden", { ascending: true })
+    .order("nombre", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function getAllCategoriaMedidas(): Promise<
+  Record<string, CategoriaMedida[]>
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categoria_medidas")
+    .select("*")
+    .order("orden", { ascending: true })
+    .order("nombre", { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  const grouped: Record<string, CategoriaMedida[]> = {};
+  for (const medida of data ?? []) {
+    if (!grouped[medida.categoria_id]) {
+      grouped[medida.categoria_id] = [];
+    }
+    grouped[medida.categoria_id].push(medida);
+  }
+  return grouped;
+}
+
+// ─── Sucursales ────────────────────────────────────────────────────────────
+
+export async function getSucursales(): Promise<Sucursal[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("sucursales")
+    .select("*")
+    .eq("activa", true)
+    .order("nombre", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+// ─── Productos ─────────────────────────────────────────────────────────────
 
 export interface GetProductosOptions {
   page?: number;
@@ -98,6 +170,25 @@ export async function getProducto(
 
   if (error) return null;
   return data as ProductoConCategoria;
+}
+
+export async function getProductoCompleto(
+  id: string,
+): Promise<ProductoCompleto | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("productos")
+    .select(
+      `*,
+      categorias(id, nombre),
+      producto_variantes(*, categoria_medidas(nombre)),
+      producto_sucursal(*)`,
+    )
+    .eq("id", id)
+    .single();
+
+  if (error) return null;
+  return data as ProductoCompleto;
 }
 
 export async function getTotalProductos(): Promise<number> {

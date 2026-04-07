@@ -7,11 +7,54 @@ export type Json =
   | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5";
   };
   public: {
     Tables: {
+      categoria_medidas: {
+        Row: {
+          activa: boolean;
+          categoria_id: string;
+          created_at: string | null;
+          descripcion: string | null;
+          id: string;
+          nombre: string;
+          orden: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          activa?: boolean;
+          categoria_id: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          activa?: boolean;
+          categoria_id?: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "categoria_medidas_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       categorias: {
         Row: {
           activa: boolean | null;
@@ -158,6 +201,96 @@ export type Database = {
         };
         Relationships: [];
       };
+      producto_sucursal: {
+        Row: {
+          created_at: string | null;
+          disponible: boolean;
+          id: string;
+          producto_id: string;
+          sucursal_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          producto_id: string;
+          sucursal_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          producto_id?: string;
+          sucursal_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producto_sucursal_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producto_sucursal_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producto_variantes: {
+        Row: {
+          created_at: string | null;
+          disponible: boolean;
+          id: string;
+          medida_id: string;
+          orden: number;
+          precio: number;
+          producto_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          medida_id: string;
+          orden?: number;
+          precio: number;
+          producto_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          medida_id?: string;
+          orden?: number;
+          precio?: number;
+          producto_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producto_variantes_medida_id_fkey";
+            columns: ["medida_id"];
+            isOneToOne: false;
+            referencedRelation: "categoria_medidas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producto_variantes_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       productos: {
         Row: {
           categoria_id: string | null;
@@ -167,7 +300,7 @@ export type Database = {
           id: string;
           imagen_url: string | null;
           nombre: string;
-          precio: number;
+          precio: number | null;
           updated_at: string | null;
         };
         Insert: {
@@ -178,7 +311,7 @@ export type Database = {
           id?: string;
           imagen_url?: string | null;
           nombre: string;
-          precio: number;
+          precio?: number | null;
           updated_at?: string | null;
         };
         Update: {
@@ -189,7 +322,7 @@ export type Database = {
           id?: string;
           imagen_url?: string | null;
           nombre?: string;
-          precio?: number;
+          precio?: number | null;
           updated_at?: string | null;
         };
         Relationships: [
@@ -457,6 +590,8 @@ export type Database = {
           producto_nombre: string;
           producto_precio: number;
           subtotal: number;
+          variante_id: string | null;
+          variante_nombre: string | null;
           venta_id: string;
         };
         Insert: {
@@ -467,6 +602,8 @@ export type Database = {
           producto_nombre: string;
           producto_precio: number;
           subtotal: number;
+          variante_id?: string | null;
+          variante_nombre?: string | null;
           venta_id: string;
         };
         Update: {
@@ -477,6 +614,8 @@ export type Database = {
           producto_nombre?: string;
           producto_precio?: number;
           subtotal?: number;
+          variante_id?: string | null;
+          variante_nombre?: string | null;
           venta_id?: string;
         };
         Relationships: [
@@ -485,6 +624,13 @@ export type Database = {
             columns: ["producto_id"];
             isOneToOne: false;
             referencedRelation: "productos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "venta_items_variante_id_fkey";
+            columns: ["variante_id"];
+            isOneToOne: false;
+            referencedRelation: "producto_variantes";
             referencedColumns: ["id"];
           },
           {
@@ -620,9 +766,10 @@ export type Database = {
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals["public"];
-
-export type UserEstado = Database["public"]["Enums"]["user_estado"];
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends

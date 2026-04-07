@@ -138,7 +138,7 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 
 ## Release 4.1: Variantes de Producto y Disponibilidad por Sucursal
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 4
 **Objetivo:** Extender el catalogo de productos con medidas/tamaños por categoria y disponibilidad por sucursal. Prerrequisito obligatorio del POS.
 
@@ -174,15 +174,15 @@ id, producto_id, sucursal_id, disponible
 - `venta_items` → agregar `variante_id` (nullable) y `variante_nombre` (texto historico)
 
 ### Commits esperados:
-- [ ] Migracion DB: tablas categoria_medidas, producto_variantes, producto_sucursal
-- [ ] Migracion DB: ajustes en productos y venta_items
-- [ ] RLS para las 3 nuevas tablas
-- [ ] Tipos TypeScript actualizados
-- [ ] Seccion "Medidas por Categoria" en /productos (backoffice)
-- [ ] Formulario de producto actualizado: variantes con precio por medida
-- [ ] Formulario de producto actualizado: checkboxes de disponibilidad por sucursal
-- [ ] Server Actions y servicios actualizados
-- [ ] Validaciones Zod actualizadas
+- [x] Migracion DB: tablas categoria_medidas, producto_variantes, producto_sucursal
+- [x] Migracion DB: ajustes en productos y venta_items
+- [x] RLS para las 3 nuevas tablas
+- [x] Tipos TypeScript actualizados
+- [x] Seccion "Medidas por Categoria" en /productos (backoffice)
+- [x] Formulario de producto actualizado: variantes con precio por medida
+- [x] Formulario de producto actualizado: checkboxes de disponibilidad por sucursal
+- [x] Server Actions y servicios actualizados
+- [x] Validaciones Zod actualizadas
 
 ### Criterio de exito:
 - Admin puede definir medidas para cada categoria (ej: Pizzas → Mini, Personal, Mediana, Familiar, Extra)

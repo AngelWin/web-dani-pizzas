@@ -23,11 +23,18 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ProductosTable } from "@/components/productos/productos-table";
 import { ProductoForm } from "@/components/productos/producto-form";
 import { CategoriasSection } from "@/components/productos/categorias-section";
-import type { Categoria, ProductoConCategoria } from "@/lib/services/productos";
+import type {
+  Categoria,
+  CategoriaMedida,
+  ProductoConCategoria,
+  Sucursal,
+} from "@/lib/services/productos";
 
 interface ProductosClienteProps {
   productos: ProductoConCategoria[];
   categorias: Categoria[];
+  categoriaMedidas: Record<string, CategoriaMedida[]>;
+  sucursales: Sucursal[];
   total: number;
   page: number;
   totalPages: number;
@@ -39,6 +46,8 @@ interface ProductosClienteProps {
 export function ProductosCliente({
   productos,
   categorias,
+  categoriaMedidas,
+  sucursales,
   total,
   page,
   totalPages,
@@ -79,7 +88,7 @@ export function ProductosCliente({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TabsList>
             <TabsTrigger value="productos">Productos</TabsTrigger>
-            <TabsTrigger value="categorias">Categorías</TabsTrigger>
+            <TabsTrigger value="categorias">Categorías y Medidas</TabsTrigger>
           </TabsList>
           <Button onClick={() => setShowNuevo(true)}>
             <Plus className="mr-1.5 h-4 w-4" />
@@ -134,6 +143,8 @@ export function ProductosCliente({
             <ProductosTable
               productos={productos}
               categorias={categorias}
+              categoriaMedidas={categoriaMedidas}
+              sucursales={sucursales}
               total={total}
               page={page}
               totalPages={totalPages}
@@ -147,6 +158,7 @@ export function ProductosCliente({
         <TabsContent value="categorias" className="mt-4">
           <CategoriasSection
             categorias={categorias}
+            categoriaMedidas={categoriaMedidas}
             onRefresh={() => router.refresh()}
           />
         </TabsContent>
@@ -160,6 +172,8 @@ export function ProductosCliente({
           </DialogHeader>
           <ProductoForm
             categorias={categorias}
+            categoriaMedidas={categoriaMedidas}
+            sucursales={sucursales}
             onSuccess={() => {
               setShowNuevo(false);
               router.refresh();
