@@ -9,6 +9,7 @@ import {
   type EstadoDelivery,
 } from "@/lib/services/ordenes";
 import { cobrarOrden } from "@/lib/services/ventas";
+import { getConfiguracionNegocio } from "@/lib/services/configuracion";
 import { cobrarOrdenSchema } from "@/lib/validations/ventas";
 import type { Venta } from "@/lib/services/ventas";
 import type { ActionResult } from "@/types";
@@ -68,18 +69,31 @@ export async function cobrarOrdenAction(
     };
   }
 
-  const { data: orden, error: ordenError } = await supabase
-    .from("ordenes")
-    .select("*, orden_items(*)")
-    .eq("id", ordenId)
-    .single();
+  const [{ data: orden, error: ordenError }, config] = await Promise.all([
+    supabase
+      .from("ordenes")
+      .select("*, orden_items(*)")
+      .eq("id", ordenId)
+      .single(),
+    getConfiguracionNegocio(),
+  ]);
 
   if (ordenError || !orden) return { data: null, error: "Orden no encontrada" };
-  if (orden.estado !== "lista") {
-    return {
-      data: null,
-      error: "Solo se pueden cobrar órdenes en estado 'lista'",
-    };
+
+  // Validar estado según modelo de negocio:
+  // Modo simple → cobra desde en_preparacion (salta el estado "lista")
+  // Modo cocina_independiente → requiere estado "lista"
+  const estadosCobrables =
+    config.modelo_negocio === "simple"
+      ? ["en_preparacion", "lista"]
+      : ["lista"];
+
+  if (!estadosCobrables.includes(orden.estado)) {
+    const mensaje =
+      config.modelo_negocio === "simple"
+        ? "La orden debe estar en preparación para cobrar"
+        : "La orden debe estar en estado 'lista' para cobrar";
+    return { data: null, error: mensaje };
   }
 
   if (

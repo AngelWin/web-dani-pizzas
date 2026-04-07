@@ -5,6 +5,7 @@ import {
   getCategoriasConProductos,
   getRepartidoresSucursal,
 } from "@/lib/services/ventas";
+import { getConfiguracionNegocio } from "@/lib/services/configuracion";
 import type { Database } from "@/types/database";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -19,7 +20,6 @@ export default async function PosPage({
   const supabase = await createClient();
   const params = await searchParams;
 
-  // Usar RPCs que usan auth.uid() directamente (más confiable que join manual)
   const [{ data: rol }, { data: sucursalIdPerfil }] = await Promise.all([
     supabase.rpc("get_user_role"),
     supabase.rpc("get_user_sucursal"),
@@ -27,7 +27,6 @@ export default async function PosPage({
 
   const esAdmin = rol === "administrador";
 
-  // Obtener sucursales si es admin
   let sucursales: Sucursal[] = [];
   if (esAdmin) {
     const { data } = await supabase
@@ -38,10 +37,6 @@ export default async function PosPage({
     sucursales = data ?? [];
   }
 
-  // Determinar sucursal activa:
-  // 1. Query param ?sucursal=<id> (admin cambia desde UI)
-  // 2. Sucursal del perfil (cajero/mesero/repartidor)
-  // 3. Primera sucursal disponible (admin sin sucursal fija)
   const sucursalParam =
     typeof params.sucursal === "string" ? params.sucursal : null;
 
@@ -61,10 +56,11 @@ export default async function PosPage({
     );
   }
 
-  const [productos, categorias, repartidores] = await Promise.all([
+  const [productos, categorias, repartidores, config] = await Promise.all([
     getProductosPOS(sucursalId),
     getCategoriasConProductos(sucursalId),
     getRepartidoresSucursal(sucursalId),
+    getConfiguracionNegocio(),
   ]);
 
   return (
@@ -75,6 +71,7 @@ export default async function PosPage({
       sucursalId={sucursalId}
       sucursales={esAdmin ? sucursales : []}
       rol={rol}
+      modeloNegocio={config.modelo_negocio}
     />
   );
 }

@@ -3,31 +3,16 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ListaOrdenes } from "@/components/ordenes/lista-ordenes";
 import { getOrdenes } from "@/lib/services/ordenes";
 import { getConfiguracionNegocio } from "@/lib/services/configuracion";
-import { ROLES } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrdenesPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const roleName = (user?.app_metadata?.role as string | undefined) ?? null;
-  const isAdmin = roleName === ROLES.ADMINISTRADOR;
-
-  // Obtener sucursal del perfil (para no-admins)
-  let sucursalId: string | null = null;
-
-  if (!isAdmin && user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("sucursal_id")
-      .eq("id", user.id)
-      .single<{ sucursal_id: string | null }>();
-    sucursalId = profile?.sucursal_id ?? null;
-  }
+  const [{ data: rolNombre }, { data: sucursalId }] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+  ]);
 
   const [ordenes, config] = await Promise.all([
     getOrdenes(sucursalId, "todas"),
@@ -42,7 +27,7 @@ export default async function OrdenesPage() {
       />
       <ListaOrdenes
         ordenes={ordenes}
-        rol={roleName}
+        rol={rolNombre}
         modeloNegocio={config.modelo_negocio}
       />
     </div>

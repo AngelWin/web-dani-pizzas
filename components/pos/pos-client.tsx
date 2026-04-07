@@ -17,10 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Store } from "lucide-react";
+import { Store, Utensils, Zap } from "lucide-react";
 import type { ProductoPOS } from "@/lib/services/ventas";
 import type { Profile } from "@/lib/services/ventas";
 import type { Orden } from "@/lib/services/ordenes";
+import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { Database } from "@/types/database";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -34,6 +35,7 @@ type Props = {
   sucursalId: string;
   sucursales: Sucursal[];
   rol: string | null;
+  modeloNegocio: ModeloNegocio;
 };
 
 export function PosClient({
@@ -43,6 +45,7 @@ export function PosClient({
   sucursalId,
   sucursales,
   rol,
+  modeloNegocio,
 }: Props) {
   const router = useRouter();
   const carrito = useCarrito();
@@ -80,26 +83,38 @@ export function PosClient({
     setOrdenConfirmada(null);
   }
 
+  const modeloLabel =
+    modeloNegocio === "simple" ? "Modo Simple" : "Cocina Independiente";
+  const ModeloIcon = modeloNegocio === "simple" ? Zap : Utensils;
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] gap-0">
-      {/* Selector de sucursal para admin */}
-      {esAdmin && (
-        <div className="flex items-center gap-2 mb-3">
-          <Store className="h-4 w-4 text-muted-foreground shrink-0" />
-          <Select value={sucursalId} onValueChange={handleCambiarSucursal}>
-            <SelectTrigger className="w-64 h-9">
-              <SelectValue placeholder="Selecciona sucursal" />
-            </SelectTrigger>
-            <SelectContent>
-              {sucursales.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Barra superior: sucursal + modo */}
+      <div className="flex items-center justify-between mb-3">
+        {esAdmin ? (
+          <div className="flex items-center gap-2">
+            <Store className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={sucursalId} onValueChange={handleCambiarSucursal}>
+              <SelectTrigger className="w-64 h-9">
+                <SelectValue placeholder="Selecciona sucursal" />
+              </SelectTrigger>
+              <SelectContent>
+                {sucursales.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div />
+        )}
+        <div className="flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+          <ModeloIcon className="h-3 w-3" />
+          {modeloLabel}
         </div>
-      )}
+      </div>
 
       {/* Panel principal */}
       <div className="flex flex-1 overflow-hidden rounded-xl border shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
