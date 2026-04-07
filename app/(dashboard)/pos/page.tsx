@@ -19,24 +19,15 @@ export default async function PosPage({
   const supabase = await createClient();
   const params = await searchParams;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("sucursal_id, roles(nombre)")
-    .eq("id", user!.id)
-    .single();
-
-  const rol =
-    profile?.roles && !Array.isArray(profile.roles)
-      ? (profile.roles as { nombre: string }).nombre
-      : null;
+  // Usar RPCs que usan auth.uid() directamente (más confiable que join manual)
+  const [{ data: rol }, { data: sucursalIdPerfil }] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+  ]);
 
   const esAdmin = rol === "administrador";
 
-  // Obtener sucursales disponibles
+  // Obtener sucursales si es admin
   let sucursales: Sucursal[] = [];
   if (esAdmin) {
     const { data } = await supabase
@@ -48,13 +39,13 @@ export default async function PosPage({
   }
 
   // Determinar sucursal activa:
-  // 1. Query param (admin cambia desde UI)
+  // 1. Query param ?sucursal=<id> (admin cambia desde UI)
   // 2. Sucursal del perfil (cajero/mesero/repartidor)
-  // 3. Primera sucursal disponible (admin sin sucursal asignada)
+  // 3. Primera sucursal disponible (admin sin sucursal fija)
   const sucursalParam =
     typeof params.sucursal === "string" ? params.sucursal : null;
 
-  let sucursalId: string | null = sucursalParam ?? profile?.sucursal_id ?? null;
+  let sucursalId: string | null = sucursalParam ?? sucursalIdPerfil ?? null;
 
   if (!sucursalId && esAdmin && sucursales.length > 0) {
     sucursalId = sucursales[0].id;
