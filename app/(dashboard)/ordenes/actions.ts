@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   actualizarEstadoOrden,
   actualizarEstadoDelivery,
+  cancelarOrdenConMotivo,
   type EstadoOrden,
   type EstadoDelivery,
 } from "@/lib/services/ordenes";
@@ -24,6 +25,19 @@ export async function cambiarEstadoOrdenAction(
     return {};
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Error desconocido" };
+  }
+}
+
+export async function cancelarOrdenAction(
+  ordenId: string,
+  motivo: string,
+): Promise<{ error?: string }> {
+  try {
+    await cancelarOrdenConMotivo(ordenId, motivo);
+    revalidatePath("/ordenes");
+    return {};
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Error al cancelar" };
   }
 }
 

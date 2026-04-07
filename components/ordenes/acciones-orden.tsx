@@ -6,19 +6,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { ChevronDown, DollarSign, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -26,6 +15,7 @@ import {
   cambiarEstadoDeliveryAction,
 } from "@/app/(dashboard)/ordenes/actions";
 import { CobroDialog } from "./cobro-dialog";
+import { CancelarOrdenDialog } from "./cancelar-orden-dialog";
 import type {
   EstadoOrden,
   EstadoDelivery,
@@ -35,7 +25,6 @@ import type { ModeloNegocio } from "@/lib/services/configuracion";
 
 const SIGUIENTE_ESTADO_SIMPLE: Partial<Record<EstadoOrden, EstadoOrden>> = {
   confirmada: "en_preparacion",
-  // en Modo Simple no hay botón "Marcar lista" — el cajero cobra desde en_preparacion
 };
 
 const SIGUIENTE_ESTADO_COCINA: Partial<Record<EstadoOrden, EstadoOrden>> = {
@@ -63,7 +52,6 @@ const DELIVERY_LABEL: Record<EstadoDelivery, string> = {
   entregado: "Entregado",
 };
 
-// Estados donde se puede cancelar (no pagadas, no finalizadas, no en cocina lista)
 const ESTADOS_CANCELABLES: EstadoOrden[] = ["confirmada", "en_preparacion"];
 
 type Props = {
@@ -103,9 +91,6 @@ export function AccionesOrden({
 
   const puedeCancelar = ESTADOS_CANCELABLES.includes(estadoActual);
 
-  // Mostrar cobrar:
-  // Modo simple → en_preparacion (sin pasar por lista)
-  // Modo cocina → lista
   const mostrarCobrar =
     puedeCobrar &&
     ((modeloNegocio === "simple" && estadoActual === "en_preparacion") ||
@@ -144,35 +129,16 @@ export function AccionesOrden({
     });
   }
 
-  function confirmarCancelar() {
-    setCancelarOpen(false);
-    setLoadingAction("cancelar");
-    startTransition(async () => {
-      const result = await cambiarEstadoOrdenAction(ordenId, "cancelada");
-      if (result.error) {
-        toast.error("Error al cancelar orden", { description: result.error });
-      } else {
-        toast.success("Orden cancelada");
-      }
-      setLoadingAction(null);
-    });
-  }
-
   if (esFinalizado) {
     return <span className="text-xs text-muted-foreground">Sin acciones</span>;
   }
 
-  // Orden en estado "lista" en Modo Simple: solo se puede cobrar (no hay siguiente estado)
-  const mostrarDropdown =
-    puedeCancelar ||
-    (modeloNegocio === "cocina_independiente" &&
-      Object.keys(SIGUIENTE_ESTADO).filter((k) => k !== estadoActual).length >
-        0);
+  const mostrarDropdown = puedeCancelar || estadoActual === "lista";
 
   return (
     <>
       <div className="flex flex-wrap gap-2">
-        {/* Botón avanzar estado */}
+        {/* Avanzar estado */}
         {siguienteEstado && (
           <Button
             size="sm"
@@ -181,13 +147,13 @@ export function AccionesOrden({
             disabled={pending}
           >
             {loadingAction === "estado" && (
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
             )}
             → {ESTADO_LABEL[siguienteEstado]}
           </Button>
         )}
 
-        {/* Botón cobrar */}
+        {/* Cobrar */}
         {mostrarCobrar && (
           <>
             <Button
@@ -207,7 +173,7 @@ export function AccionesOrden({
           </>
         )}
 
-        {/* Botón avanzar delivery */}
+        {/* Avanzar delivery */}
         {tipoDelivery &&
           siguienteDelivery &&
           deliveryStatus !== "entregado" && (
@@ -219,13 +185,13 @@ export function AccionesOrden({
               disabled={pending}
             >
               {loadingAction === "delivery" && (
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
               )}
               Delivery → {DELIVERY_LABEL[siguienteDelivery]}
             </Button>
           )}
 
-        {/* Dropdown con acciones adicionales */}
+        {/* Dropdown */}
         {mostrarDropdown && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -239,34 +205,26 @@ export function AccionesOrden({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {puedeCancelar && (
-                <>
+              {puedeCancelar ? (
+                <DropdownMenuItem
+                  className={
+                    estadoActual === "en_preparacion"
+                      ? "text-amber-600"
+                      : "text-destructive"
+                  }
+                  onClick={() => setCancelarOpen(true)}
+                >
                   {estadoActual === "en_preparacion" && (
-                    <DropdownMenuItem
-                      className="text-amber-600"
-                      onClick={() => setCancelarOpen(true)}
-                    >
-                      <AlertTriangle className="mr-2 h-3.5 w-3.5" />
-                      Cancelar orden
-                    </DropdownMenuItem>
+                    <AlertTriangle className="mr-2 h-3.5 w-3.5" />
                   )}
-                  {estadoActual !== "en_preparacion" && (
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => setCancelarOpen(true)}
-                    >
-                      Cancelar orden
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              {!puedeCancelar && estadoActual === "lista" && (
+                  Cancelar orden
+                </DropdownMenuItem>
+              ) : (
                 <DropdownMenuItem
                   disabled
                   className="text-xs text-muted-foreground"
                 >
-                  No se puede cancelar en estado Lista
+                  No se puede cancelar en este estado
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -274,30 +232,12 @@ export function AccionesOrden({
         )}
       </div>
 
-      {/* Dialog confirmación cancelar */}
-      <AlertDialog open={cancelarOpen} onOpenChange={setCancelarOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              ¿Cancelar orden #{orden.numero_orden}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {estadoActual === "en_preparacion"
-                ? "Esta orden ya está siendo preparada en cocina. ¿Seguro que quieres cancelarla?"
-                : "Esta acción no se puede deshacer. La orden quedará cancelada."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Volver</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={confirmarCancelar}
-            >
-              Sí, cancelar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Dialog de cancelación con motivo */}
+      <CancelarOrdenDialog
+        orden={orden}
+        open={cancelarOpen}
+        onOpenChange={setCancelarOpen}
+      />
     </>
   );
 }

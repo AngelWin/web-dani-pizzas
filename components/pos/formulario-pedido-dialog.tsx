@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -39,8 +39,10 @@ import {
   crearOrdenSchema,
   type CrearOrdenFormValues,
 } from "@/lib/validations/ordenes";
+import { BuscadorCliente } from "./buscador-cliente";
 import type { useCarrito } from "@/hooks/use-carrito";
 import type { Profile } from "@/lib/services/ventas";
+import type { ClienteConMembresia } from "@/lib/services/clientes";
 
 type Repartidor = Pick<Profile, "id" | "nombre" | "apellido_paterno">;
 
@@ -66,10 +68,13 @@ export function FormularioPedidoDialog({
   isSubmitting,
 }: Props) {
   const esMesero = rol === "mesero";
+  const [clienteSeleccionado, setClienteSeleccionado] =
+    useState<ClienteConMembresia | null>(null);
 
   const form = useForm<CrearOrdenFormValues>({
     resolver: zodResolver(crearOrdenSchema),
     defaultValues: {
+      cliente_id: null,
       tipo_pedido: TIPO_PEDIDO.EN_LOCAL,
       mesa_referencia: "",
       notas: "",
@@ -85,6 +90,12 @@ export function FormularioPedidoDialog({
 
   const tipoPedido = form.watch("tipo_pedido");
   const deliveryMethod = form.watch("delivery_method");
+
+  // Sincronizar cliente seleccionado → form
+  function handleClienteSeleccionado(cliente: ClienteConMembresia | null) {
+    setClienteSeleccionado(cliente);
+    form.setValue("cliente_id", cliente?.id ?? null);
+  }
 
   // Sincronizar items del carrito
   useEffect(() => {
@@ -111,12 +122,19 @@ export function FormularioPedidoDialog({
     }
   }, [deliveryMethod, deliveryFees, form]);
 
+  // Limpiar al cerrar
+  function handleClose() {
+    setClienteSeleccionado(null);
+    form.reset();
+    onClose();
+  }
+
   const deliveryFee =
     tipoPedido === TIPO_PEDIDO.DELIVERY ? (form.watch("delivery_fee") ?? 0) : 0;
   const total = carrito.subtotal + deliveryFee;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Confirmar pedido</DialogTitle>
@@ -124,12 +142,23 @@ export function FormularioPedidoDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Resumen del carrito */}
-            <div className="rounded-xl border p-3 space-y-1 bg-muted/30">
+            {/* ── Identificación de cliente ── */}
+            <div className="rounded-xl border p-3">
+              <BuscadorCliente
+                clienteSeleccionado={clienteSeleccionado}
+                onClienteSeleccionado={handleClienteSeleccionado}
+              />
+            </div>
+
+            {/* ── Resumen del carrito ── */}
+            <div className="rounded-xl border bg-muted/30 p-3 space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                Productos
+              </p>
               {carrito.items.map((item) => (
                 <div key={item.key} className="flex justify-between text-sm">
                   <span>
-                    {item.cantidad}x {item.producto_nombre}
+                    {item.cantidad}× {item.producto_nombre}
                     {item.variante_nombre ? ` (${item.variante_nombre})` : ""}
                   </span>
                   <span className="font-medium">
@@ -141,7 +170,7 @@ export function FormularioPedidoDialog({
 
             <Separator />
 
-            {/* Tipo de pedido */}
+            {/* ── Tipo de pedido ── */}
             <FormField
               control={form.control}
               name="tipo_pedido"
@@ -176,7 +205,7 @@ export function FormularioPedidoDialog({
               )}
             />
 
-            {/* Mesa / referencia (en local) */}
+            {/* ── Mesa / referencia ── */}
             {tipoPedido === TIPO_PEDIDO.EN_LOCAL && (
               <FormField
                 control={form.control}
@@ -197,7 +226,7 @@ export function FormularioPedidoDialog({
               />
             )}
 
-            {/* Formulario de delivery */}
+            {/* ── Datos de delivery ── */}
             {tipoPedido === TIPO_PEDIDO.DELIVERY && (
               <div className="space-y-3 rounded-xl border p-3">
                 <p className="text-sm font-medium text-muted-foreground">
@@ -363,7 +392,7 @@ export function FormularioPedidoDialog({
               </div>
             )}
 
-            {/* Notas generales */}
+            {/* ── Notas generales ── */}
             <FormField
               control={form.control}
               name="notas"
@@ -383,7 +412,7 @@ export function FormularioPedidoDialog({
               )}
             />
 
-            {/* Total */}
+            {/* ── Total ── */}
             <div className="rounded-xl border p-3 space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
@@ -395,10 +424,17 @@ export function FormularioPedidoDialog({
                   <span>{formatCurrency(deliveryFee)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-base border-t pt-1 mt-1">
+              <div className="flex justify-between border-t pt-1 mt-1 font-bold text-base">
                 <span>Total del pedido</span>
                 <span className="text-primary">{formatCurrency(total)}</span>
               </div>
+              {clienteSeleccionado?.membresias?.nivel?.descuento_porcentaje && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  * Este cliente tiene{" "}
+                  {clienteSeleccionado.membresias.nivel.descuento_porcentaje}%
+                  de descuento por membresía (aplicar al momento del cobro)
+                </p>
+              )}
             </div>
 
             <DialogFooter className="gap-2">
@@ -406,7 +442,7 @@ export function FormularioPedidoDialog({
                 type="button"
                 variant="outline"
                 className="h-12"
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={isSubmitting}
               >
                 Cancelar

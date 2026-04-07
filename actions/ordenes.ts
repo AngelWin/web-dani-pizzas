@@ -42,6 +42,7 @@ export async function crearOrdenAction(
     const orden = await crearOrden({
       cajero_id: user.id,
       sucursal_id: sucursalId,
+      cliente_id: resto.cliente_id ?? null,
       tipo_pedido: resto.tipo_pedido,
       notas: resto.notas ?? null,
       mesa_referencia: resto.mesa_referencia ?? null,

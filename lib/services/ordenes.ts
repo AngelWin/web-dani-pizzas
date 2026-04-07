@@ -98,6 +98,38 @@ export async function actualizarEstadoOrden(
   if (error) throw new Error(error.message);
 }
 
+export async function cancelarOrdenConMotivo(
+  ordenId: string,
+  motivo: string,
+): Promise<void> {
+  const supabase = await createClient();
+
+  // 1. Actualizar estado → el trigger creará la entrada del historial
+  const { error: updateError } = await supabase
+    .from("ordenes")
+    .update({ estado: "cancelada", updated_at: new Date().toISOString() })
+    .eq("id", ordenId);
+
+  if (updateError) throw new Error(updateError.message);
+
+  // 2. Actualizar la entrada del historial recién creada con el motivo
+  const { error: historialError } = await supabase
+    .from("orden_estado_historial")
+    .update({ notas: motivo })
+    .eq("orden_id", ordenId)
+    .eq("estado_hasta", "cancelada")
+    .order("cambiado_at", { ascending: false })
+    .limit(1);
+
+  // No lanzar error si falla la nota — el estado ya fue actualizado
+  if (historialError) {
+    console.error(
+      "No se pudo guardar el motivo de cancelación:",
+      historialError.message,
+    );
+  }
+}
+
 export async function actualizarEstadoDelivery(
   ordenId: string,
   deliveryStatus: EstadoDelivery,
@@ -121,6 +153,7 @@ export async function actualizarEstadoDelivery(
 export type CrearOrdenData = {
   cajero_id: string;
   sucursal_id: string;
+  cliente_id?: string | null;
   tipo_pedido: TipoPedido;
   notas?: string | null;
   mesa_referencia?: string | null;
@@ -158,6 +191,7 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
     .insert({
       cajero_id: ordenData.cajero_id,
       sucursal_id: ordenData.sucursal_id,
+      cliente_id: ordenData.cliente_id ?? null,
       tipo_pedido: ordenData.tipo_pedido,
       estado: "confirmada",
       subtotal,
