@@ -48,9 +48,11 @@ function nombreCajero(
 
 type Props = {
   orden: OrdenConItems;
+  rol: string | null;
 };
 
-export function TarjetaOrden({ orden }: Props) {
+export function TarjetaOrden({ orden, rol }: Props) {
+  const puedeCobrar = rol === "administrador" || rol === "cajero";
   const tipoCfg = TIPO_PEDIDO_CONFIG[orden.tipo_pedido];
   const TipoIcon = tipoCfg.icon;
   const esDelivery = orden.tipo_pedido === "delivery";
@@ -182,10 +184,9 @@ export function TarjetaOrden({ orden }: Props) {
         </div>
 
         <AccionesOrden
-          ordenId={orden.id}
+          orden={orden}
           estadoActual={orden.estado}
-          deliveryStatus={orden.delivery_status}
-          tipoDelivery={esDelivery}
+          puedeCobrar={puedeCobrar}
         />
       </CardFooter>
     </Card>

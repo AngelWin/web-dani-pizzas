@@ -9,18 +9,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, DollarSign, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   cambiarEstadoOrdenAction,
   cambiarEstadoDeliveryAction,
 } from "@/app/(dashboard)/ordenes/actions";
-import type { EstadoOrden, EstadoDelivery } from "@/lib/services/ordenes";
+import { CobroDialog } from "./cobro-dialog";
+import type {
+  EstadoOrden,
+  EstadoDelivery,
+  OrdenConItems,
+} from "@/lib/services/ordenes";
 
 const SIGUIENTE_ESTADO: Partial<Record<EstadoOrden, EstadoOrden>> = {
   confirmada: "en_preparacion",
   en_preparacion: "lista",
-  lista: "entregada",
 };
 
 const ESTADO_LABEL: Record<EstadoOrden, string> = {
@@ -44,20 +48,19 @@ const DELIVERY_LABEL: Record<EstadoDelivery, string> = {
 };
 
 type Props = {
-  ordenId: string;
+  orden: OrdenConItems;
   estadoActual: EstadoOrden;
-  deliveryStatus: EstadoDelivery | null;
-  tipoDelivery: boolean;
+  puedeCobrar: boolean;
 };
 
-export function AccionesOrden({
-  ordenId,
-  estadoActual,
-  deliveryStatus,
-  tipoDelivery,
-}: Props) {
+export function AccionesOrden({ orden, estadoActual, puedeCobrar }: Props) {
   const [pending, startTransition] = useTransition();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [cobrarOpen, setCobrarOpen] = useState(false);
+
+  const ordenId = orden.id;
+  const deliveryStatus = orden.delivery_status;
+  const tipoDelivery = orden.tipo_pedido === "delivery";
 
   const siguienteEstado = SIGUIENTE_ESTADO[estadoActual];
   const siguienteDelivery = deliveryStatus
@@ -130,6 +133,25 @@ export function AccionesOrden({
           ) : null}
           → {ESTADO_LABEL[siguienteEstado]}
         </Button>
+      )}
+
+      {estadoActual === "lista" && puedeCobrar && (
+        <>
+          <Button
+            size="sm"
+            className="h-8 rounded-lg bg-green-600 text-white hover:bg-green-700"
+            onClick={() => setCobrarOpen(true)}
+            disabled={pending}
+          >
+            <DollarSign className="mr-1 h-3 w-3" />
+            Cobrar
+          </Button>
+          <CobroDialog
+            orden={orden}
+            open={cobrarOpen}
+            onOpenChange={setCobrarOpen}
+          />
+        </>
       )}
 
       {tipoDelivery && siguienteDelivery && deliveryStatus !== "entregado" && (

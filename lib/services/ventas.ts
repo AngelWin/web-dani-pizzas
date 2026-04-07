@@ -229,3 +229,83 @@ export async function crearVenta(data: CrearVentaData): Promise<Venta> {
 
   return venta;
 }
+
+// ─── Cobrar orden (crea venta vinculada a una orden) ───────────────────────
+
+export type CobrarOrdenData = {
+  orden_id: string;
+  cajero_id: string;
+  sucursal_origen_id: string;
+  tipo_pedido: Database["public"]["Enums"]["tipo_pedido"];
+  metodo_pago: Database["public"]["Enums"]["metodo_pago"];
+  monto_recibido?: number | null;
+  subtotal: number;
+  descuento: number;
+  delivery_fee: number;
+  total: number;
+  notas?: string | null;
+  mesa_referencia?: string | null;
+  delivery_method?: string | null;
+  delivery_address?: string | null;
+  delivery_referencia?: string | null;
+  repartidor_id?: string | null;
+  third_party_name?: string | null;
+  items: {
+    producto_id: string;
+    variante_id?: string | null;
+    cantidad: number;
+    producto_nombre: string;
+    variante_nombre?: string | null;
+    precio_unitario: number;
+    subtotal: number;
+  }[];
+};
+
+export async function cobrarOrden(data: CobrarOrdenData): Promise<Venta> {
+  const supabase = await createClient();
+  const { items, ...ventaData } = data;
+
+  const { data: venta, error: ventaError } = await supabase
+    .from("ventas")
+    .insert({
+      orden_id: ventaData.orden_id,
+      cajero_id: ventaData.cajero_id,
+      sucursal_origen_id: ventaData.sucursal_origen_id,
+      tipo_pedido: ventaData.tipo_pedido,
+      metodo_pago: ventaData.metodo_pago,
+      monto_recibido: ventaData.monto_recibido ?? null,
+      subtotal: ventaData.subtotal,
+      descuento: ventaData.descuento,
+      delivery_fee: ventaData.delivery_fee > 0 ? ventaData.delivery_fee : null,
+      delivery_method: ventaData.delivery_method ?? null,
+      delivery_address: ventaData.delivery_address ?? null,
+      delivery_referencia: ventaData.delivery_referencia ?? null,
+      repartidor_id: ventaData.repartidor_id ?? null,
+      third_party_name: ventaData.third_party_name ?? null,
+      total: ventaData.total,
+      notas: ventaData.notas ?? null,
+      mesa_referencia: ventaData.mesa_referencia ?? null,
+      estado_pago_v2: "pagado",
+    })
+    .select()
+    .single();
+
+  if (ventaError) throw new Error(ventaError.message);
+
+  const { error: itemsError } = await supabase.from("venta_items").insert(
+    items.map((item) => ({
+      venta_id: venta.id,
+      producto_id: item.producto_id,
+      variante_id: item.variante_id ?? null,
+      cantidad: item.cantidad,
+      producto_nombre: item.producto_nombre,
+      variante_nombre: item.variante_nombre ?? null,
+      producto_precio: item.precio_unitario,
+      subtotal: item.subtotal,
+    })),
+  );
+
+  if (itemsError) throw new Error(itemsError.message);
+
+  return venta;
+}

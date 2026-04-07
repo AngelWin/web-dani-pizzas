@@ -29,18 +29,18 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 
 ## Release 0: Arquitectura Base (Scaffolding)
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Objetivo:** Proyecto compilable con design system, clientes Supabase y DB lista.
 
 ### Commits esperados:
 - [x] Inicializar proyecto Next.js con dependencias
-- [ ] Configuraciones (tsconfig, next.config, postcss)
-- [ ] Design system (globals.css con paleta DANI PIZZAS light + dark)
-- [ ] Clientes Supabase (client.ts, server.ts, middleware.ts)
-- [ ] Utilidades (utils.ts, constants.ts) y tipos base
-- [ ] Root layout con ThemeProvider + Toaster
-- [ ] Instalar shadcn/ui componentes base
-- [ ] Migraciones DB (tablas, RLS, seed data)
+- [x] Configuraciones (tsconfig, next.config, postcss)
+- [x] Design system (globals.css con paleta DANI PIZZAS light + dark)
+- [x] Clientes Supabase (client.ts, server.ts, middleware.ts)
+- [x] Utilidades (utils.ts, constants.ts) y tipos base
+- [x] Root layout con ThemeProvider + Toaster
+- [x] Instalar shadcn/ui componentes base
+- [x] Migraciones DB (tablas, RLS, seed data)
 
 ### Criterio de exito:
 - `npm run build` pasa sin errores
@@ -232,16 +232,16 @@ id, producto_id, sucursal_id, disponible
 - `orden_items`: producto_id, variante_id, cantidad, precios historicos
 
 ### Commits esperados:
-- [ ] Refactorizar actions/ventas.ts → actions/ordenes.ts (insert en ordenes + orden_items)
-- [ ] Servicio getOrdenesPOS, crearOrden en lib/services/ordenes.ts
-- [ ] Validaciones Zod actualizadas para orden (lib/validations/ordenes.ts)
-- [ ] Catalogo de productos filtrado por sucursal (reutilizar logica existente)
-- [ ] Selector de medida/variante al agregar producto
-- [ ] Carrito dinamico con cantidades
-- [ ] Formulario: tipo de pedido + delivery + notas
-- [ ] Confirmacion con numero de orden generado
-- [ ] Hooks: use-carrito (reutilizar), use-delivery-fees (reutilizar)
-- [ ] Mesero NO ve opcion delivery
+- [x] Refactorizar actions/ventas.ts → actions/ordenes.ts (insert en ordenes + orden_items)
+- [x] Servicio getOrdenesPOS, crearOrden en lib/services/ordenes.ts
+- [x] Validaciones Zod actualizadas para orden (lib/validations/ordenes.ts)
+- [x] Catalogo de productos filtrado por sucursal (reutilizar logica existente)
+- [x] Selector de medida/variante al agregar producto
+- [x] Carrito dinamico con cantidades
+- [x] Formulario: tipo de pedido + delivery + notas
+- [x] Confirmacion con numero de orden generado
+- [x] Hooks: use-carrito (reutilizar), use-delivery-fees (reutilizar)
+- [x] Mesero NO ve opcion delivery
 
 ### Criterio de exito:
 - El POS crea registros en `ordenes` (no en `ventas`)
@@ -255,7 +255,7 @@ id, producto_id, sucursal_id, disponible
 
 ## Release 5b: Gestion de Ordenes
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5a
 **Objetivo:** Pagina /ordenes con lista de ordenes activas, cambio de estado y vista por rol.
 
@@ -274,17 +274,17 @@ confirmada → en_preparacion → lista → entregada
 | Repartidor | Solo las ordenes de delivery asignadas a el |
 
 ### Commits esperados:
-- [ ] Pagina /ordenes con lista de ordenes activas (filtrada por sucursal y rol)
-- [ ] Tarjeta de orden: numero, tipo pedido, items resumidos, estado, tiempo transcurrido
-- [ ] Cambio de estado: confirmada → en_preparacion → lista (boton por estado)
-- [ ] Filtros: por estado, por tipo de pedido
-- [ ] Vista de detalle de orden (items completos, datos de delivery)
-- [ ] Boton "Cancelar orden" con confirmacion
-- [ ] Repartidor: ve solo sus ordenes delivery, puede marcar en_camino y entregado
-- [ ] Actualizacion de delivery_status al marcar entregado (con timestamp)
-- [ ] Server Actions: actualizarEstadoOrden, cancelarOrden
-- [ ] Servicio: getOrdenes (con filtros por sucursal, rol, estado)
-- [ ] Polling o recarga manual para ver nuevas ordenes
+- [x] Pagina /ordenes con lista de ordenes activas (filtrada por sucursal y rol)
+- [x] Tarjeta de orden: numero, tipo pedido, items resumidos, estado, tiempo transcurrido
+- [x] Cambio de estado: confirmada → en_preparacion → lista (boton por estado)
+- [x] Filtros: por estado, por tipo de pedido
+- [x] Vista de detalle de orden (items completos, datos de delivery)
+- [x] Boton "Cancelar orden" con confirmacion
+- [x] Repartidor: ve solo sus ordenes delivery, puede marcar en_camino y entregado
+- [x] Actualizacion de delivery_status al marcar entregado (con timestamp)
+- [x] Server Actions: actualizarEstadoOrden, cancelarOrden
+- [x] Servicio: getOrdenes (con filtros por sucursal, rol, estado)
+- [x] Polling o recarga manual para ver nuevas ordenes
 
 ### Criterio de exito:
 - Lista de ordenes activas visible y actualizable
@@ -297,7 +297,7 @@ confirmada → en_preparacion → lista → entregada
 
 ## Release 5c: Cobro de Orden (Cierre de Venta)
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5b
 **Objetivo:** Desde una orden en estado "lista", el cajero procesa el cobro. Crea el registro en `ventas` vinculado a la orden.
 
@@ -312,13 +312,13 @@ confirmada → en_preparacion → lista → entregada
 4. Pantalla de confirmacion con numero de venta y vuelto (si es efectivo)
 
 ### Commits esperados:
-- [ ] Boton "Cobrar" visible solo en ordenes con estado "lista"
-- [ ] Dialog/pagina de cobro: metodo de pago, monto recibido, calculo de vuelto
-- [ ] Server Action: cobrarOrden (crea venta + actualiza orden)
-- [ ] Servicio: cobrarOrden en lib/services/ventas.ts
-- [ ] Validacion Zod para el cobro
-- [ ] Confirmacion con numero de venta, total cobrado y vuelto
-- [ ] Cajero y admin pueden cobrar; mesero y repartidor NO
+- [x] Boton "Cobrar" visible solo en ordenes con estado "lista"
+- [x] Dialog/pagina de cobro: metodo de pago, monto recibido, calculo de vuelto
+- [x] Server Action: cobrarOrden (crea venta + actualiza orden)
+- [x] Servicio: cobrarOrden en lib/services/ventas.ts
+- [x] Validacion Zod para el cobro
+- [x] Confirmacion con numero de venta, total cobrado y vuelto
+- [x] Cajero y admin pueden cobrar; mesero y repartidor NO
 
 ### Criterio de exito:
 - Solo ordenes en estado "lista" pueden cobrarse

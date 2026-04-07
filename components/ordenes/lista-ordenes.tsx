@@ -32,9 +32,10 @@ function filtrarOrdenes(
 
 type Props = {
   ordenes: OrdenConItems[];
+  rol: string | null;
 };
 
-export function ListaOrdenes({ ordenes }: Props) {
+export function ListaOrdenes({ ordenes, rol }: Props) {
   const [filtro, setFiltro] = useState<EstadoTab>("activas");
 
   const ordenesFiltradas = filtrarOrdenes(ordenes, filtro);
@@ -87,7 +88,7 @@ export function ListaOrdenes({ ordenes }: Props) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {ordenesFiltradas.map((orden) => (
-            <TarjetaOrden key={orden.id} orden={orden} />
+            <TarjetaOrden key={orden.id} orden={orden} rol={rol} />
           ))}
         </div>
       )}

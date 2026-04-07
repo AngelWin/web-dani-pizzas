@@ -116,3 +116,34 @@ export const crearVentaSchema = z.object({
 });
 
 export type CrearVentaFormValues = z.infer<typeof crearVentaSchema>;
+
+// ─── Cobro de orden ────────────────────────────────────────────────────────
+
+export const cobrarOrdenSchema = z
+  .object({
+    metodo_pago: z.enum(
+      [
+        METODO_PAGO.EFECTIVO,
+        METODO_PAGO.TARJETA,
+        METODO_PAGO.YAPE,
+        METODO_PAGO.PLIN,
+        METODO_PAGO.TRANSFERENCIA,
+      ],
+      { required_error: "Selecciona un método de pago" },
+    ),
+    monto_recibido: z
+      .number({ invalid_type_error: "Ingresa un monto válido" })
+      .positive("El monto debe ser mayor a cero")
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.metodo_pago === METODO_PAGO.EFECTIVO && !data.monto_recibido) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ingresa el monto recibido",
+        path: ["monto_recibido"],
+      });
+    }
+  });
+
+export type CobrarOrdenFormValues = z.infer<typeof cobrarOrdenSchema>;

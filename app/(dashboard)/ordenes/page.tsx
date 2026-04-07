@@ -36,7 +36,7 @@ export default async function OrdenesPage() {
         title="Órdenes"
         description="Gestión y seguimiento de órdenes activas"
       />
-      <ListaOrdenes ordenes={ordenes} />
+      <ListaOrdenes ordenes={ordenes} rol={roleName} />
     </div>
   );
 }
