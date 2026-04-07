@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { ListaOrdenes } from "@/components/ordenes/lista-ordenes";
 import { getOrdenes } from "@/lib/services/ordenes";
+import { getConfiguracionNegocio } from "@/lib/services/configuracion";
 import { ROLES } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,10 @@ export default async function OrdenesPage() {
     sucursalId = profile?.sucursal_id ?? null;
   }
 
-  const ordenes = await getOrdenes(sucursalId, "todas");
+  const [ordenes, config] = await Promise.all([
+    getOrdenes(sucursalId, "todas"),
+    getConfiguracionNegocio(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -36,7 +40,11 @@ export default async function OrdenesPage() {
         title="Órdenes"
         description="Gestión y seguimiento de órdenes activas"
       />
-      <ListaOrdenes ordenes={ordenes} rol={roleName} />
+      <ListaOrdenes
+        ordenes={ordenes}
+        rol={roleName}
+        modeloNegocio={config.modelo_negocio}
+      />
     </div>
   );
 }

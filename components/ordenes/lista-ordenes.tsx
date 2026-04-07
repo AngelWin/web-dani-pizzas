@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ClipboardList } from "lucide-react";
 import { TarjetaOrden } from "./tarjeta-orden";
 import type { OrdenConItems, FiltroEstadoOrden } from "@/lib/services/ordenes";
+import type { ModeloNegocio } from "@/lib/services/configuracion";
 
 type EstadoTab = FiltroEstadoOrden;
 
@@ -33,9 +34,10 @@ function filtrarOrdenes(
 type Props = {
   ordenes: OrdenConItems[];
   rol: string | null;
+  modeloNegocio: ModeloNegocio;
 };
 
-export function ListaOrdenes({ ordenes, rol }: Props) {
+export function ListaOrdenes({ ordenes, rol, modeloNegocio }: Props) {
   const [filtro, setFiltro] = useState<EstadoTab>("activas");
 
   const ordenesFiltradas = filtrarOrdenes(ordenes, filtro);
@@ -88,7 +90,12 @@ export function ListaOrdenes({ ordenes, rol }: Props) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {ordenesFiltradas.map((orden) => (
-            <TarjetaOrden key={orden.id} orden={orden} rol={rol} />
+            <TarjetaOrden
+              key={orden.id}
+              orden={orden}
+              rol={rol}
+              modeloNegocio={modeloNegocio}
+            />
           ))}
         </div>
       )}

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { EstadoOrdenBadge, EstadoDeliveryBadge } from "./estado-badge";
 import { AccionesOrden } from "./acciones-orden";
 import type { OrdenConItems } from "@/lib/services/ordenes";
+import type { ModeloNegocio } from "@/lib/services/configuracion";
 
 const TIPO_PEDIDO_CONFIG = {
   local: { label: "Local", icon: UtensilsCrossed, color: "text-blue-600" },
@@ -49,9 +50,10 @@ function nombreCajero(
 type Props = {
   orden: OrdenConItems;
   rol: string | null;
+  modeloNegocio: ModeloNegocio;
 };
 
-export function TarjetaOrden({ orden, rol }: Props) {
+export function TarjetaOrden({ orden, rol, modeloNegocio }: Props) {
   const puedeCobrar = rol === "administrador" || rol === "cajero";
   const tipoCfg = TIPO_PEDIDO_CONFIG[orden.tipo_pedido];
   const TipoIcon = tipoCfg.icon;
@@ -187,6 +189,7 @@ export function TarjetaOrden({ orden, rol }: Props) {
           orden={orden}
           estadoActual={orden.estado}
           puedeCobrar={puedeCobrar}
+          modeloNegocio={modeloNegocio}
         />
       </CardFooter>
     </Card>

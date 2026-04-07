@@ -21,8 +21,14 @@ import type {
   EstadoDelivery,
   OrdenConItems,
 } from "@/lib/services/ordenes";
+import type { ModeloNegocio } from "@/lib/services/configuracion";
 
-const SIGUIENTE_ESTADO: Partial<Record<EstadoOrden, EstadoOrden>> = {
+const SIGUIENTE_ESTADO_SIMPLE: Partial<Record<EstadoOrden, EstadoOrden>> = {
+  confirmada: "en_preparacion",
+  en_preparacion: "entregada",
+};
+
+const SIGUIENTE_ESTADO_COCINA: Partial<Record<EstadoOrden, EstadoOrden>> = {
   confirmada: "en_preparacion",
   en_preparacion: "lista",
 };
@@ -51,9 +57,15 @@ type Props = {
   orden: OrdenConItems;
   estadoActual: EstadoOrden;
   puedeCobrar: boolean;
+  modeloNegocio: ModeloNegocio;
 };
 
-export function AccionesOrden({ orden, estadoActual, puedeCobrar }: Props) {
+export function AccionesOrden({
+  orden,
+  estadoActual,
+  puedeCobrar,
+  modeloNegocio,
+}: Props) {
   const [pending, startTransition] = useTransition();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [cobrarOpen, setCobrarOpen] = useState(false);
@@ -61,6 +73,11 @@ export function AccionesOrden({ orden, estadoActual, puedeCobrar }: Props) {
   const ordenId = orden.id;
   const deliveryStatus = orden.delivery_status;
   const tipoDelivery = orden.tipo_pedido === "delivery";
+
+  const SIGUIENTE_ESTADO =
+    modeloNegocio === "simple"
+      ? SIGUIENTE_ESTADO_SIMPLE
+      : SIGUIENTE_ESTADO_COCINA;
 
   const siguienteEstado = SIGUIENTE_ESTADO[estadoActual];
   const siguienteDelivery = deliveryStatus
@@ -135,24 +152,27 @@ export function AccionesOrden({ orden, estadoActual, puedeCobrar }: Props) {
         </Button>
       )}
 
-      {estadoActual === "lista" && puedeCobrar && (
-        <>
-          <Button
-            size="sm"
-            className="h-8 rounded-lg bg-green-600 text-white hover:bg-green-700"
-            onClick={() => setCobrarOpen(true)}
-            disabled={pending}
-          >
-            <DollarSign className="mr-1 h-3 w-3" />
-            Cobrar
-          </Button>
-          <CobroDialog
-            orden={orden}
-            open={cobrarOpen}
-            onOpenChange={setCobrarOpen}
-          />
-        </>
-      )}
+      {((modeloNegocio === "simple" && estadoActual === "en_preparacion") ||
+        (modeloNegocio === "cocina_independiente" &&
+          estadoActual === "lista")) &&
+        puedeCobrar && (
+          <>
+            <Button
+              size="sm"
+              className="h-8 rounded-lg bg-green-600 text-white hover:bg-green-700"
+              onClick={() => setCobrarOpen(true)}
+              disabled={pending}
+            >
+              <DollarSign className="mr-1 h-3 w-3" />
+              Cobrar
+            </Button>
+            <CobroDialog
+              orden={orden}
+              open={cobrarOpen}
+              onOpenChange={setCobrarOpen}
+            />
+          </>
+        )}
 
       {tipoDelivery && siguienteDelivery && deliveryStatus !== "entregado" && (
         <Button

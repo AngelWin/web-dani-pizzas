@@ -127,6 +127,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      configuracion_negocio: {
+        Row: {
+          id: string;
+          modelo_negocio: Database["public"]["Enums"]["modelo_negocio"];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          modelo_negocio?: Database["public"]["Enums"]["modelo_negocio"];
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          modelo_negocio?: Database["public"]["Enums"]["modelo_negocio"];
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       delivery_fees_config: {
         Row: {
           created_at: string | null;
@@ -1024,6 +1045,7 @@ export type Database = {
         | "tarjeta"
         | "mixto"
         | "transferencia";
+      modelo_negocio: "simple" | "cocina_independiente";
       tipo_cliente: "registrado" | "paso";
       tipo_pedido: "local" | "delivery" | "para_llevar";
       user_estado: "activo" | "inactivo" | "eliminado";
@@ -1176,6 +1198,7 @@ export const Constants = {
         "mixto",
         "transferencia",
       ],
+      modelo_negocio: ["simple", "cocina_independiente"],
       tipo_cliente: ["registrado", "paso"],
       tipo_pedido: ["local", "delivery", "para_llevar"],
       user_estado: ["activo", "inactivo", "eliminado"],
