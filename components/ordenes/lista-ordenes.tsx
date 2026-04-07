@@ -9,15 +9,28 @@ import type { ModeloNegocio } from "@/lib/services/configuracion";
 
 type EstadoTab = FiltroEstadoOrden;
 
-const TABS: { value: EstadoTab; label: string }[] = [
-  { value: "activas", label: "Activas" },
-  { value: "todas", label: "Todas" },
-  { value: "confirmada", label: "Confirmadas" },
-  { value: "en_preparacion", label: "En preparación" },
-  { value: "lista", label: "Listas" },
-  { value: "entregada", label: "Entregadas" },
-  { value: "cancelada", label: "Canceladas" },
-];
+function getTabs(
+  modeloNegocio: ModeloNegocio,
+): { value: EstadoTab; label: string }[] {
+  const base: { value: EstadoTab; label: string }[] = [
+    { value: "activas", label: "Activas" },
+    { value: "todas", label: "Todas" },
+    { value: "confirmada", label: "Confirmadas" },
+    { value: "en_preparacion", label: "En preparación" },
+  ];
+
+  // En Modo Cocina Independiente aparece el estado "lista"
+  if (modeloNegocio === "cocina_independiente") {
+    base.push({ value: "lista", label: "Listas" });
+  }
+
+  base.push(
+    { value: "entregada", label: "Entregadas" },
+    { value: "cancelada", label: "Canceladas" },
+  );
+
+  return base;
+}
 
 function filtrarOrdenes(
   ordenes: OrdenConItems[],
@@ -40,13 +53,14 @@ type Props = {
 export function ListaOrdenes({ ordenes, rol, modeloNegocio }: Props) {
   const [filtro, setFiltro] = useState<EstadoTab>("activas");
 
+  const tabs = getTabs(modeloNegocio);
   const ordenesFiltradas = filtrarOrdenes(ordenes, filtro);
 
   return (
     <div className="space-y-4">
       {/* Tabs de filtro */}
       <div className="flex flex-wrap gap-2">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const count =
             tab.value === "activas"
               ? ordenes.filter(

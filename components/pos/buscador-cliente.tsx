@@ -3,10 +3,20 @@
 import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, UserCheck, UserX, X, Star } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  UserCheck,
+  UserX,
+  AlertCircle,
+  X,
+  Star,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buscarClienteAction } from "@/actions/clientes";
 import type { ClienteConMembresia } from "@/lib/services/clientes";
+
+type Estado = "idle" | "no_encontrado" | "error";
 
 type Props = {
   onClienteSeleccionado: (cliente: ClienteConMembresia | null) => void;
@@ -18,27 +28,34 @@ export function BuscadorCliente({
   clienteSeleccionado,
 }: Props) {
   const [dni, setDni] = useState("");
-  const [noEncontrado, setNoEncontrado] = useState(false);
+  const [estado, setEstado] = useState<Estado>("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function handleBuscar() {
     if (!dni.trim()) return;
-    setNoEncontrado(false);
+    setEstado("idle");
+    setErrorMsg(null);
     startTransition(async () => {
       const result = await buscarClienteAction(dni.trim());
-      if (result.error || result.data === null) {
-        setNoEncontrado(true);
+      if (result.error) {
+        setEstado("error");
+        setErrorMsg(result.error);
+        onClienteSeleccionado(null);
+      } else if (result.data === null) {
+        setEstado("no_encontrado");
         onClienteSeleccionado(null);
       } else {
+        setEstado("idle");
         onClienteSeleccionado(result.data);
-        setNoEncontrado(false);
       }
     });
   }
 
   function handleLimpiar() {
     setDni("");
-    setNoEncontrado(false);
+    setEstado("idle");
+    setErrorMsg(null);
     onClienteSeleccionado(null);
   }
 
@@ -68,7 +85,8 @@ export function BuscadorCliente({
             onChange={(e) => {
               setDni(e.target.value.replace(/\D/g, "").slice(0, 12));
               if (clienteSeleccionado) onClienteSeleccionado(null);
-              setNoEncontrado(false);
+              setEstado("idle");
+              setErrorMsg(null);
             }}
             onKeyDown={handleKeyDown}
             disabled={pending}
@@ -118,7 +136,7 @@ export function BuscadorCliente({
             {clienteSeleccionado.membresias && (
               <div
                 className={cn(
-                  "mt-1.5 flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium w-fit",
+                  "mt-1.5 flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
                   "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
                 )}
               >
@@ -135,12 +153,22 @@ export function BuscadorCliente({
       )}
 
       {/* No encontrado */}
-      {noEncontrado && !clienteSeleccionado && (
+      {estado === "no_encontrado" && (
         <div className="flex items-center gap-2 rounded-xl border border-dashed p-3 text-sm text-muted-foreground">
           <UserX className="h-4 w-4 shrink-0" />
           <span>
             No se encontró cliente con ese documento. La orden se registrará sin
             cliente.
+          </span>
+        </div>
+      )}
+
+      {/* Error técnico */}
+      {estado === "error" && (
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>
+            {errorMsg ?? "Error al buscar cliente. Intenta nuevamente."}
           </span>
         </div>
       )}
