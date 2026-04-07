@@ -8,7 +8,8 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
                                                                      -> R5a (POS: Crear Orden)
                                                                      -> R5b (Gestion de Ordenes)
                                                                      -> R5c (Cobro de Orden)
-                                                                          -> R6 (Reportes)
+                                                                          -> R5d (Historial de Estados)
+                                                                               -> R6 (Reportes)
                                                                           -> R7 (Promociones)
                                                                           -> R8 (Membresias)
                                        -> R9 (Sucursales) [paralelo con R10]
@@ -327,6 +328,70 @@ confirmada → en_preparacion → lista → entregada
 - Calculo correcto de vuelto para pagos en efectivo
 - Estado de la orden pasa a "entregada" al cobrar
 - Solo cajero y admin pueden realizar el cobro
+
+---
+
+## Release 5d: Historial de Estados de Orden (Auditoría)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5c
+**Objetivo:** Registrar cada transicion de estado de una orden: quien la cambio, desde que estado, hacia cual y cuando. Habilita auditoria y reportes de eficiencia operativa.
+
+### Contexto del negocio:
+Actualmente los cambios de estado de una orden no dejan rastro. Esto impide saber:
+- Cuanto tiempo estuvo una orden en preparacion
+- Que usuario cambio un estado
+- Si hubo estados revertidos o cancelaciones tardias
+
+### Nueva tabla DB: `orden_estado_historial`
+
+```
+id            uuid PK
+orden_id      uuid FK ordenes.id
+estado_desde  estado_orden (nullable — null si es la creacion)
+estado_hasta  estado_orden
+cambiado_por  uuid FK profiles.id
+cambiado_at   timestamptz DEFAULT now()
+notas         text (nullable — para cancelaciones con motivo)
+```
+
+> No elimines ni modifiques registros del historial. Es append-only por diseno.
+
+### Comportamiento:
+- Insertar fila automaticamente en cada cambio de estado de orden
+- El primer registro tiene `estado_desde = null` (orden recien creada en "confirmada")
+- La cancelacion puede incluir un campo `notas` con el motivo
+- RLS: todos los roles autenticados pueden leer; solo el sistema (via Server Action) puede insertar
+
+### Metricas que habilita (para R6 Reportes):
+- Tiempo promedio en preparacion (delta entre `en_preparacion` y `lista`)
+- Tiempo total de ciclo de orden (creacion a entrega)
+- Ordenes canceladas por turno y quien las cancelo
+- Rendimiento por cajero/mesero
+
+### Commits esperados:
+
+**DB:**
+- [ ] Migracion: tabla `orden_estado_historial`
+- [ ] RLS: insert solo via service role o autenticado; select autenticado
+- [ ] Trigger opcional: insertar historial automaticamente al hacer UPDATE en ordenes.estado
+- [ ] Tipos TypeScript actualizados
+
+**Backend:**
+- [ ] Funcion `registrarCambioEstado` en lib/services/ordenes.ts
+- [ ] Actualizar `actualizarEstadoOrden` y `cobrarOrden` para insertar en historial
+- [ ] Actualizar `cancelarOrden` para incluir `notas` en el historial
+
+**UI:**
+- [ ] Panel de historial colapsable en la tarjeta de orden (timeline visual)
+- [ ] Cada entrada muestra: estado, usuario, hora, tiempo transcurrido desde el anterior
+
+### Criterio de exito:
+- Cada cambio de estado queda registrado con usuario y timestamp
+- La creacion de la orden genera el primer registro del historial
+- La cancelacion puede registrar un motivo
+- El timeline es visible en la tarjeta de orden
+- No se puede eliminar ni modificar el historial desde la UI
 
 ---
 
