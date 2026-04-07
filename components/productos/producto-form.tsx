@@ -43,6 +43,7 @@ import { ImageUpload } from "@/components/productos/image-upload";
 
 interface ProductoFormProps {
   producto?: ProductoCompleto | null;
+  isDuplicate?: boolean;
   categorias: Categoria[];
   categoriaMedidas: Record<string, CategoriaMedida[]>;
   sucursales: Sucursal[];
@@ -52,13 +53,14 @@ interface ProductoFormProps {
 
 export function ProductoForm({
   producto,
+  isDuplicate = false,
   categorias,
   categoriaMedidas,
   sucursales,
   onSuccess,
   onCancel,
 }: ProductoFormProps) {
-  const isEditing = !!producto;
+  const isEditing = !!producto && !isDuplicate;
   const [isImageUploading, setIsImageUploading] = useState(false);
 
   // Medidas de la categoría seleccionada actualmente
@@ -88,7 +90,7 @@ export function ProductoForm({
     resolver: zodResolver(productoSchema),
     mode: "onChange",
     defaultValues: {
-      nombre: producto?.nombre ?? "",
+      nombre: isDuplicate ? "" : (producto?.nombre ?? ""),
       descripcion: producto?.descripcion ?? "",
       precio: producto?.precio != null ? Number(producto.precio) : null,
       categoria_id: categoriaIdInicial,
@@ -109,6 +111,19 @@ export function ProductoForm({
     ? (categoriaMedidas[categoriaIdActual] ?? [])
     : [];
   const tieneVariantes = medidasActuales.length > 0;
+
+  const nombreValue = form.watch("nombre");
+  const imagenValue = form.watch("imagen_url");
+  const variantesValue = form.watch("variantes");
+  const precioValue = form.watch("precio");
+
+  const isFormReady =
+    !!nombreValue?.trim() &&
+    !!imagenValue &&
+    (tieneVariantes
+      ? (variantesValue?.length ?? 0) > 0 &&
+        variantesValue!.every((v) => (v.precio ?? 0) > 0)
+      : precioValue != null && precioValue > 0);
 
   // Cuando cambia la categoría, reconstruir las variantes
   useEffect(() => {
@@ -272,6 +287,7 @@ export function ProductoForm({
                     placeholder="0.00"
                     {...field}
                     value={field.value ?? ""}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
                       const val = e.target.value;
                       field.onChange(val === "" ? "" : Number(val));
@@ -318,6 +334,7 @@ export function ProductoForm({
                               className="pl-7 text-right"
                               {...f}
                               value={f.value ?? ""}
+                              onFocus={(e) => e.target.select()}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 f.onChange(val === "" ? 0 : Number(val));
@@ -436,7 +453,9 @@ export function ProductoForm({
           </Button>
           <Button
             type="submit"
-            disabled={form.formState.isSubmitting || isImageUploading}
+            disabled={
+              form.formState.isSubmitting || isImageUploading || !isFormReady
+            }
           >
             {form.formState.isSubmitting
               ? "Guardando..."

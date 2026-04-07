@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Pencil, Trash2, MoreHorizontal, Loader2 } from "lucide-react";
+import { Pencil, Trash2, MoreHorizontal, Loader2, Copy } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -70,7 +70,12 @@ export function ProductosTable({
   const [editProducto, setEditProducto] = useState<ProductoCompleto | null>(
     null,
   );
+  const [duplicateProducto, setDuplicateProducto] =
+    useState<ProductoCompleto | null>(null);
   const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
+  const [loadingDuplicateId, setLoadingDuplicateId] = useState<string | null>(
+    null,
+  );
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -83,6 +88,17 @@ export function ProductosTable({
       return;
     }
     setEditProducto(result.data);
+  };
+
+  const handleDuplicateClick = async (id: string) => {
+    setLoadingDuplicateId(id);
+    const result = await getProductoCompletoAction(id);
+    setLoadingDuplicateId(null);
+    if (result.error || !result.data) {
+      toast.error(result.error ?? "Error al cargar el producto");
+      return;
+    }
+    setDuplicateProducto(result.data);
   };
 
   const handleToggleDisponible = (id: string, disponible: boolean) => {
@@ -178,7 +194,8 @@ export function ProductosTable({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                          {loadingEditId === p.id ? (
+                          {loadingEditId === p.id ||
+                          loadingDuplicateId === p.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <MoreHorizontal className="h-4 w-4" />
@@ -188,10 +205,23 @@ export function ProductosTable({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => handleEditClick(p.id)}
-                          disabled={loadingEditId === p.id}
+                          disabled={
+                            loadingEditId === p.id ||
+                            loadingDuplicateId === p.id
+                          }
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDuplicateClick(p.id)}
+                          disabled={
+                            loadingEditId === p.id ||
+                            loadingDuplicateId === p.id
+                          }
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Duplicar
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
@@ -238,6 +268,32 @@ export function ProductosTable({
                 onRefresh();
               }}
               onCancel={() => setEditProducto(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog duplicar */}
+      <Dialog
+        open={!!duplicateProducto}
+        onOpenChange={(open) => !open && setDuplicateProducto(null)}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Duplicar producto</DialogTitle>
+          </DialogHeader>
+          {duplicateProducto && (
+            <ProductoForm
+              producto={duplicateProducto}
+              isDuplicate
+              categorias={categorias}
+              categoriaMedidas={categoriaMedidas}
+              sucursales={sucursales}
+              onSuccess={() => {
+                setDuplicateProducto(null);
+                onRefresh();
+              }}
+              onCancel={() => setDuplicateProducto(null)}
             />
           )}
         </DialogContent>
