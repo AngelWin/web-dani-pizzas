@@ -6,10 +6,10 @@ import { toast } from "sonner";
 import { CatalogoProductos } from "./catalogo-productos";
 import { Carrito } from "./carrito";
 import { FormularioPedidoDialog } from "./formulario-pedido-dialog";
-import { VentaExitosaDialog } from "./venta-exitosa-dialog";
+import { OrdenConfirmadaDialog } from "./orden-confirmada-dialog";
 import { useCarrito } from "@/hooks/use-carrito";
 import { useDeliveryFees } from "@/hooks/use-delivery-fees";
-import { crearVentaAction } from "@/actions/ventas";
+import { crearOrdenAction } from "@/actions/ordenes";
 import {
   Select,
   SelectContent,
@@ -18,8 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Store } from "lucide-react";
-import type { ProductoPOS, Venta } from "@/lib/services/ventas";
+import type { ProductoPOS } from "@/lib/services/ventas";
 import type { Profile } from "@/lib/services/ventas";
+import type { Orden } from "@/lib/services/ordenes";
 import type { Database } from "@/types/database";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -48,7 +49,7 @@ export function PosClient({
   const { fees: deliveryFees } = useDeliveryFees(sucursalId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [ventaExitosa, setVentaExitosa] = useState<Venta | null>(null);
+  const [ordenConfirmada, setOrdenConfirmada] = useState<Orden | null>(null);
 
   const esAdmin = sucursales.length > 0;
 
@@ -58,17 +59,17 @@ export function PosClient({
   }
 
   async function handleConfirmarPedido(
-    data: Parameters<typeof crearVentaAction>[0],
+    data: Parameters<typeof crearOrdenAction>[0],
   ) {
     setIsSubmitting(true);
     try {
-      const result = await crearVentaAction(data);
+      const result = await crearOrdenAction(data);
       if (result.error) {
         toast.error(result.error);
         return;
       }
       setDialogOpen(false);
-      setVentaExitosa(result.data);
+      setOrdenConfirmada(result.data);
     } finally {
       setIsSubmitting(false);
     }
@@ -76,7 +77,7 @@ export function PosClient({
 
   function handleNuevoPedido() {
     carrito.limpiarCarrito();
-    setVentaExitosa(null);
+    setOrdenConfirmada(null);
   }
 
   return (
@@ -102,7 +103,7 @@ export function PosClient({
 
       {/* Panel principal */}
       <div className="flex flex-1 overflow-hidden rounded-xl border shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
-        {/* Catálogo (panel izquierdo) */}
+        {/* Catálogo */}
         <div className="flex-1 overflow-hidden p-4">
           <CatalogoProductos
             productos={productos}
@@ -111,7 +112,7 @@ export function PosClient({
           />
         </div>
 
-        {/* Carrito (panel derecho) */}
+        {/* Carrito */}
         <div className="w-72 xl:w-80 shrink-0">
           <Carrito
             carrito={carrito}
@@ -127,7 +128,7 @@ export function PosClient({
         </div>
       </div>
 
-      {/* Dialog de confirmación de pedido */}
+      {/* Dialog de confirmación */}
       <FormularioPedidoDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
@@ -139,10 +140,10 @@ export function PosClient({
         isSubmitting={isSubmitting}
       />
 
-      {/* Dialog de venta exitosa */}
-      <VentaExitosaDialog
-        venta={ventaExitosa}
-        open={ventaExitosa !== null}
+      {/* Dialog de orden confirmada */}
+      <OrdenConfirmadaDialog
+        orden={ordenConfirmada}
+        open={ordenConfirmada !== null}
         onNuevoPedido={handleNuevoPedido}
       />
     </div>

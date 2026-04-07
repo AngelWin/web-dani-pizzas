@@ -246,6 +246,70 @@ export type Database = {
         };
         Relationships: [];
       };
+      orden_items: {
+        Row: {
+          cantidad: number;
+          created_at: string;
+          id: string;
+          notas_item: string | null;
+          orden_id: string;
+          precio_unitario: number;
+          producto_id: string;
+          producto_nombre: string;
+          subtotal: number;
+          variante_id: string | null;
+          variante_nombre: string | null;
+        };
+        Insert: {
+          cantidad: number;
+          created_at?: string;
+          id?: string;
+          notas_item?: string | null;
+          orden_id: string;
+          precio_unitario: number;
+          producto_id: string;
+          producto_nombre: string;
+          subtotal: number;
+          variante_id?: string | null;
+          variante_nombre?: string | null;
+        };
+        Update: {
+          cantidad?: number;
+          created_at?: string;
+          id?: string;
+          notas_item?: string | null;
+          orden_id?: string;
+          precio_unitario?: number;
+          producto_id?: string;
+          producto_nombre?: string;
+          subtotal?: number;
+          variante_id?: string | null;
+          variante_nombre?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "orden_items_orden_id_fkey";
+            columns: ["orden_id"];
+            isOneToOne: false;
+            referencedRelation: "ordenes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orden_items_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orden_items_variante_id_fkey";
+            columns: ["variante_id"];
+            isOneToOne: false;
+            referencedRelation: "producto_variantes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ordenes: {
         Row: {
           cajero_id: string;

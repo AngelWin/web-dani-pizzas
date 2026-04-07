@@ -207,7 +207,7 @@ id, producto_id, sucursal_id, disponible
 
 ## Release 5a: POS — Toma de Pedido (Crear Orden)
 
-**Estado:** [ ] Pendiente (refactor de R5 anterior)
+**Estado:** [x] Completado
 **Dependencia:** Release 4.1
 **Objetivo:** El POS registra ordenes en la tabla `ordenes` + `orden_items`. NO crea ventas directamente.
 

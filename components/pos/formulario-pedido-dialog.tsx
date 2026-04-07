@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -33,13 +33,12 @@ import { formatCurrency } from "@/lib/utils";
 import {
   TIPO_PEDIDO,
   DELIVERY_METHOD,
-  METODO_PAGO,
   THIRD_PARTY_SERVICES,
 } from "@/lib/constants";
 import {
-  crearVentaSchema,
-  type CrearVentaFormValues,
-} from "@/lib/validations/ventas";
+  crearOrdenSchema,
+  type CrearOrdenFormValues,
+} from "@/lib/validations/ordenes";
 import type { useCarrito } from "@/hooks/use-carrito";
 import type { Profile } from "@/lib/services/ventas";
 
@@ -52,7 +51,7 @@ type Props = {
   repartidores: Repartidor[];
   deliveryFees: { propio: number; tercero: number };
   rol: string | null;
-  onSubmit: (data: CrearVentaFormValues) => Promise<void>;
+  onSubmit: (data: CrearOrdenFormValues) => Promise<void>;
   isSubmitting: boolean;
 };
 
@@ -68,35 +67,26 @@ export function FormularioPedidoDialog({
 }: Props) {
   const esMesero = rol === "mesero";
 
-  const form = useForm<CrearVentaFormValues>({
-    resolver: zodResolver(crearVentaSchema),
+  const form = useForm<CrearOrdenFormValues>({
+    resolver: zodResolver(crearOrdenSchema),
     defaultValues: {
       tipo_pedido: TIPO_PEDIDO.EN_LOCAL,
-      metodo_pago: METODO_PAGO.EFECTIVO,
-      notas: "",
       mesa_referencia: "",
+      notas: "",
       delivery_method: DELIVERY_METHOD.PROPIO,
       repartidor_id: null,
       third_party_name: null,
       delivery_fee: deliveryFees.propio,
       delivery_address: "",
       delivery_referencia: "",
-      items: carrito.items.map((i) => ({
-        producto_id: i.producto_id,
-        variante_id: i.variante_id,
-        cantidad: i.cantidad,
-        producto_nombre: i.producto_nombre,
-        variante_nombre: i.variante_nombre,
-        producto_precio: i.producto_precio,
-        subtotal: i.subtotal,
-      })),
+      items: [],
     },
   });
 
   const tipoPedido = form.watch("tipo_pedido");
   const deliveryMethod = form.watch("delivery_method");
 
-  // Actualizar items cuando cambia el carrito
+  // Sincronizar items del carrito
   useEffect(() => {
     form.setValue(
       "items",
@@ -106,13 +96,13 @@ export function FormularioPedidoDialog({
         cantidad: i.cantidad,
         producto_nombre: i.producto_nombre,
         variante_nombre: i.variante_nombre,
-        producto_precio: i.producto_precio,
+        precio_unitario: i.producto_precio,
         subtotal: i.subtotal,
       })),
     );
   }, [carrito.items, form]);
 
-  // Auto-llenar tarifa de delivery al cambiar método
+  // Auto-llenar tarifa al cambiar método de delivery
   useEffect(() => {
     if (deliveryMethod === DELIVERY_METHOD.PROPIO) {
       form.setValue("delivery_fee", deliveryFees.propio);
@@ -125,10 +115,6 @@ export function FormularioPedidoDialog({
     tipoPedido === TIPO_PEDIDO.DELIVERY ? (form.watch("delivery_fee") ?? 0) : 0;
   const total = carrito.subtotal + deliveryFee;
 
-  async function handleSubmit(data: CrearVentaFormValues) {
-    await onSubmit(data);
-  }
-
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -137,10 +123,7 @@ export function FormularioPedidoDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Resumen del carrito */}
             <div className="rounded-xl border p-3 space-y-1 bg-muted/30">
               {carrito.items.map((item) => (
@@ -221,7 +204,6 @@ export function FormularioPedidoDialog({
                   Datos de delivery
                 </p>
 
-                {/* Método */}
                 <FormField
                   control={form.control}
                   name="delivery_method"
@@ -251,7 +233,6 @@ export function FormularioPedidoDialog({
                   )}
                 />
 
-                {/* Repartidor (propio) */}
                 {deliveryMethod === DELIVERY_METHOD.PROPIO && (
                   <FormField
                     control={form.control}
@@ -288,7 +269,6 @@ export function FormularioPedidoDialog({
                   />
                 )}
 
-                {/* Servicio tercero */}
                 {deliveryMethod === DELIVERY_METHOD.TERCERO && (
                   <FormField
                     control={form.control}
@@ -319,7 +299,6 @@ export function FormularioPedidoDialog({
                   />
                 )}
 
-                {/* Costo delivery */}
                 <FormField
                   control={form.control}
                   name="delivery_fee"
@@ -344,7 +323,6 @@ export function FormularioPedidoDialog({
                   )}
                 />
 
-                {/* Dirección */}
                 <FormField
                   control={form.control}
                   name="delivery_address"
@@ -364,7 +342,6 @@ export function FormularioPedidoDialog({
                   )}
                 />
 
-                {/* Referencia */}
                 <FormField
                   control={form.control}
                   name="delivery_referencia"
@@ -386,32 +363,7 @@ export function FormularioPedidoDialog({
               </div>
             )}
 
-            {/* Método de pago */}
-            <FormField
-              control={form.control}
-              name="metodo_pago"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Método de pago</FormLabel>
-                  <div className="grid grid-cols-3 gap-2">
-                    {Object.entries(METODO_PAGO).map(([key, value]) => (
-                      <Button
-                        key={key}
-                        type="button"
-                        variant={field.value === value ? "default" : "outline"}
-                        className="h-12 capitalize"
-                        onClick={() => field.onChange(value)}
-                      >
-                        {value}
-                      </Button>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Notas */}
+            {/* Notas generales */}
             <FormField
               control={form.control}
               name="notas"
@@ -444,7 +396,7 @@ export function FormularioPedidoDialog({
                 </div>
               )}
               <div className="flex justify-between font-bold text-base border-t pt-1 mt-1">
-                <span>Total</span>
+                <span>Total del pedido</span>
                 <span className="text-primary">{formatCurrency(total)}</span>
               </div>
             </div>
@@ -464,7 +416,7 @@ export function FormularioPedidoDialog({
                 className="h-12 flex-1"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Registrando..." : "Registrar venta"}
+                {isSubmitting ? "Registrando..." : "Confirmar pedido"}
               </Button>
             </DialogFooter>
           </form>
