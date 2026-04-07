@@ -3,6 +3,7 @@ import { type Role, ROLES } from "@/lib/constants";
 export const PROTECTED_ROUTES = [
   "/dashboard",
   "/pos",
+  "/ordenes",
   "/productos",
   "/promociones",
   "/membresias",
@@ -16,9 +17,9 @@ export type ProtectedRoute = (typeof PROTECTED_ROUTES)[number];
 /** Rutas permitidas por rol */
 export const ROLE_ROUTES: Record<Role, readonly ProtectedRoute[]> = {
   [ROLES.ADMINISTRADOR]: PROTECTED_ROUTES,
-  [ROLES.CAJERO]: ["/pos", "/reportes"],
-  [ROLES.MESERO]: ["/pos"],
-  [ROLES.REPARTIDOR]: ["/pos"],
+  [ROLES.CAJERO]: ["/pos", "/ordenes", "/reportes"],
+  [ROLES.MESERO]: ["/pos", "/ordenes"],
+  [ROLES.REPARTIDOR]: ["/pos", "/ordenes"],
 };
 
 /** Ruta por defecto tras login según rol */

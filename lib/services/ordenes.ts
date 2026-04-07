@@ -9,6 +9,82 @@ export type DeliveryMethod =
   Database["public"]["Enums"]["delivery_method_tipo"];
 export type EstadoDelivery = Database["public"]["Enums"]["estado_delivery"];
 
+export type OrdenConItems = Orden & {
+  orden_items: OrdenItem[];
+  cajero: { nombre: string; apellido_paterno: string } | null;
+  repartidor: { nombre: string; apellido_paterno: string } | null;
+};
+
+export type FiltroEstadoOrden = EstadoOrden | "todas" | "activas";
+
+// ─── Consultas ─────────────────────────────────────────────────────────────
+
+export async function getOrdenes(
+  sucursalId: string | null,
+  filtroEstado: FiltroEstadoOrden = "activas",
+): Promise<OrdenConItems[]> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("ordenes")
+    .select(
+      `
+      *,
+      orden_items (*),
+      cajero:profiles!ordenes_cajero_id_fkey (nombre, apellido_paterno),
+      repartidor:profiles!ordenes_repartidor_id_fkey (nombre, apellido_paterno)
+    `,
+    )
+    .order("created_at", { ascending: false });
+
+  if (sucursalId) {
+    query = query.eq("sucursal_id", sucursalId);
+  }
+
+  if (filtroEstado === "activas") {
+    query = query.not("estado", "in", '("entregada","cancelada")');
+  } else if (filtroEstado !== "todas") {
+    query = query.eq("estado", filtroEstado);
+  }
+
+  const { data, error } = await query.limit(100);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as OrdenConItems[];
+}
+
+export async function actualizarEstadoOrden(
+  ordenId: string,
+  estado: EstadoOrden,
+): Promise<void> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("ordenes")
+    .update({ estado, updated_at: new Date().toISOString() })
+    .eq("id", ordenId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function actualizarEstadoDelivery(
+  ordenId: string,
+  deliveryStatus: EstadoDelivery,
+): Promise<void> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("ordenes")
+    .update({
+      delivery_status: deliveryStatus,
+      delivery_status_updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", ordenId);
+
+  if (error) throw new Error(error.message);
+}
+
 // ─── Crear orden ───────────────────────────────────────────────────────────
 
 export type CrearOrdenData = {
