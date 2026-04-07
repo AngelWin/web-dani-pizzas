@@ -136,9 +136,10 @@ export function ProductoForm({
       return;
     }
 
-    // Al editar, si la categoría no cambió, mantener los precios existentes
+    // Al editar o duplicar, si la categoría no cambió, mantener los precios existentes
     const esCategoriaSinCambio =
-      isEditing && categoriaIdActual === producto?.categoria_id;
+      (isEditing || isDuplicate) &&
+      categoriaIdActual === producto?.categoria_id;
 
     const nuevasVariantes = medidas.map((medida) => {
       if (esCategoriaSinCambio) {
@@ -286,7 +287,7 @@ export function ProductoForm({
                     min="0"
                     placeholder="0.00"
                     {...field}
-                    value={field.value ?? ""}
+                    value={field.value || ""}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -333,7 +334,7 @@ export function ProductoForm({
                               placeholder="0.00"
                               className="pl-7 text-right"
                               {...f}
-                              value={f.value ?? ""}
+                              value={f.value || ""}
                               onFocus={(e) => e.target.select()}
                               onChange={(e) => {
                                 const val = e.target.value;

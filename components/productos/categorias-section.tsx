@@ -116,7 +116,17 @@ function CategoriaForm({
               <FormItem>
                 <FormLabel>Orden</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input
+                    type="number"
+                    min={0}
+                    {...field}
+                    value={field.value || ""}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      field.onChange(val === "" ? 0 : Number(val));
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -239,7 +249,17 @@ function MedidaForm({
               <FormItem>
                 <FormLabel>Orden</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input
+                    type="number"
+                    min={0}
+                    {...field}
+                    value={field.value || ""}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      field.onChange(val === "" ? 0 : Number(val));
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
