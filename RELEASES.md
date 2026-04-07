@@ -4,9 +4,9 @@
 
 ```
 R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
-                                       -> R4 (Productos) -> R5 (POS) -> R6 (Reportes)
-                                                                     -> R7 (Promociones)
-                                                                     -> R8 (Membresias)
+                                       -> R4 (Productos) -> R4.1 (Variantes + Disponibilidad) -> R5 (POS) -> R6 (Reportes)
+                                                                                                          -> R7 (Promociones)
+                                                                                                          -> R8 (Membresias)
                                        -> R9 (Sucursales) [paralelo con R10]
                                        -> R10 (Config)    [paralelo con R9]
                           R1 -> R11 (Usuarios)
@@ -136,15 +136,73 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 
 ---
 
-## Release 5: POS (Punto de Venta) - CRITICO
+## Release 4.1: Variantes de Producto y Disponibilidad por Sucursal
 
 **Estado:** [ ] Pendiente
 **Dependencia:** Release 4
+**Objetivo:** Extender el catalogo de productos con medidas/tamaños por categoria y disponibilidad por sucursal. Prerrequisito obligatorio del POS.
+
+### Contexto del negocio:
+- Las pizzas tienen 5 tamaños (Mini, Personal, Mediana, Familiar, Extra) cada una con precio distinto
+- Las bebidas (chicha, limonada, jugos) tienen medidas por volumen (Vaso, 500ml, 1L, 1.5L)
+- Las gaseosas tambien tienen medidas (Personal, Mediana, Familiar, Extra)
+- Los postres pueden tener medidas (Por tajada, Entero) o venderse por unidad
+- Otros productos como gelatinas, mazamorras se venden por unidad sin medida
+- No todos los productos estan disponibles en todas las sucursales
+
+### Nuevas tablas DB:
+
+**`categoria_medidas`** — Medidas predefinidas por categoria (se gestionan como las categorias)
+```
+id, categoria_id, nombre (ej: "Mini", "Familiar", "Vaso", "1.5 litros"), descripcion, orden, activa
+```
+
+**`producto_variantes`** — Precio de cada medida para cada producto
+```
+id, producto_id, medida_id, precio, disponible, orden
+```
+- Si el producto tiene variantes → precio vive aqui (productos.precio queda en null)
+- Si el producto no tiene variantes (gelatina, mazamorra) → usa productos.precio base
+
+**`producto_sucursal`** — Disponibilidad por sucursal
+```
+id, producto_id, sucursal_id, disponible
+```
+
+### Cambios en tablas existentes:
+- `productos.precio` → se vuelve nullable (solo para productos sin variantes)
+- `venta_items` → agregar `variante_id` (nullable) y `variante_nombre` (texto historico)
+
+### Commits esperados:
+- [ ] Migracion DB: tablas categoria_medidas, producto_variantes, producto_sucursal
+- [ ] Migracion DB: ajustes en productos y venta_items
+- [ ] RLS para las 3 nuevas tablas
+- [ ] Tipos TypeScript actualizados
+- [ ] Seccion "Medidas por Categoria" en /productos (backoffice)
+- [ ] Formulario de producto actualizado: variantes con precio por medida
+- [ ] Formulario de producto actualizado: checkboxes de disponibilidad por sucursal
+- [ ] Server Actions y servicios actualizados
+- [ ] Validaciones Zod actualizadas
+
+### Criterio de exito:
+- Admin puede definir medidas para cada categoria (ej: Pizzas → Mini, Personal, Mediana, Familiar, Extra)
+- Al crear/editar un producto con categoria que tiene medidas → se ingresan precios por medida
+- Al crear/editar un producto sin medidas → se ingresa un precio base como antes
+- Admin puede marcar que sucursales tienen disponible cada producto
+- El POS puede consultar variantes y disponibilidad por sucursal correctamente
+
+---
+
+## Release 5: POS (Punto de Venta) - CRITICO
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 4.1
 **Objetivo:** Punto de venta completo con 3 tipos de pedido.
 
 ### Commits esperados:
-- [ ] Catalogo de productos (grid touch-friendly)
-- [ ] Carrito dinamico con cantidades
+- [ ] Catalogo de productos filtrado por sucursal activa (solo muestra productos disponibles)
+- [ ] Selector de medida/variante al agregar producto (si la categoria tiene medidas definidas)
+- [ ] Carrito dinamico con cantidades (incluye variante seleccionada)
 - [ ] Selector de tipo de pedido (en local, para llevar, delivery)
 - [ ] Formulario de delivery (metodo, repartidor/tercero, direccion, tarifa)
 - [ ] Formulario de pago

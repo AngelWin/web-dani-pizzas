@@ -84,7 +84,7 @@ export function ImageUpload({
   return (
     <div className="space-y-2">
       {value ? (
-        <div className="relative w-full max-w-xs overflow-hidden rounded-xl border border-border bg-muted aspect-video">
+        <div className="relative mx-auto w-full max-w-xs overflow-hidden rounded-xl border border-border bg-muted aspect-video">
           <Image
             src={value}
             alt="Vista previa del producto"
