@@ -1,0 +1,475 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { formatCurrency } from "@/lib/utils";
+import {
+  TIPO_PEDIDO,
+  DELIVERY_METHOD,
+  METODO_PAGO,
+  THIRD_PARTY_SERVICES,
+} from "@/lib/constants";
+import {
+  crearVentaSchema,
+  type CrearVentaFormValues,
+} from "@/lib/validations/ventas";
+import type { useCarrito } from "@/hooks/use-carrito";
+import type { Profile } from "@/lib/services/ventas";
+
+type Repartidor = Pick<Profile, "id" | "nombre" | "apellido_paterno">;
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  carrito: ReturnType<typeof useCarrito>;
+  repartidores: Repartidor[];
+  deliveryFees: { propio: number; tercero: number };
+  rol: string | null;
+  onSubmit: (data: CrearVentaFormValues) => Promise<void>;
+  isSubmitting: boolean;
+};
+
+export function FormularioPedidoDialog({
+  open,
+  onClose,
+  carrito,
+  repartidores,
+  deliveryFees,
+  rol,
+  onSubmit,
+  isSubmitting,
+}: Props) {
+  const esMesero = rol === "mesero";
+
+  const form = useForm<CrearVentaFormValues>({
+    resolver: zodResolver(crearVentaSchema),
+    defaultValues: {
+      tipo_pedido: TIPO_PEDIDO.EN_LOCAL,
+      metodo_pago: METODO_PAGO.EFECTIVO,
+      notas: "",
+      mesa_referencia: "",
+      delivery_method: DELIVERY_METHOD.PROPIO,
+      repartidor_id: null,
+      third_party_name: null,
+      delivery_fee: deliveryFees.propio,
+      delivery_address: "",
+      delivery_referencia: "",
+      items: carrito.items.map((i) => ({
+        producto_id: i.producto_id,
+        variante_id: i.variante_id,
+        cantidad: i.cantidad,
+        producto_nombre: i.producto_nombre,
+        variante_nombre: i.variante_nombre,
+        producto_precio: i.producto_precio,
+        subtotal: i.subtotal,
+      })),
+    },
+  });
+
+  const tipoPedido = form.watch("tipo_pedido");
+  const deliveryMethod = form.watch("delivery_method");
+
+  // Actualizar items cuando cambia el carrito
+  useEffect(() => {
+    form.setValue(
+      "items",
+      carrito.items.map((i) => ({
+        producto_id: i.producto_id,
+        variante_id: i.variante_id,
+        cantidad: i.cantidad,
+        producto_nombre: i.producto_nombre,
+        variante_nombre: i.variante_nombre,
+        producto_precio: i.producto_precio,
+        subtotal: i.subtotal,
+      })),
+    );
+  }, [carrito.items, form]);
+
+  // Auto-llenar tarifa de delivery al cambiar método
+  useEffect(() => {
+    if (deliveryMethod === DELIVERY_METHOD.PROPIO) {
+      form.setValue("delivery_fee", deliveryFees.propio);
+    } else if (deliveryMethod === DELIVERY_METHOD.TERCERO) {
+      form.setValue("delivery_fee", deliveryFees.tercero);
+    }
+  }, [deliveryMethod, deliveryFees, form]);
+
+  const deliveryFee =
+    tipoPedido === TIPO_PEDIDO.DELIVERY ? (form.watch("delivery_fee") ?? 0) : 0;
+  const total = carrito.subtotal + deliveryFee;
+
+  async function handleSubmit(data: CrearVentaFormValues) {
+    await onSubmit(data);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Confirmar pedido</DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
+            {/* Resumen del carrito */}
+            <div className="rounded-xl border p-3 space-y-1 bg-muted/30">
+              {carrito.items.map((item) => (
+                <div key={item.key} className="flex justify-between text-sm">
+                  <span>
+                    {item.cantidad}x {item.producto_nombre}
+                    {item.variante_nombre ? ` (${item.variante_nombre})` : ""}
+                  </span>
+                  <span className="font-medium">
+                    {formatCurrency(item.subtotal)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <Separator />
+
+            {/* Tipo de pedido */}
+            <FormField
+              control={form.control}
+              name="tipo_pedido"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de pedido</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Selecciona tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={TIPO_PEDIDO.EN_LOCAL}>
+                        En local
+                      </SelectItem>
+                      <SelectItem value={TIPO_PEDIDO.PARA_LLEVAR}>
+                        Para llevar
+                      </SelectItem>
+                      {!esMesero && (
+                        <SelectItem value={TIPO_PEDIDO.DELIVERY}>
+                          Delivery
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Mesa / referencia (en local) */}
+            {tipoPedido === TIPO_PEDIDO.EN_LOCAL && (
+              <FormField
+                control={form.control}
+                name="mesa_referencia"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mesa / referencia (opcional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ej: Mesa 3"
+                        className="h-12"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Formulario de delivery */}
+            {tipoPedido === TIPO_PEDIDO.DELIVERY && (
+              <div className="space-y-3 rounded-xl border p-3">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Datos de delivery
+                </p>
+
+                {/* Método */}
+                <FormField
+                  control={form.control}
+                  name="delivery_method"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Método</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value ?? DELIVERY_METHOD.PROPIO}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={DELIVERY_METHOD.PROPIO}>
+                            Propio
+                          </SelectItem>
+                          <SelectItem value={DELIVERY_METHOD.TERCERO}>
+                            Tercero (Rappi, etc.)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Repartidor (propio) */}
+                {deliveryMethod === DELIVERY_METHOD.PROPIO && (
+                  <FormField
+                    control={form.control}
+                    name="repartidor_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Repartidor</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value ?? ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12">
+                              <SelectValue placeholder="Selecciona repartidor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {repartidores.length === 0 ? (
+                              <SelectItem value="_none" disabled>
+                                Sin repartidores disponibles
+                              </SelectItem>
+                            ) : (
+                              repartidores.map((r) => (
+                                <SelectItem key={r.id} value={r.id}>
+                                  {r.nombre} {r.apellido_paterno}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Servicio tercero */}
+                {deliveryMethod === DELIVERY_METHOD.TERCERO && (
+                  <FormField
+                    control={form.control}
+                    name="third_party_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Servicio de delivery</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value ?? ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12">
+                              <SelectValue placeholder="Selecciona servicio" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {THIRD_PARTY_SERVICES.map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Costo delivery */}
+                <FormField
+                  control={form.control}
+                  name="delivery_fee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Costo de delivery (S/)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.5}
+                          className="h-12"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value) || 0)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Dirección */}
+                <FormField
+                  control={form.control}
+                  name="delivery_address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dirección de entrega</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Calle, número, distrito..."
+                          className="h-12"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Referencia */}
+                <FormField
+                  control={form.control}
+                  name="delivery_referencia"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Referencia (opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ej: Frente al parque"
+                          className="h-12"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Método de pago */}
+            <FormField
+              control={form.control}
+              name="metodo_pago"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Método de pago</FormLabel>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(METODO_PAGO).map(([key, value]) => (
+                      <Button
+                        key={key}
+                        type="button"
+                        variant={field.value === value ? "default" : "outline"}
+                        className="h-12 capitalize"
+                        onClick={() => field.onChange(value)}
+                      >
+                        {value}
+                      </Button>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Notas */}
+            <FormField
+              control={form.control}
+              name="notas"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notas (opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Instrucciones especiales..."
+                      className="resize-none"
+                      rows={2}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Total */}
+            <div className="rounded-xl border p-3 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>{formatCurrency(carrito.subtotal)}</span>
+              </div>
+              {deliveryFee > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Delivery</span>
+                  <span>{formatCurrency(deliveryFee)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-base border-t pt-1 mt-1">
+                <span>Total</span>
+                <span className="text-primary">{formatCurrency(total)}</span>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="h-12 flex-1"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Registrando..." : "Registrar venta"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
