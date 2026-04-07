@@ -195,20 +195,20 @@ id, producto_id, sucursal_id, disponible
 
 ## Release 5: POS (Punto de Venta) - CRITICO
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 4.1
 **Objetivo:** Punto de venta completo con 3 tipos de pedido.
 
 ### Commits esperados:
-- [ ] Catalogo de productos filtrado por sucursal activa (solo muestra productos disponibles)
-- [ ] Selector de medida/variante al agregar producto (si la categoria tiene medidas definidas)
-- [ ] Carrito dinamico con cantidades (incluye variante seleccionada)
-- [ ] Selector de tipo de pedido (en local, para llevar, delivery)
-- [ ] Formulario de delivery (metodo, repartidor/tercero, direccion, tarifa)
-- [ ] Formulario de pago
-- [ ] Resumen y confirmacion de pedido
-- [ ] Server Actions + servicios de ventas y delivery
-- [ ] Hooks (use-carrito, use-delivery-fees)
+- [x] Catalogo de productos filtrado por sucursal activa (solo muestra productos disponibles)
+- [x] Selector de medida/variante al agregar producto (si la categoria tiene medidas definidas)
+- [x] Carrito dinamico con cantidades (incluye variante seleccionada)
+- [x] Selector de tipo de pedido (en local, para llevar, delivery)
+- [x] Formulario de delivery (metodo, repartidor/tercero, direccion, tarifa)
+- [x] Formulario de pago
+- [x] Resumen y confirmacion de pedido
+- [x] Server Actions + servicios de ventas y delivery
+- [x] Hooks (use-carrito, use-delivery-fees)
 
 ### Criterio de exito:
 - Flujo completo de venta para los 3 tipos de pedido
