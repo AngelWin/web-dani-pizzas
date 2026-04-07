@@ -4,9 +4,13 @@
 
 ```
 R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
-                                       -> R4 (Productos) -> R4.1 (Variantes + Disponibilidad) -> R5 (POS) -> R6 (Reportes)
-                                                                                                          -> R7 (Promociones)
-                                                                                                          -> R8 (Membresias)
+                                       -> R4 (Productos) -> R4.1 (Variantes + Disponibilidad)
+                                                                     -> R5a (POS: Crear Orden)
+                                                                     -> R5b (Gestion de Ordenes)
+                                                                     -> R5c (Cobro de Orden)
+                                                                          -> R6 (Reportes)
+                                                                          -> R7 (Promociones)
+                                                                          -> R8 (Membresias)
                                        -> R9 (Sucursales) [paralelo con R10]
                                        -> R10 (Config)    [paralelo con R9]
                           R1 -> R11 (Usuarios)
@@ -195,28 +199,133 @@ id, producto_id, sucursal_id, disponible
 
 ## Release 5: POS (Punto de Venta) - CRITICO
 
-**Estado:** [x] Completado
+> **Replanteado:** El flujo correcto para DANI PIZZAS separa la toma de pedido del cobro.
+> La BD ya contempla esta arquitectura: tabla `ordenes` (pedido) → tabla `ventas` (cobro).
+> R5 se divide en tres sub-releases: 5a (POS crea ordenes), 5b (gestion de ordenes), 5c (cobro).
+
+---
+
+## Release 5a: POS — Toma de Pedido (Crear Orden)
+
+**Estado:** [ ] Pendiente (refactor de R5 anterior)
 **Dependencia:** Release 4.1
-**Objetivo:** Punto de venta completo con 3 tipos de pedido.
+**Objetivo:** El POS registra ordenes en la tabla `ordenes` + `orden_items`. NO crea ventas directamente.
+
+### Contexto del negocio:
+- El cajero o mesero toma el pedido desde el POS
+- El pedido queda registrado como orden con estado "confirmada"
+- La cocina/staff lo prepara y actualiza el estado
+- Solo cuando la orden esta lista se puede cobrar (Release 5c)
+
+### Flujo del POS:
+1. Seleccionar productos del catalogo (filtrado por sucursal)
+2. Elegir medida/variante si aplica
+3. Armar carrito con cantidades
+4. Elegir tipo de pedido (en local, para llevar, delivery)
+5. Si delivery: metodo, repartidor o tercero, direccion, tarifa
+6. Confirmar → crea orden en estado "confirmada"
+7. Pantalla de confirmacion con numero de orden
+
+### Tabla destino: `ordenes` + `orden_items`
+- `ordenes.estado`: inicia en "confirmada"
+- `ordenes.cajero_id`, `sucursal_id`, `tipo_pedido`, campos delivery
+- `orden_items`: producto_id, variante_id, cantidad, precios historicos
 
 ### Commits esperados:
-- [x] Catalogo de productos filtrado por sucursal activa (solo muestra productos disponibles)
-- [x] Selector de medida/variante al agregar producto (si la categoria tiene medidas definidas)
-- [x] Carrito dinamico con cantidades (incluye variante seleccionada)
-- [x] Selector de tipo de pedido (en local, para llevar, delivery)
-- [x] Formulario de delivery (metodo, repartidor/tercero, direccion, tarifa)
-- [x] Formulario de pago
-- [x] Resumen y confirmacion de pedido
-- [x] Server Actions + servicios de ventas y delivery
-- [x] Hooks (use-carrito, use-delivery-fees)
+- [ ] Refactorizar actions/ventas.ts → actions/ordenes.ts (insert en ordenes + orden_items)
+- [ ] Servicio getOrdenesPOS, crearOrden en lib/services/ordenes.ts
+- [ ] Validaciones Zod actualizadas para orden (lib/validations/ordenes.ts)
+- [ ] Catalogo de productos filtrado por sucursal (reutilizar logica existente)
+- [ ] Selector de medida/variante al agregar producto
+- [ ] Carrito dinamico con cantidades
+- [ ] Formulario: tipo de pedido + delivery + notas
+- [ ] Confirmacion con numero de orden generado
+- [ ] Hooks: use-carrito (reutilizar), use-delivery-fees (reutilizar)
+- [ ] Mesero NO ve opcion delivery
 
 ### Criterio de exito:
-- Flujo completo de venta para los 3 tipos de pedido
-- Delivery: seleccion de repartidor (propio) o tercero
-- Tarifas auto-llenadas desde delivery_fees_config (editables)
-- Mesero NO ve opcion de delivery
-- Repartidor solo ve sus deliveries asignados
+- El POS crea registros en `ordenes` (no en `ventas`)
+- Orden queda en estado "confirmada" al crearse
+- Numero de orden autogenerado visible en confirmacion
+- Delivery guarda repartidor/tercero, direccion y tarifa en la orden
+- Mesero no ve opcion de delivery
 - Touch-friendly con botones h-14
+
+---
+
+## Release 5b: Gestion de Ordenes
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5a
+**Objetivo:** Pagina /ordenes con lista de ordenes activas, cambio de estado y vista por rol.
+
+### Flujo de estados de una orden:
+```
+confirmada → en_preparacion → lista → entregada
+                                  ↘ cancelada (en cualquier punto)
+```
+
+### Vista por rol:
+| Rol | Lo que ve |
+|-----|-----------|
+| Administrador | Todas las ordenes de la sucursal seleccionada |
+| Cajero | Todas las ordenes de su sucursal |
+| Mesero | Todas las ordenes de su sucursal (solo en local y para llevar) |
+| Repartidor | Solo las ordenes de delivery asignadas a el |
+
+### Commits esperados:
+- [ ] Pagina /ordenes con lista de ordenes activas (filtrada por sucursal y rol)
+- [ ] Tarjeta de orden: numero, tipo pedido, items resumidos, estado, tiempo transcurrido
+- [ ] Cambio de estado: confirmada → en_preparacion → lista (boton por estado)
+- [ ] Filtros: por estado, por tipo de pedido
+- [ ] Vista de detalle de orden (items completos, datos de delivery)
+- [ ] Boton "Cancelar orden" con confirmacion
+- [ ] Repartidor: ve solo sus ordenes delivery, puede marcar en_camino y entregado
+- [ ] Actualizacion de delivery_status al marcar entregado (con timestamp)
+- [ ] Server Actions: actualizarEstadoOrden, cancelarOrden
+- [ ] Servicio: getOrdenes (con filtros por sucursal, rol, estado)
+- [ ] Polling o recarga manual para ver nuevas ordenes
+
+### Criterio de exito:
+- Lista de ordenes activas visible y actualizable
+- Estados cambian correctamente segun el flujo
+- Repartidor solo ve y gestiona sus deliveries asignados
+- Cancelacion con confirmacion
+- Interfaz touch-friendly
+
+---
+
+## Release 5c: Cobro de Orden (Cierre de Venta)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5b
+**Objetivo:** Desde una orden en estado "lista", el cajero procesa el cobro. Crea el registro en `ventas` vinculado a la orden.
+
+### Flujo de cobro:
+1. Orden en estado "lista" muestra boton "Cobrar"
+2. Se abre formulario de pago (metodo de pago, monto recibido)
+3. Al confirmar:
+   - Crea registro en `ventas` con `orden_id` FK
+   - `ventas.total` = subtotal + delivery_fee (si aplica)
+   - `ventas.estado_pago_v2` = "pagado"
+   - Actualiza `ordenes.estado` = "entregada"
+4. Pantalla de confirmacion con numero de venta y vuelto (si es efectivo)
+
+### Commits esperados:
+- [ ] Boton "Cobrar" visible solo en ordenes con estado "lista"
+- [ ] Dialog/pagina de cobro: metodo de pago, monto recibido, calculo de vuelto
+- [ ] Server Action: cobrarOrden (crea venta + actualiza orden)
+- [ ] Servicio: cobrarOrden en lib/services/ventas.ts
+- [ ] Validacion Zod para el cobro
+- [ ] Confirmacion con numero de venta, total cobrado y vuelto
+- [ ] Cajero y admin pueden cobrar; mesero y repartidor NO
+
+### Criterio de exito:
+- Solo ordenes en estado "lista" pueden cobrarse
+- Venta queda vinculada a la orden (orden_id FK)
+- Calculo correcto de vuelto para pagos en efectivo
+- Estado de la orden pasa a "entregada" al cobrar
+- Solo cajero y admin pueden realizar el cobro
 
 ---
 
