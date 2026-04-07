@@ -82,6 +82,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      clientes: {
+        Row: {
+          activo: boolean;
+          apellido: string | null;
+          auth_user_id: string | null;
+          correo: string | null;
+          created_at: string;
+          dni: string | null;
+          fecha_nacimiento: string | null;
+          id: string;
+          nombre: string;
+          telefono: string | null;
+          tipo: Database["public"]["Enums"]["tipo_cliente"];
+          updated_at: string;
+        };
+        Insert: {
+          activo?: boolean;
+          apellido?: string | null;
+          auth_user_id?: string | null;
+          correo?: string | null;
+          created_at?: string;
+          dni?: string | null;
+          fecha_nacimiento?: string | null;
+          id?: string;
+          nombre: string;
+          telefono?: string | null;
+          tipo?: Database["public"]["Enums"]["tipo_cliente"];
+          updated_at?: string;
+        };
+        Update: {
+          activo?: boolean;
+          apellido?: string | null;
+          auth_user_id?: string | null;
+          correo?: string | null;
+          created_at?: string;
+          dni?: string | null;
+          fecha_nacimiento?: string | null;
+          id?: string;
+          nombre?: string;
+          telefono?: string | null;
+          tipo?: Database["public"]["Enums"]["tipo_cliente"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       delivery_fees_config: {
         Row: {
           created_at: string | null;
@@ -200,6 +245,122 @@ export type Database = {
           updated_at?: string | null;
         };
         Relationships: [];
+      };
+      ordenes: {
+        Row: {
+          cajero_id: string;
+          cliente_id: string | null;
+          created_at: string;
+          delivery_address: string | null;
+          delivery_fee: number;
+          delivery_method:
+            | Database["public"]["Enums"]["delivery_method_tipo"]
+            | null;
+          delivery_referencia: string | null;
+          delivery_status:
+            | Database["public"]["Enums"]["estado_delivery"]
+            | null;
+          delivery_status_updated_at: string | null;
+          descuento: number;
+          estado: Database["public"]["Enums"]["estado_orden"];
+          id: string;
+          mesa_referencia: string | null;
+          notas: string | null;
+          numero_orden: number;
+          repartidor_id: string | null;
+          subtotal: number;
+          sucursal_id: string;
+          third_party_name: string | null;
+          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"];
+          total: number;
+          updated_at: string;
+        };
+        Insert: {
+          cajero_id: string;
+          cliente_id?: string | null;
+          created_at?: string;
+          delivery_address?: string | null;
+          delivery_fee?: number;
+          delivery_method?:
+            | Database["public"]["Enums"]["delivery_method_tipo"]
+            | null;
+          delivery_referencia?: string | null;
+          delivery_status?:
+            | Database["public"]["Enums"]["estado_delivery"]
+            | null;
+          delivery_status_updated_at?: string | null;
+          descuento?: number;
+          estado?: Database["public"]["Enums"]["estado_orden"];
+          id?: string;
+          mesa_referencia?: string | null;
+          notas?: string | null;
+          numero_orden?: never;
+          repartidor_id?: string | null;
+          subtotal?: number;
+          sucursal_id: string;
+          third_party_name?: string | null;
+          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"];
+          total?: number;
+          updated_at?: string;
+        };
+        Update: {
+          cajero_id?: string;
+          cliente_id?: string | null;
+          created_at?: string;
+          delivery_address?: string | null;
+          delivery_fee?: number;
+          delivery_method?:
+            | Database["public"]["Enums"]["delivery_method_tipo"]
+            | null;
+          delivery_referencia?: string | null;
+          delivery_status?:
+            | Database["public"]["Enums"]["estado_delivery"]
+            | null;
+          delivery_status_updated_at?: string | null;
+          descuento?: number;
+          estado?: Database["public"]["Enums"]["estado_orden"];
+          id?: string;
+          mesa_referencia?: string | null;
+          notas?: string | null;
+          numero_orden?: never;
+          repartidor_id?: string | null;
+          subtotal?: number;
+          sucursal_id?: string;
+          third_party_name?: string | null;
+          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"];
+          total?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ordenes_cajero_id_fkey";
+            columns: ["cajero_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ordenes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ordenes_repartidor_id_fkey";
+            columns: ["repartidor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ordenes_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       producto_sucursal: {
         Row: {
@@ -645,6 +806,7 @@ export type Database = {
       ventas: {
         Row: {
           cajero_id: string;
+          cliente_id: string | null;
           created_at: string | null;
           delivery_address: string | null;
           delivery_fee: number | null;
@@ -653,22 +815,26 @@ export type Database = {
           delivery_status: string | null;
           delivery_status_updated_at: string | null;
           descuento: number | null;
+          estado_pago_v2: Database["public"]["Enums"]["estado_pago"];
           id: string;
           mesa_referencia: string | null;
-          metodo_pago: string;
+          metodo_pago: Database["public"]["Enums"]["metodo_pago"] | null;
+          monto_recibido: number | null;
           notas: string | null;
           numero_venta: number;
+          orden_id: string | null;
           promocion_id: string | null;
           repartidor_id: string | null;
           subtotal: number;
           sucursal_origen_id: string;
           third_party_name: string | null;
-          tipo_pedido: string;
+          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"] | null;
           total: number;
           updated_at: string | null;
         };
         Insert: {
           cajero_id: string;
+          cliente_id?: string | null;
           created_at?: string | null;
           delivery_address?: string | null;
           delivery_fee?: number | null;
@@ -677,22 +843,26 @@ export type Database = {
           delivery_status?: string | null;
           delivery_status_updated_at?: string | null;
           descuento?: number | null;
+          estado_pago_v2?: Database["public"]["Enums"]["estado_pago"];
           id?: string;
           mesa_referencia?: string | null;
-          metodo_pago: string;
+          metodo_pago?: Database["public"]["Enums"]["metodo_pago"] | null;
+          monto_recibido?: number | null;
           notas?: string | null;
           numero_venta?: number;
+          orden_id?: string | null;
           promocion_id?: string | null;
           repartidor_id?: string | null;
           subtotal: number;
           sucursal_origen_id: string;
           third_party_name?: string | null;
-          tipo_pedido: string;
+          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"] | null;
           total: number;
           updated_at?: string | null;
         };
         Update: {
           cajero_id?: string;
+          cliente_id?: string | null;
           created_at?: string | null;
           delivery_address?: string | null;
           delivery_fee?: number | null;
@@ -701,17 +871,20 @@ export type Database = {
           delivery_status?: string | null;
           delivery_status_updated_at?: string | null;
           descuento?: number | null;
+          estado_pago_v2?: Database["public"]["Enums"]["estado_pago"];
           id?: string;
           mesa_referencia?: string | null;
-          metodo_pago?: string;
+          metodo_pago?: Database["public"]["Enums"]["metodo_pago"] | null;
+          monto_recibido?: number | null;
           notas?: string | null;
           numero_venta?: number;
+          orden_id?: string | null;
           promocion_id?: string | null;
           repartidor_id?: string | null;
           subtotal?: number;
           sucursal_origen_id?: string;
           third_party_name?: string | null;
-          tipo_pedido?: string;
+          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"] | null;
           total?: number;
           updated_at?: string | null;
         };
@@ -721,6 +894,20 @@ export type Database = {
             columns: ["cajero_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ventas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ventas_orden_id_fkey";
+            columns: ["orden_id"];
+            isOneToOne: false;
+            referencedRelation: "ordenes";
             referencedColumns: ["id"];
           },
           {
@@ -756,6 +943,25 @@ export type Database = {
       get_user_sucursal: { Args: never; Returns: string };
     };
     Enums: {
+      delivery_method_tipo: "propio" | "tercero";
+      estado_delivery: "pendiente" | "en_camino" | "entregado";
+      estado_orden:
+        | "borrador"
+        | "confirmada"
+        | "en_preparacion"
+        | "lista"
+        | "entregada"
+        | "cancelada";
+      estado_pago: "pagado" | "pendiente" | "anulado";
+      metodo_pago:
+        | "efectivo"
+        | "yape"
+        | "plin"
+        | "tarjeta"
+        | "mixto"
+        | "transferencia";
+      tipo_cliente: "registrado" | "paso";
+      tipo_pedido: "local" | "delivery" | "para_llevar";
       user_estado: "activo" | "inactivo" | "eliminado";
     };
     CompositeTypes: {
@@ -887,6 +1093,27 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      delivery_method_tipo: ["propio", "tercero"],
+      estado_delivery: ["pendiente", "en_camino", "entregado"],
+      estado_orden: [
+        "borrador",
+        "confirmada",
+        "en_preparacion",
+        "lista",
+        "entregada",
+        "cancelada",
+      ],
+      estado_pago: ["pagado", "pendiente", "anulado"],
+      metodo_pago: [
+        "efectivo",
+        "yape",
+        "plin",
+        "tarjeta",
+        "mixto",
+        "transferencia",
+      ],
+      tipo_cliente: ["registrado", "paso"],
+      tipo_pedido: ["local", "delivery", "para_llevar"],
       user_estado: ["activo", "inactivo", "eliminado"],
     },
   },

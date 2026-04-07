@@ -150,8 +150,8 @@ export async function getDeliveryFeesSucursal(
 export type CrearVentaData = {
   cajero_id: string;
   sucursal_origen_id: string;
-  tipo_pedido: string;
-  metodo_pago: string;
+  tipo_pedido: Database["public"]["Enums"]["tipo_pedido"];
+  metodo_pago: Database["public"]["Enums"]["metodo_pago"];
   subtotal: number;
   descuento: number;
   total: number;
@@ -184,10 +184,26 @@ export async function crearVenta(data: CrearVentaData): Promise<Venta> {
   const { data: venta, error: ventaError } = await supabase
     .from("ventas")
     .insert({
-      ...ventaData,
-      delivery_status: data.tipo_pedido === "delivery" ? "pendiente" : null,
+      cajero_id: ventaData.cajero_id,
+      sucursal_origen_id: ventaData.sucursal_origen_id,
+      tipo_pedido: ventaData.tipo_pedido,
+      metodo_pago: ventaData.metodo_pago,
+      subtotal: ventaData.subtotal,
+      descuento: ventaData.descuento,
+      total: ventaData.total,
+      notas: ventaData.notas ?? null,
+      mesa_referencia: ventaData.mesa_referencia ?? null,
+      delivery_method: ventaData.delivery_method ?? null,
+      delivery_fee: ventaData.delivery_fee ?? null,
+      delivery_address: ventaData.delivery_address ?? null,
+      delivery_referencia: ventaData.delivery_referencia ?? null,
+      repartidor_id: ventaData.repartidor_id ?? null,
+      third_party_name: ventaData.third_party_name ?? null,
+      delivery_status:
+        ventaData.tipo_pedido === "delivery" ? "pendiente" : null,
       delivery_status_updated_at:
-        data.tipo_pedido === "delivery" ? new Date().toISOString() : null,
+        ventaData.tipo_pedido === "delivery" ? new Date().toISOString() : null,
+      estado_pago_v2: "pagado",
     })
     .select()
     .single();

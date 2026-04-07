@@ -57,13 +57,17 @@ export function VentaExitosaDialog({ venta, open, onNuevoPedido }: Props) {
           <p className="text-muted-foreground text-sm">
             Tipo:{" "}
             <span className="font-medium text-foreground">
-              {TIPO_PEDIDO_LABEL[venta.tipo_pedido] ?? venta.tipo_pedido}
+              {venta.tipo_pedido
+                ? (TIPO_PEDIDO_LABEL[venta.tipo_pedido] ?? venta.tipo_pedido)
+                : "-"}
             </span>
           </p>
           <p className="text-muted-foreground text-sm">
             Pago:{" "}
             <span className="font-medium text-foreground">
-              {METODO_PAGO_LABEL[venta.metodo_pago] ?? venta.metodo_pago}
+              {venta.metodo_pago
+                ? (METODO_PAGO_LABEL[venta.metodo_pago] ?? venta.metodo_pago)
+                : "-"}
             </span>
           </p>
           <p className="text-2xl font-bold text-primary pt-2">
