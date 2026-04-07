@@ -12,7 +12,8 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
                                                                           -> R7 (Promociones)
                                                                           -> R8 (Membresias)
                                        -> R9 (Sucursales) [paralelo con R10]
-                                       -> R10 (Config)    [paralelo con R9]
+                                       -> R10 (Config: Tarifas + Modelo Negocio)
+                                            -> actualiza comportamiento visual de R5b y R5c
                           R1 -> R11 (Usuarios)
 ```
 
@@ -405,22 +406,91 @@ confirmada → en_preparacion → lista → entregada
 
 ---
 
-## Release 10: Configuracion (Tarifas Delivery)
+## Release 10: Configuracion (Tarifas Delivery + Modelo de Negocio)
 
 **Estado:** [ ] Pendiente
-**Dependencia:** Release 2
-**Objetivo:** Admin puede editar tarifas de delivery por sucursal.
+**Dependencia:** Release 2 (configuracion base) + Release 5c (afecta comportamiento visual de ordenes/POS)
+**Objetivo:** Admin puede editar tarifas de delivery y elegir el modelo de operacion del negocio.
 **Nota:** Puede ejecutarse en paralelo con Release 9.
 
+### Contexto del negocio:
+El modelo de operacion define como fluyen los estados de una orden en la interfaz.
+Internamente los estados de BD nunca cambian; solo cambia que transiciones y botones
+se muestran segun el modo seleccionado.
+
+### Modelos de operacion:
+
+**Modo Simple** (negocio pequeno, sin cocina separada):
+```
+confirmada → en_preparacion → entregada
+("lista" se omite visualmente — el cajero cobra directo desde en_preparacion)
+```
+
+**Modo Cocina Independiente** (cocina y caja operan separadas):
+```
+confirmada → en_preparacion → lista → entregada
+(cocina marca "lista", cajero ve la orden lista y procede a cobrar)
+```
+
+> Regla de oro: los estados en BD siempre son los mismos. Solo cambia el comportamiento visual.
+
+### Reglas de edicion de orden:
+
+Una orden es editable solo si:
+- `estado IN (confirmada, en_preparacion)` Y
+- `estado_pago = pendiente`
+
+Bloqueada absolutamente si:
+- `estado_pago = pagado`
+- `estado IN (lista, entregada, cancelada)`
+
+Se muestra advertencia visual al editar una orden en estado `en_preparacion`
+(puede estar siendo preparada en cocina).
+
+### Nueva tabla DB: `configuracion_negocio`
+
+```
+id (siempre un registro unico global)
+modelo_negocio: simple | cocina_independiente
+updated_at
+updated_by (auth.uid)
+```
+
+> No hay config por sucursal — el modelo aplica a todo el negocio.
+
 ### Commits esperados:
-- [ ] Pagina de configuracion
-- [ ] Formulario de tarifas por sucursal y tipo (propio/tercero)
-- [ ] Server Actions + servicio de configuracion
+
+**DB:**
+- [ ] Migracion: tabla `configuracion_negocio` con fila unica global
+- [ ] RLS: solo admin puede update; todos pueden select
+- [ ] Seed: insertar fila inicial con modelo `simple`
+- [ ] Tipos TypeScript actualizados (generate types)
+
+**Backend:**
+- [ ] Servicio `lib/services/configuracion.ts`: getConfiguracion, updateConfiguracion, getDeliveryFees, updateDeliveryFees
+- [ ] Server Actions `actions/configuracion.ts`: actualizarModelo, actualizarTarifas
+- [ ] Validaciones Zod para ambos formularios
+
+**UI — Pagina /configuracion:**
+- [ ] Seccion "Modelo de operacion": selector visual (cards radio) con descripcion de cada modo
+- [ ] Seccion "Tarifas de delivery": formulario por sucursal (propio/tercero) — tarifa actual y nueva
+- [ ] Solo admin puede acceder y editar
+
+**Integracion con /ordenes y POS:**
+- [ ] Leer `modelo_negocio` en servidor y pasarlo como prop a `ListaOrdenes` y `PosClient`
+- [ ] En Modo Simple: ocultar boton "Marcar lista", habilitar cobro directo desde `en_preparacion`
+- [ ] En Modo Cocina: mostrar flujo completo incluyendo estado `lista`
+- [ ] Bloquear edicion de orden segun reglas definidas (ver arriba)
+- [ ] Advertencia visual al intentar editar orden en `en_preparacion`
 
 ### Criterio de exito:
-- Tarifas editables por sucursal
-- Cambios se reflejan en el POS
-- Solo admin puede acceder
+- Admin puede cambiar el modelo de operacion desde /configuracion
+- Cambio se refleja inmediatamente en /ordenes y el POS (sin deploy)
+- Tarifas de delivery editables por sucursal y tipo
+- Los cambios de tarifas se reflejan en el POS
+- Estados internos en BD nunca se alteran segun el modelo elegido
+- Reglas de edicion de orden aplicadas correctamente por estado y estado_pago
+- Solo admin puede acceder a /configuracion
 
 ---
 
