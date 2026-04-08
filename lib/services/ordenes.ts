@@ -174,6 +174,8 @@ export type CrearOrdenData = {
   delivery_referencia?: string | null;
   repartidor_id?: string | null;
   third_party_name?: string | null;
+  // Promoción
+  descuento?: number;
   // Items
   items: {
     producto_id: string;
@@ -194,7 +196,8 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
 
   const subtotal = items.reduce((acc, i) => acc + i.subtotal, 0);
   const deliveryFee = ordenData.delivery_fee ?? 0;
-  const total = subtotal + deliveryFee;
+  const descuento = ordenData.descuento ?? 0;
+  const total = Math.max(0, subtotal - descuento + deliveryFee);
 
   const { data: orden, error: ordenError } = await supabase
     .from("ordenes")
@@ -205,7 +208,7 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
       tipo_pedido: ordenData.tipo_pedido,
       estado: "confirmada",
       subtotal,
-      descuento: 0,
+      descuento,
       delivery_fee: deliveryFee,
       total,
       notas: ordenData.notas ?? null,

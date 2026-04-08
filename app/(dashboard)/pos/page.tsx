@@ -6,6 +6,7 @@ import {
   getRepartidoresSucursal,
 } from "@/lib/services/ventas";
 import { getConfiguracionNegocio } from "@/lib/services/configuracion";
+import { getPromocionesActivas } from "@/lib/services/promociones";
 import type { Database } from "@/types/database";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -56,12 +57,14 @@ export default async function PosPage({
     );
   }
 
-  const [productos, categorias, repartidores, config] = await Promise.all([
-    getProductosPOS(sucursalId),
-    getCategoriasConProductos(sucursalId),
-    getRepartidoresSucursal(sucursalId),
-    getConfiguracionNegocio(),
-  ]);
+  const [productos, categorias, repartidores, config, promociones] =
+    await Promise.all([
+      getProductosPOS(sucursalId),
+      getCategoriasConProductos(sucursalId),
+      getRepartidoresSucursal(sucursalId),
+      getConfiguracionNegocio(),
+      getPromocionesActivas(),
+    ]);
 
   return (
     <PosClient
@@ -72,6 +75,7 @@ export default async function PosPage({
       sucursales={esAdmin ? sucursales : []}
       rol={rol}
       modeloNegocio={config.modelo_negocio}
+      promociones={promociones}
     />
   );
 }

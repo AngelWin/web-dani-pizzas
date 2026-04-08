@@ -32,6 +32,9 @@ export const crearOrdenSchema = z
     delivery_address: z.string().max(200).nullable().optional(),
     delivery_referencia: z.string().max(150).nullable().optional(),
     items: z.array(ordenItemSchema).min(1, "Agrega al menos un producto"),
+    // Promoción aplicada
+    promocion_id: z.string().uuid().nullable().optional(),
+    descuento: z.number().min(0).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.tipo_pedido !== TIPO_PEDIDO.DELIVERY) return;

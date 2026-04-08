@@ -425,16 +425,16 @@ notas         text (nullable — para cancelaciones con motivo)
 
 ## Release 7: Promociones
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 4
 **Objetivo:** CRUD de promociones con vinculacion a productos.
 
 ### Commits esperados:
-- [ ] Listado de promociones
-- [ ] Formulario de crear/editar promocion
-- [ ] Vinculacion de productos a promociones
-- [ ] Server Actions + servicio de promociones
-- [ ] Integracion con POS (promociones activas)
+- [x] Listado de promociones
+- [x] Formulario de crear/editar promocion
+- [x] Vinculacion de productos a promociones
+- [x] Server Actions + servicio de promociones
+- [x] Integracion con POS (promociones activas)
 
 ### Criterio de exito:
 - CRUD completo con fechas inicio/fin

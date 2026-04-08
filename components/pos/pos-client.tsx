@@ -22,6 +22,7 @@ import type { ProductoPOS } from "@/lib/services/ventas";
 import type { Profile } from "@/lib/services/ventas";
 import type { Orden } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
+import type { PromocionActivaPOS } from "@/lib/services/promociones";
 import type { Database } from "@/types/database";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -36,6 +37,7 @@ type Props = {
   sucursales: Sucursal[];
   rol: string | null;
   modeloNegocio: ModeloNegocio;
+  promociones: PromocionActivaPOS[];
 };
 
 export function PosClient({
@@ -46,6 +48,7 @@ export function PosClient({
   sucursales,
   rol,
   modeloNegocio,
+  promociones,
 }: Props) {
   const router = useRouter();
   const carrito = useCarrito();
@@ -153,6 +156,7 @@ export function PosClient({
         rol={rol}
         onSubmit={handleConfirmarPedido}
         isSubmitting={isSubmitting}
+        promociones={promociones}
       />
 
       {/* Dialog de orden confirmada */}

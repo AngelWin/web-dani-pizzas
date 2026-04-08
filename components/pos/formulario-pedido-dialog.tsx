@@ -39,10 +39,14 @@ import {
   crearOrdenSchema,
   type CrearOrdenFormValues,
 } from "@/lib/validations/ordenes";
+import { Tag, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { BuscadorCliente } from "./buscador-cliente";
 import type { useCarrito } from "@/hooks/use-carrito";
 import type { Profile } from "@/lib/services/ventas";
 import type { ClienteConMembresia } from "@/lib/services/clientes";
+import type { PromocionActivaPOS } from "@/lib/services/promociones";
+import { calcularDescuento } from "@/lib/promociones-utils";
 
 type Repartidor = Pick<Profile, "id" | "nombre" | "apellido_paterno">;
 
@@ -55,6 +59,7 @@ type Props = {
   rol: string | null;
   onSubmit: (data: CrearOrdenFormValues) => Promise<void>;
   isSubmitting: boolean;
+  promociones: PromocionActivaPOS[];
 };
 
 export function FormularioPedidoDialog({
@@ -66,10 +71,13 @@ export function FormularioPedidoDialog({
   rol,
   onSubmit,
   isSubmitting,
+  promociones,
 }: Props) {
   const esMesero = rol === "mesero";
   const [clienteSeleccionado, setClienteSeleccionado] =
     useState<ClienteConMembresia | null>(null);
+  const [promocionSeleccionada, setPromocionSeleccionada] =
+    useState<PromocionActivaPOS | null>(null);
 
   const form = useForm<CrearOrdenFormValues>({
     resolver: zodResolver(crearOrdenSchema),
@@ -85,6 +93,8 @@ export function FormularioPedidoDialog({
       delivery_address: "",
       delivery_referencia: "",
       items: [],
+      promocion_id: null,
+      descuento: 0,
     },
   });
 
@@ -122,9 +132,25 @@ export function FormularioPedidoDialog({
     }
   }, [deliveryMethod, deliveryFees, form]);
 
+  // Sincronizar promoción seleccionada → form (descuento)
+  useEffect(() => {
+    if (!promocionSeleccionada) {
+      form.setValue("promocion_id", null);
+      form.setValue("descuento", 0);
+      return;
+    }
+    const montoDescuento = calcularDescuento(
+      promocionSeleccionada,
+      carrito.subtotal,
+    );
+    form.setValue("promocion_id", promocionSeleccionada.id);
+    form.setValue("descuento", montoDescuento);
+  }, [promocionSeleccionada, carrito.subtotal, form]);
+
   // Limpiar al cerrar
   function handleClose() {
     setClienteSeleccionado(null);
+    setPromocionSeleccionada(null);
     form.reset();
     onClose();
   }
@@ -142,7 +168,10 @@ export function FormularioPedidoDialog({
 
   const deliveryFee =
     tipoPedido === TIPO_PEDIDO.DELIVERY ? (form.watch("delivery_fee") ?? 0) : 0;
-  const total = carrito.subtotal + deliveryFee;
+  const descuento = promocionSeleccionada
+    ? calcularDescuento(promocionSeleccionada, carrito.subtotal)
+    : 0;
+  const total = Math.max(0, carrito.subtotal - descuento + deliveryFee);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -426,12 +455,71 @@ export function FormularioPedidoDialog({
               )}
             />
 
+            {/* ── Promoción ── */}
+            {promociones.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Promoción (opcional)</p>
+                {promocionSeleccionada ? (
+                  <div className="flex items-center justify-between rounded-xl border border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <div>
+                        <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                          {promocionSeleccionada.nombre}
+                        </p>
+                        <p className="text-xs text-green-600/80 dark:text-green-500">
+                          {promocionSeleccionada.tipo_descuento === "porcentaje"
+                            ? `${promocionSeleccionada.valor_descuento}% de descuento`
+                            : `S/. ${promocionSeleccionada.valor_descuento} de descuento`}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPromocionSeleccionada(null)}
+                      className="rounded-full p-1 hover:bg-green-200/50 dark:hover:bg-green-900/50"
+                    >
+                      <X className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </button>
+                  </div>
+                ) : (
+                  <Select
+                    onValueChange={(id) => {
+                      const promo = promociones.find((p) => p.id === id);
+                      setPromocionSeleccionada(promo ?? null);
+                    }}
+                    value=""
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Seleccionar promoción..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {promociones.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nombre}
+                          {p.tipo_descuento === "porcentaje"
+                            ? ` — ${p.valor_descuento}%`
+                            : ` — S/. ${p.valor_descuento}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
             {/* ── Total ── */}
             <div className="rounded-xl border p-3 space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatCurrency(carrito.subtotal)}</span>
               </div>
+              {descuento > 0 && (
+                <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                  <span>Descuento promo</span>
+                  <span>- {formatCurrency(descuento)}</span>
+                </div>
+              )}
               {deliveryFee > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Delivery</span>
