@@ -473,7 +473,7 @@ notas         text (nullable — para cancelaciones con motivo)
 
 ## Release 10: Configuracion (Tarifas Delivery + Modelo de Negocio)
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 2 (configuracion base) + Release 5c (afecta comportamiento visual de ordenes/POS)
 **Objetivo:** Admin puede editar tarifas de delivery y elegir el modelo de operacion del negocio.
 **Nota:** Puede ejecutarse en paralelo con Release 9.
@@ -526,27 +526,27 @@ updated_by (auth.uid)
 ### Commits esperados:
 
 **DB:**
-- [ ] Migracion: tabla `configuracion_negocio` con fila unica global
-- [ ] RLS: solo admin puede update; todos pueden select
-- [ ] Seed: insertar fila inicial con modelo `simple`
-- [ ] Tipos TypeScript actualizados (generate types)
+- [x] Migracion: tabla `configuracion_negocio` con fila unica global
+- [x] RLS: solo admin puede update; todos pueden select
+- [x] Seed: insertar fila inicial con modelo `simple`
+- [x] Tipos TypeScript actualizados (generate types)
 
 **Backend:**
-- [ ] Servicio `lib/services/configuracion.ts`: getConfiguracion, updateConfiguracion, getDeliveryFees, updateDeliveryFees
-- [ ] Server Actions `actions/configuracion.ts`: actualizarModelo, actualizarTarifas
-- [ ] Validaciones Zod para ambos formularios
+- [x] Servicio `lib/services/configuracion.ts`: getConfiguracion, updateConfiguracion, getDeliveryFees, updateDeliveryFees
+- [x] Server Actions `actions/configuracion.ts`: actualizarModelo, actualizarTarifas
+- [x] Validaciones Zod para ambos formularios
 
 **UI — Pagina /configuracion:**
-- [ ] Seccion "Modelo de operacion": selector visual (cards radio) con descripcion de cada modo
-- [ ] Seccion "Tarifas de delivery": formulario por sucursal (propio/tercero) — tarifa actual y nueva
-- [ ] Solo admin puede acceder y editar
+- [x] Seccion "Modelo de operacion": selector visual (cards radio) con descripcion de cada modo
+- [x] Seccion "Tarifas de delivery": formulario por sucursal (propio/tercero) — tarifa actual y nueva
+- [x] Solo admin puede acceder y editar
 
 **Integracion con /ordenes y POS:**
-- [ ] Leer `modelo_negocio` en servidor y pasarlo como prop a `ListaOrdenes` y `PosClient`
-- [ ] En Modo Simple: ocultar boton "Marcar lista", habilitar cobro directo desde `en_preparacion`
-- [ ] En Modo Cocina: mostrar flujo completo incluyendo estado `lista`
-- [ ] Bloquear edicion de orden segun reglas definidas (ver arriba)
-- [ ] Advertencia visual al intentar editar orden en `en_preparacion`
+- [x] Leer `modelo_negocio` en servidor y pasarlo como prop a `ListaOrdenes` y `PosClient`
+- [x] En Modo Simple: ocultar boton "Marcar lista", habilitar cobro directo desde `en_preparacion`
+- [x] En Modo Cocina: mostrar flujo completo incluyendo estado `lista`
+- [x] Bloquear edicion de orden segun reglas definidas (estados finalizados sin acciones)
+- [x] Advertencia visual al intentar cancelar orden en `en_preparacion` (icono AlertTriangle + color amber)
 
 ### Criterio de exito:
 - Admin puede cambiar el modelo de operacion desde /configuracion
