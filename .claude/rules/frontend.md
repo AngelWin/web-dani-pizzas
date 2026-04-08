@@ -26,6 +26,12 @@ paths: "app/**/*.tsx,components/**/*.tsx,components/**/*.ts"
 - Botones grandes para interacción táctil en POS: `h-12 min-w-[44px]`
 - Responsive: mobile-first, POS optimizado para tablet/PC táctil
 
+## Moneda
+
+- Usar SIEMPRE el formato `S/. X.XX` para valores monetarios
+- Usar `formatCurrency(amount)` de `@/lib/utils` — nunca escribir el símbolo manualmente
+- No usar `$`, `PEN`, ni `S/` sin el punto
+
 ## Textos
 
 - TODOS los textos de UI deben estar en español (Perú)

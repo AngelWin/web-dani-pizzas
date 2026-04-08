@@ -19,6 +19,7 @@ export type OrdenConItems = Orden & {
   orden_items: OrdenItem[];
   cajero: { nombre: string; apellido_paterno: string } | null;
   repartidor: { nombre: string; apellido_paterno: string } | null;
+  cliente: { nombre: string; apellido: string | null } | null;
   orden_estado_historial: HistorialConUsuario[];
 };
 
@@ -41,6 +42,7 @@ export async function getOrdenes(
       orden_items (*),
       cajero:profiles!ordenes_cajero_id_fkey (nombre, apellido_paterno),
       repartidor:profiles!ordenes_repartidor_id_fkey (nombre, apellido_paterno),
+      cliente:clientes!ordenes_cliente_id_fkey (nombre, apellido),
       orden_estado_historial (
         *,
         cambiado_por_profile:profiles!orden_estado_historial_cambiado_por_fkey (nombre, apellido_paterno)

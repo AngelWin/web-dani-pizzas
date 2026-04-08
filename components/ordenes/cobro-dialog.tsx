@@ -111,6 +111,22 @@ export function CobroDialog({ orden, open, onOpenChange }: Props) {
               </DialogTitle>
             </DialogHeader>
 
+            {/* Cliente */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Cliente:</span>
+              <span
+                className={
+                  !orden.cliente
+                    ? "italic text-muted-foreground"
+                    : "font-medium"
+                }
+              >
+                {orden.cliente
+                  ? `${orden.cliente.nombre}${orden.cliente.apellido ? ` ${orden.cliente.apellido}` : ""}`
+                  : "Cliente no registrado"}
+              </span>
+            </div>
+
             {/* Resumen de la orden */}
             <div className="space-y-1 rounded-lg bg-muted/50 p-3 text-sm">
               {orden.orden_items.map((item) => (
@@ -246,7 +262,12 @@ export function CobroDialog({ orden, open, onOpenChange }: Props) {
                   <Button
                     type="submit"
                     className="h-12 flex-1 rounded-xl bg-green-600 text-white hover:bg-green-700"
-                    disabled={isPending}
+                    disabled={
+                      isPending ||
+                      !metodoPago ||
+                      (esEfectivo &&
+                        (!montoRecibido || montoRecibido < orden.total))
+                    }
                   >
                     {isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

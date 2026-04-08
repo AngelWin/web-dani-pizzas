@@ -62,7 +62,7 @@ type Props = {
   modeloNegocio: ModeloNegocio;
   fechaFiltro: string; // YYYY-MM-DD
   hoy: string; // YYYY-MM-DD
-  minFecha: string; // YYYY-MM-DD (7 días atrás)
+  minFecha: string | null; // YYYY-MM-DD (7 días atrás) — null = sin restricción (admin)
 };
 
 export function ListaOrdenes({
@@ -81,7 +81,7 @@ export function ListaOrdenes({
 
   function handleFechaChange(e: React.ChangeEvent<HTMLInputElement>) {
     const nueva = e.target.value;
-    if (nueva >= minFecha && nueva <= hoy) {
+    if (nueva <= hoy && (minFecha === null || nueva >= minFecha)) {
       router.push(`/ordenes?fecha=${nueva}`);
     }
   }
@@ -105,7 +105,7 @@ export function ListaOrdenes({
           <input
             type="date"
             value={fechaFiltro}
-            min={minFecha}
+            {...(minFecha ? { min: minFecha } : {})}
             max={hoy}
             onChange={handleFechaChange}
             className="h-9 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"

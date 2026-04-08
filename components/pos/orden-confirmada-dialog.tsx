@@ -40,7 +40,7 @@ export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
   const tieneDelivery = esDelivery && orden.delivery_fee > 0;
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={(v) => !v && onNuevoPedido()}>
       <DialogContent
         className="max-w-sm"
         onInteractOutside={(e) => e.preventDefault()}

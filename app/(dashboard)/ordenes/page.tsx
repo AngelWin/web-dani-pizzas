@@ -25,12 +25,6 @@ export default async function OrdenesPage({
 }) {
   const params = await searchParams;
   const hoy = getHoyLima();
-  const minFecha = getMinFechaLima();
-
-  // Validar que la fecha esté dentro del rango permitido (máx 7 días atrás)
-  const fechaParam = params.fecha ?? hoy;
-  const fechaFiltro =
-    fechaParam >= minFecha && fechaParam <= hoy ? fechaParam : hoy;
 
   const supabase = await createClient();
 
@@ -38,6 +32,17 @@ export default async function OrdenesPage({
     supabase.rpc("get_user_role"),
     supabase.rpc("get_user_sucursal"),
   ]);
+
+  // Solo los no-administradores tienen restricción de 7 días
+  const esAdmin = rolNombre === "administrador";
+  const minFecha = esAdmin ? null : getMinFechaLima();
+
+  // Validar que la fecha esté dentro del rango permitido
+  const fechaParam = params.fecha ?? hoy;
+  const fechaFiltro =
+    fechaParam <= hoy && (minFecha === null || fechaParam >= minFecha)
+      ? fechaParam
+      : hoy;
 
   const [ordenes, config] = await Promise.all([
     getOrdenes(sucursalId, "todas", fechaFiltro),

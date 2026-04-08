@@ -12,8 +12,9 @@ import {
   Bike,
   ShoppingBag,
   Clock,
+  UserCheck,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { EstadoOrdenBadge, EstadoDeliveryBadge } from "./estado-badge";
 import { AccionesOrden } from "./acciones-orden";
 import { HistorialTimeline } from "./historial-timeline";
@@ -37,8 +38,11 @@ function formatHora(isoString: string) {
   });
 }
 
-function formatSoles(amount: number) {
-  return `S/ ${amount.toFixed(2)}`;
+function nombreCliente(
+  cliente: { nombre: string; apellido: string | null } | null,
+): string {
+  if (!cliente) return "Cliente no registrado";
+  return `${cliente.nombre}${cliente.apellido ? ` ${cliente.apellido}` : ""}`;
 }
 
 function nombreCajero(
@@ -101,6 +105,12 @@ export function TarjetaOrden({ orden, rol, modeloNegocio }: Props) {
             </span>
           )}
         </div>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <UserCheck className="h-3 w-3" />
+          <span className={!orden.cliente ? "italic" : ""}>
+            {nombreCliente(orden.cliente)}
+          </span>
+        </div>
       </CardHeader>
 
       <CardContent className="pb-3">
@@ -124,7 +134,7 @@ export function TarjetaOrden({ orden, rol, modeloNegocio }: Props) {
                 )}
               </span>
               <span className="shrink-0 pl-2 text-muted-foreground">
-                {formatSoles(item.subtotal)}
+                {formatCurrency(item.subtotal)}
               </span>
             </li>
           ))}
@@ -179,11 +189,11 @@ export function TarjetaOrden({ orden, rol, modeloNegocio }: Props) {
       <CardFooter className="flex items-center justify-between pt-3">
         <div className="text-sm">
           <span className="font-bold text-foreground">
-            {formatSoles(orden.total)}
+            {formatCurrency(orden.total)}
           </span>
           {esDelivery && orden.delivery_fee > 0 && (
             <span className="ml-1 text-xs text-muted-foreground">
-              (inc. delivery {formatSoles(orden.delivery_fee)})
+              (inc. delivery {formatCurrency(orden.delivery_fee)})
             </span>
           )}
         </div>

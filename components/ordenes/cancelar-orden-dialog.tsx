@@ -73,6 +73,20 @@ export function CancelarOrdenDialog({ orden, open, onOpenChange }: Props) {
           </div>
         )}
 
+        {/* Cliente */}
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Cliente:</span>
+          <span
+            className={
+              !orden.cliente ? "italic text-muted-foreground" : "font-medium"
+            }
+          >
+            {orden.cliente
+              ? `${orden.cliente.nombre}${orden.cliente.apellido ? ` ${orden.cliente.apellido}` : ""}`
+              : "Cliente no registrado"}
+          </span>
+        </div>
+
         {/* Resumen de la orden */}
         <div className="rounded-xl border bg-muted/30 p-3 space-y-1.5">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
