@@ -43,10 +43,39 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
                   <p className="text-sm font-medium leading-tight">
                     {item.producto_nombre}
                   </p>
-                  {item.variante_nombre && (
+                  {item.variante_nombre && !item.sabores && (
                     <p className="text-xs text-muted-foreground">
                       {item.variante_nombre}
                     </p>
+                  )}
+                  {/* Sabores de pizza */}
+                  {item.sabores && item.sabores.length > 0 && (
+                    <div className="text-xs text-muted-foreground mt-0.5 space-y-0.5">
+                      <p className="font-medium text-foreground/70">
+                        {item.variante_nombre}
+                      </p>
+                      {item.sabores.map((s, i) => (
+                        <p key={i}>
+                          {item.sabores!.length > 1 && (
+                            <span className="text-primary font-medium">
+                              {s.proporcion}{" "}
+                            </span>
+                          )}
+                          {s.sabor_nombre}
+                          {s.exclusiones.length > 0 && (
+                            <span className="text-destructive/70">
+                              {" "}
+                              · sin {s.exclusiones.join(", ")}
+                            </span>
+                          )}
+                        </p>
+                      ))}
+                      {item.extras && item.extras.length > 0 && (
+                        <p className="text-primary/70">
+                          +{item.extras.map((e) => e.nombre).join(", ")}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
                 <button

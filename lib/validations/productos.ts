@@ -21,6 +21,7 @@ export const categoriaMedidaSchema = z.object({
     .nullable(),
   orden: z.coerce.number().int().min(0, "El orden debe ser mayor o igual a 0"),
   activa: z.boolean(),
+  permite_combinacion: z.boolean(),
 });
 
 export const varianteFormSchema = z.object({

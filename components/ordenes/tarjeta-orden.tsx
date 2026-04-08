@@ -19,6 +19,30 @@ import { EstadoOrdenBadge, EstadoDeliveryBadge } from "./estado-badge";
 import { AccionesOrden } from "./acciones-orden";
 import { HistorialTimeline } from "./historial-timeline";
 import type { OrdenConItems } from "@/lib/services/ordenes";
+import type { Json } from "@/types/database";
+
+type SaborOrdenJson = {
+  sabor_id: string;
+  sabor_nombre: string;
+  proporcion: string;
+  exclusiones: string[];
+};
+
+type ExtraOrdenJson = {
+  extra_id: string;
+  nombre: string;
+  precio: number;
+};
+
+function parseSabores(raw: Json | null): SaborOrdenJson[] {
+  if (!Array.isArray(raw)) return [];
+  return raw as SaborOrdenJson[];
+}
+
+function parseExtras(raw: Json | null): ExtraOrdenJson[] {
+  if (!Array.isArray(raw)) return [];
+  return raw as ExtraOrdenJson[];
+}
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { NivelMembresia } from "@/lib/services/membresias";
 
@@ -122,29 +146,62 @@ export function TarjetaOrden({
 
       <CardContent className="pb-3">
         {/* Items */}
-        <ul className="space-y-1">
-          {orden.orden_items.map((item) => (
-            <li key={item.id} className="flex justify-between text-sm">
-              <span className="text-foreground">
-                <span className="font-medium">{item.cantidad}×</span>{" "}
-                {item.producto_nombre}
-                {item.variante_nombre && (
-                  <span className="text-muted-foreground">
-                    {" "}
-                    ({item.variante_nombre})
-                  </span>
-                )}
-                {item.notas_item && (
-                  <span className="block text-xs text-muted-foreground">
-                    {item.notas_item}
-                  </span>
-                )}
-              </span>
-              <span className="shrink-0 pl-2 text-muted-foreground">
-                {formatCurrency(item.subtotal)}
-              </span>
-            </li>
-          ))}
+        <ul className="space-y-1.5">
+          {orden.orden_items.map((item) => {
+            const sabores = parseSabores(item.sabores);
+            const extras = parseExtras(item.extras);
+            return (
+              <li key={item.id} className="flex justify-between text-sm">
+                <span className="text-foreground">
+                  <span className="font-medium">{item.cantidad}×</span>{" "}
+                  {item.producto_nombre}
+                  {item.variante_nombre && !sabores.length && (
+                    <span className="text-muted-foreground">
+                      {" "}
+                      ({item.variante_nombre})
+                    </span>
+                  )}
+                  {/* Sabores de pizza */}
+                  {sabores.length > 0 && (
+                    <span className="block text-xs text-muted-foreground mt-0.5 space-y-0.5">
+                      <span className="block font-medium text-foreground/70">
+                        {item.variante_nombre}
+                      </span>
+                      {sabores.map((s, i) => (
+                        <span key={i} className="block">
+                          {sabores.length > 1 && (
+                            <span className="text-primary font-medium">
+                              {s.proporcion}{" "}
+                            </span>
+                          )}
+                          {s.sabor_nombre}
+                          {s.exclusiones.length > 0 && (
+                            <span className="text-destructive/70">
+                              {" "}
+                              · sin {s.exclusiones.join(", ")}
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                      {extras.length > 0 && (
+                        <span className="block text-primary/70">
+                          +{extras.map((e) => e.nombre).join(", ")}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {item.notas_item && (
+                    <span className="block text-xs text-muted-foreground">
+                      {item.notas_item}
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0 pl-2 text-muted-foreground">
+                  {formatCurrency(item.subtotal)}
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Delivery info */}

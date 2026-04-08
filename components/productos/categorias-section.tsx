@@ -192,6 +192,7 @@ function MedidaForm({
       descripcion: medida?.descripcion ?? "",
       orden: medida?.orden ?? 0,
       activa: medida?.activa ?? true,
+      permite_combinacion: medida?.permite_combinacion ?? false,
     },
   });
 
@@ -280,6 +281,28 @@ function MedidaForm({
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="permite_combinacion"
+            render={({ field }) => (
+              <FormItem className="flex items-end gap-3 space-y-0 pb-1 col-span-2">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div>
+                  <FormLabel className="cursor-pointer">
+                    Permite combinación de sabores
+                  </FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    Activa para tamaños como Familiar y Extra (pizzas)
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
@@ -359,6 +382,7 @@ function MedidasPanel({
                 <TableHead>Nombre</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead className="text-center">Orden</TableHead>
+                <TableHead className="text-center">Combinable</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
@@ -371,6 +395,13 @@ function MedidasPanel({
                     {m.descripcion ?? "—"}
                   </TableCell>
                   <TableCell className="text-center">{m.orden}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge
+                      variant={m.permite_combinacion ? "default" : "outline"}
+                    >
+                      {m.permite_combinacion ? "Sí" : "No"}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={m.activa ? "default" : "secondary"}>
                       {m.activa ? "Activa" : "Inactiva"}
@@ -593,7 +624,7 @@ export function CategoriasSection({
                     </TableRow>
                     {isExpanded && (
                       <TableRow key={`${cat.id}-medidas`}>
-                        <TableCell colSpan={6} className="p-0">
+                        <TableCell colSpan={7} className="p-0">
                           <MedidasPanel
                             categoria={cat}
                             medidas={medidas}

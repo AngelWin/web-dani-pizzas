@@ -186,6 +186,15 @@ export type CrearOrdenData = {
     precio_unitario: number;
     subtotal: number;
     notas_item?: string | null;
+    sabores?:
+      | {
+          sabor_id: string;
+          sabor_nombre: string;
+          proporcion: string;
+          exclusiones: string[];
+        }[]
+      | null;
+    extras?: { extra_id: string; nombre: string; precio: number }[] | null;
   }[];
 };
 
@@ -239,6 +248,8 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
       precio_unitario: item.precio_unitario,
       subtotal: item.subtotal,
       notas_item: item.notas_item ?? null,
+      sabores: item.sabores ?? null,
+      extras: item.extras ?? null,
     })),
   );
 

@@ -14,6 +14,123 @@ export type Database = {
   };
   public: {
     Tables: {
+      pizza_sabores: {
+        Row: {
+          categoria_id: string;
+          created_at: string | null;
+          descripcion: string | null;
+          disponible: boolean;
+          id: string;
+          imagen_url: string | null;
+          nombre: string;
+          orden: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          categoria_id: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean;
+          id?: string;
+          imagen_url?: string | null;
+          nombre: string;
+          orden?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          categoria_id?: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean;
+          id?: string;
+          imagen_url?: string | null;
+          nombre?: string;
+          orden?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pizza_sabores_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sabor_ingredientes: {
+        Row: {
+          es_principal: boolean;
+          id: string;
+          nombre: string;
+          orden: number;
+          sabor_id: string;
+        };
+        Insert: {
+          es_principal?: boolean;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          sabor_id: string;
+        };
+        Update: {
+          es_principal?: boolean;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          sabor_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sabor_ingredientes_sabor_id_fkey";
+            columns: ["sabor_id"];
+            isOneToOne: false;
+            referencedRelation: "pizza_sabores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producto_extras: {
+        Row: {
+          categoria_id: string;
+          created_at: string | null;
+          disponible: boolean;
+          id: string;
+          nombre: string;
+          orden: number;
+          precio: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          categoria_id: string;
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          precio?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          categoria_id?: string;
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          precio?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producto_extras_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       categoria_medidas: {
         Row: {
           activa: boolean;
@@ -23,6 +140,7 @@ export type Database = {
           id: string;
           nombre: string;
           orden: number;
+          permite_combinacion: boolean;
           updated_at: string | null;
         };
         Insert: {
@@ -33,6 +151,7 @@ export type Database = {
           id?: string;
           nombre: string;
           orden?: number;
+          permite_combinacion?: boolean;
           updated_at?: string | null;
         };
         Update: {
@@ -43,6 +162,7 @@ export type Database = {
           id?: string;
           nombre?: string;
           orden?: number;
+          permite_combinacion?: boolean;
           updated_at?: string | null;
         };
         Relationships: [
@@ -316,12 +436,14 @@ export type Database = {
         Row: {
           cantidad: number;
           created_at: string;
+          extras: Json | null;
           id: string;
           notas_item: string | null;
           orden_id: string;
           precio_unitario: number;
           producto_id: string;
           producto_nombre: string;
+          sabores: Json | null;
           subtotal: number;
           variante_id: string | null;
           variante_nombre: string | null;
@@ -329,12 +451,14 @@ export type Database = {
         Insert: {
           cantidad: number;
           created_at?: string;
+          extras?: Json | null;
           id?: string;
           notas_item?: string | null;
           orden_id: string;
           precio_unitario: number;
           producto_id: string;
           producto_nombre: string;
+          sabores?: Json | null;
           subtotal: number;
           variante_id?: string | null;
           variante_nombre?: string | null;
@@ -342,12 +466,14 @@ export type Database = {
         Update: {
           cantidad?: number;
           created_at?: string;
+          extras?: Json | null;
           id?: string;
           notas_item?: string | null;
           orden_id?: string;
           precio_unitario?: number;
           producto_id?: string;
           producto_nombre?: string;
+          sabores?: Json | null;
           subtotal?: number;
           variante_id?: string | null;
           variante_nombre?: string | null;

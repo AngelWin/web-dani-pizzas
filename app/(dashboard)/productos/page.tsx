@@ -5,6 +5,8 @@ import {
   getProductos,
   getAllCategoriaMedidas,
   getSucursales,
+  getAllPizzaSabores,
+  getAllProductoExtras,
 } from "@/lib/services/productos";
 
 interface SearchParams {
@@ -28,6 +30,8 @@ export default async function ProductosPage({
     categorias,
     categoriaMedidas,
     sucursales,
+    saboresPorCategoria,
+    extrasPorCategoria,
   ] = await Promise.all([
     getProductos({
       page,
@@ -38,6 +42,8 @@ export default async function ProductosPage({
     getCategorias(),
     getAllCategoriaMedidas(),
     getSucursales(),
+    getAllPizzaSabores(),
+    getAllProductoExtras(),
   ]);
 
   return (
@@ -51,6 +57,8 @@ export default async function ProductosPage({
         categorias={categorias}
         categoriaMedidas={categoriaMedidas}
         sucursales={sucursales}
+        saboresPorCategoria={saboresPorCategoria}
+        extrasPorCategoria={extrasPorCategoria}
         total={total}
         page={page}
         totalPages={totalPages}

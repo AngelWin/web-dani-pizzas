@@ -16,14 +16,17 @@ export type ProductoPOS = {
   imagen_url: string | null;
   disponible: boolean | null;
   categoria_id: string | null;
-  categorias: { id: string; nombre: string } | null;
+  categorias: { id: string; nombre: string; tiene_sabores: boolean } | null;
   producto_variantes: {
     id: string;
     medida_id: string;
     precio: number;
     disponible: boolean;
     orden: number;
-    categoria_medidas: { nombre: string } | null;
+    categoria_medidas: {
+      nombre: string;
+      permite_combinacion: boolean;
+    } | null;
   }[];
 };
 
@@ -34,13 +37,23 @@ export async function getProductosPOS(
 ): Promise<ProductoPOS[]> {
   const supabase = await createClient();
 
+  // Obtener IDs de categorías que tienen sabores definidos
+  const { data: categoriasConSabores } = await supabase
+    .from("pizza_sabores")
+    .select("categoria_id")
+    .eq("disponible", true);
+
+  const categoriasConSaboresIds = new Set(
+    (categoriasConSabores ?? []).map((s) => s.categoria_id),
+  );
+
   // Productos disponibles globalmente
   const { data: productos, error } = await supabase
     .from("productos")
     .select(
       `id, nombre, descripcion, precio, imagen_url, disponible, categoria_id,
        categorias(id, nombre),
-       producto_variantes(id, medida_id, precio, disponible, orden, categoria_medidas(nombre))`,
+       producto_variantes(id, medida_id, precio, disponible, orden, categoria_medidas(nombre, permite_combinacion))`,
     )
     .eq("disponible", true)
     .order("nombre", { ascending: true });
@@ -70,15 +83,25 @@ export async function getProductosPOS(
   });
 
   // Filtrar variantes no disponibles
-  return filtrados.map((p) => ({
-    ...p,
-    categorias: Array.isArray(p.categorias)
+  return filtrados.map((p) => {
+    const cat = Array.isArray(p.categorias)
       ? (p.categorias[0] ?? null)
-      : (p.categorias as { id: string; nombre: string } | null),
-    producto_variantes: (p.producto_variantes ?? []).filter(
-      (v) => v.disponible,
-    ),
-  })) as ProductoPOS[];
+      : (p.categorias as { id: string; nombre: string } | null);
+
+    return {
+      ...p,
+      categorias: cat
+        ? {
+            id: cat.id,
+            nombre: cat.nombre,
+            tiene_sabores: categoriasConSaboresIds.has(cat.id),
+          }
+        : null,
+      producto_variantes: (p.producto_variantes ?? []).filter(
+        (v) => v.disponible,
+      ),
+    };
+  }) as ProductoPOS[];
 }
 
 // ─── Categorías (para filtro del POS) ─────────────────────────────────────

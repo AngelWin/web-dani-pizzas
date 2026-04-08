@@ -381,3 +381,135 @@ export async function toggleDisponibleAction(
   revalidatePath("/productos");
   return { data: null, error: null };
 }
+
+// ─── Pizza Sabores ─────────────────────────────────────────────────────────
+
+export async function createPizzaSaborAction(data: {
+  categoria_id: string;
+  nombre: string;
+  descripcion?: string | null;
+  disponible?: boolean;
+  orden?: number;
+}): Promise<ActionResult<{ id: string }>> {
+  if (!data.nombre?.trim()) {
+    return { data: null, error: "El nombre es requerido" };
+  }
+  const supabase = await createClient();
+  const { data: sabor, error } = await supabase
+    .from("pizza_sabores")
+    .insert(data)
+    .select("id")
+    .single();
+  if (error) return { data: null, error: error.message };
+  revalidatePath("/productos");
+  return { data: { id: sabor.id }, error: null };
+}
+
+export async function updatePizzaSaborAction(
+  id: string,
+  data: {
+    nombre?: string;
+    descripcion?: string | null;
+    disponible?: boolean;
+    orden?: number;
+  },
+): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("pizza_sabores")
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) return { data: null, error: error.message };
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}
+
+export async function deletePizzaSaborAction(
+  id: string,
+): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("pizza_sabores").delete().eq("id", id);
+  if (error) return { data: null, error: error.message };
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}
+
+export async function upsertSaborIngredientesAction(
+  saborId: string,
+  ingredientes: { nombre: string; es_principal: boolean; orden: number }[],
+): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const { error: delError } = await supabase
+    .from("sabor_ingredientes")
+    .delete()
+    .eq("sabor_id", saborId);
+  if (delError) return { data: null, error: delError.message };
+
+  if (ingredientes.length > 0) {
+    const { error: insError } = await supabase
+      .from("sabor_ingredientes")
+      .insert(
+        ingredientes.map((ing) => ({
+          sabor_id: saborId,
+          nombre: ing.nombre,
+          es_principal: ing.es_principal,
+          orden: ing.orden,
+        })),
+      );
+    if (insError) return { data: null, error: insError.message };
+  }
+
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}
+
+// ─── Producto Extras ───────────────────────────────────────────────────────
+
+export async function createProductoExtraAction(data: {
+  categoria_id: string;
+  nombre: string;
+  precio: number;
+  disponible?: boolean;
+  orden?: number;
+}): Promise<ActionResult<null>> {
+  if (!data.nombre?.trim()) {
+    return { data: null, error: "El nombre es requerido" };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("producto_extras").insert(data);
+  if (error) return { data: null, error: error.message };
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}
+
+export async function updateProductoExtraAction(
+  id: string,
+  data: {
+    nombre?: string;
+    precio?: number;
+    disponible?: boolean;
+    orden?: number;
+  },
+): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("producto_extras")
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) return { data: null, error: error.message };
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}
+
+export async function deleteProductoExtraAction(
+  id: string,
+): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("producto_extras")
+    .delete()
+    .eq("id", id);
+  if (error) return { data: null, error: error.message };
+  revalidatePath("/productos");
+  return { data: null, error: null };
+}

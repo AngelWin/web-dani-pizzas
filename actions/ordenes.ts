@@ -62,6 +62,8 @@ export async function crearOrdenAction(
         precio_unitario: i.precio_unitario,
         subtotal: i.subtotal,
         notas_item: i.notas_item ?? null,
+        sabores: i.sabores ?? null,
+        extras: i.extras ?? null,
       })),
     });
 

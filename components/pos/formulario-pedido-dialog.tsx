@@ -119,6 +119,8 @@ export function FormularioPedidoDialog({
         variante_nombre: i.variante_nombre,
         precio_unitario: i.producto_precio,
         subtotal: i.subtotal,
+        sabores: i.sabores ?? null,
+        extras: i.extras ?? null,
       })),
     );
   }, [carrito.items, form]);

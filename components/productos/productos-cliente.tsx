@@ -23,11 +23,15 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ProductosTable } from "@/components/productos/productos-table";
 import { ProductoForm } from "@/components/productos/producto-form";
 import { CategoriasSection } from "@/components/productos/categorias-section";
+import { SaboresSection } from "@/components/productos/sabores-section";
+import { ExtrasSection } from "@/components/productos/extras-section";
 import type {
   Categoria,
   CategoriaMedida,
   ProductoConCategoria,
   Sucursal,
+  PizzaSaborConIngredientes,
+  ProductoExtra,
 } from "@/lib/services/productos";
 
 interface ProductosClienteProps {
@@ -35,6 +39,8 @@ interface ProductosClienteProps {
   categorias: Categoria[];
   categoriaMedidas: Record<string, CategoriaMedida[]>;
   sucursales: Sucursal[];
+  saboresPorCategoria: Record<string, PizzaSaborConIngredientes[]>;
+  extrasPorCategoria: Record<string, ProductoExtra[]>;
   total: number;
   page: number;
   totalPages: number;
@@ -48,6 +54,8 @@ export function ProductosCliente({
   categorias,
   categoriaMedidas,
   sucursales,
+  saboresPorCategoria,
+  extrasPorCategoria,
   total,
   page,
   totalPages,
@@ -89,6 +97,8 @@ export function ProductosCliente({
           <TabsList>
             <TabsTrigger value="productos">Productos</TabsTrigger>
             <TabsTrigger value="categorias">Categorías y Medidas</TabsTrigger>
+            <TabsTrigger value="sabores">Sabores</TabsTrigger>
+            <TabsTrigger value="extras">Extras</TabsTrigger>
           </TabsList>
           <Button onClick={() => setShowNuevo(true)}>
             <Plus className="mr-1.5 h-4 w-4" />
@@ -159,6 +169,22 @@ export function ProductosCliente({
           <CategoriasSection
             categorias={categorias}
             categoriaMedidas={categoriaMedidas}
+            onRefresh={() => router.refresh()}
+          />
+        </TabsContent>
+
+        <TabsContent value="sabores" className="mt-4">
+          <SaboresSection
+            categorias={categorias}
+            saboresPorCategoria={saboresPorCategoria}
+            onRefresh={() => router.refresh()}
+          />
+        </TabsContent>
+
+        <TabsContent value="extras" className="mt-4">
+          <ExtrasSection
+            categorias={categorias}
+            extrasPorCategoria={extrasPorCategoria}
             onRefresh={() => router.refresh()}
           />
         </TabsContent>

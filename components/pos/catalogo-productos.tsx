@@ -7,7 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Search, ShoppingCart } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { SelectorVarianteDialog } from "./selector-variante-dialog";
+import { ConfiguradorPizzaDialog } from "./configurador-pizza-dialog";
 import type { ProductoPOS } from "@/lib/services/ventas";
+import type {
+  PizzaSaborConIngredientes,
+  ProductoExtra,
+} from "@/lib/services/productos";
 import type { useCarrito } from "@/hooks/use-carrito";
 
 type Categoria = { id: string; nombre: string };
@@ -16,12 +21,22 @@ type Props = {
   productos: ProductoPOS[];
   categorias: Categoria[];
   carrito: ReturnType<typeof useCarrito>;
+  saboresPorCategoria: Record<string, PizzaSaborConIngredientes[]>;
+  extrasPorCategoria: Record<string, ProductoExtra[]>;
 };
 
-export function CatalogoProductos({ productos, categorias, carrito }: Props) {
+export function CatalogoProductos({
+  productos,
+  categorias,
+  carrito,
+  saboresPorCategoria,
+  extrasPorCategoria,
+}: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState<string | null>(null);
   const [productoParaVariante, setProductoParaVariante] =
+    useState<ProductoPOS | null>(null);
+  const [productoParaConfigurar, setProductoParaConfigurar] =
     useState<ProductoPOS | null>(null);
 
   const productosFiltrados = useMemo(() => {
@@ -35,6 +50,12 @@ export function CatalogoProductos({ productos, categorias, carrito }: Props) {
   }, [productos, categoriaActiva, busqueda]);
 
   function handleClickProducto(producto: ProductoPOS) {
+    // Si la categoría tiene sabores → configurador de pizza
+    if (producto.categorias?.tiene_sabores) {
+      setProductoParaConfigurar(producto);
+      return;
+    }
+
     const tieneVariantes = producto.producto_variantes.length > 0;
     if (tieneVariantes) {
       if (producto.producto_variantes.length === 1) {
@@ -145,6 +166,26 @@ export function CatalogoProductos({ productos, categorias, carrito }: Props) {
         onClose={() => setProductoParaVariante(null)}
         onSelect={(producto, variante) => {
           carrito.agregarItem(producto, variante);
+        }}
+      />
+
+      <ConfiguradorPizzaDialog
+        producto={productoParaConfigurar}
+        sabores={
+          productoParaConfigurar?.categoria_id
+            ? (saboresPorCategoria[productoParaConfigurar.categoria_id] ?? [])
+            : []
+        }
+        extras={
+          productoParaConfigurar?.categoria_id
+            ? (extrasPorCategoria[productoParaConfigurar.categoria_id] ?? [])
+            : []
+        }
+        open={productoParaConfigurar !== null}
+        onClose={() => setProductoParaConfigurar(null)}
+        onConfirmar={(data) => {
+          carrito.agregarPizza(data);
+          setProductoParaConfigurar(null);
         }}
       />
     </div>

@@ -199,6 +199,88 @@ id, producto_id, sucursal_id, disponible
 
 ---
 
+## Release 4.2: Sabores, Combinaciones y Extras para Pizzas
+
+**Estado:** [x] Completado
+**Dependencia:** Release 4.1
+**Objetivo:** Extender el modelo de productos para soportar sabores de pizza (con ingredientes y exclusiones), combinaciones multi-sabor en tamaños especificos, y extras pagados por categoria.
+
+### Contexto del negocio:
+- Las pizzas tienen sabores (Americana, Hawaiana, Marina, etc.) como dimension independiente del producto
+- En tamaños Familiar y Extra se permiten hasta 3 sabores combinados (mitad/mitad o tercios)
+- Cada sabor tiene ingredientes registrados para permitir exclusiones ("sin piña")
+- Se pueden agregar extras pagados a la pizza (Extra Queso, Champiñones, etc.)
+- Otros productos (bebidas, postres, lasagna, gelatinas) no cambian: siguen el modelo anterior
+
+### Nuevas tablas DB:
+
+**`pizza_sabores`** — Sabores de pizza por categoria
+```
+id, categoria_id, nombre, descripcion, imagen_url, disponible, orden, created_at, updated_at
+```
+
+**`sabor_ingredientes`** — Ingredientes por sabor (para gestionar exclusiones)
+```
+id, sabor_id, nombre, es_principal, orden
+```
+
+**`producto_extras`** — Extras pagados por categoria
+```
+id, categoria_id, nombre, precio, disponible, orden, created_at, updated_at
+```
+
+### Cambios en tablas existentes:
+- `categoria_medidas` → agregar `permite_combinacion boolean DEFAULT false`
+- `orden_items` → agregar `sabores jsonb` y `extras jsonb`
+
+### Estructura JSON en orden_items:
+
+`sabores`:
+```json
+[
+  { "sabor_id": "uuid", "sabor_nombre": "Hawaiana", "proporcion": "1/2", "exclusiones": ["Piña"] },
+  { "sabor_id": "uuid", "sabor_nombre": "Americana", "proporcion": "1/2", "exclusiones": [] }
+]
+```
+
+`extras`:
+```json
+[
+  { "extra_id": "uuid", "nombre": "Extra Queso", "precio": 2.00 }
+]
+```
+
+### Commits esperados:
+- [x] Migracion DB: tablas pizza_sabores, sabor_ingredientes, producto_extras
+- [x] Migracion DB: permite_combinacion en categoria_medidas, sabores/extras en orden_items
+- [x] RLS para las 3 nuevas tablas
+- [x] Tipos TypeScript actualizados (database.ts, lib/services/productos.ts)
+- [x] Servicios CRUD en lib/services/productos.ts (sabores, ingredientes, extras)
+- [x] Server Actions en actions/productos.ts
+- [x] Validaciones Zod actualizadas (lib/validations/ordenes.ts, lib/validations/productos.ts)
+- [x] Hook use-carrito.ts extendido con SaborOrden, ExtraOrden, agregarPizza, key unica
+- [x] Backoffice /productos: toggle permite_combinacion en medidas
+- [x] Backoffice /productos: nueva seccion SaboresSection (CRUD sabores + ingredientes)
+- [x] Backoffice /productos: nueva seccion ExtrasSection (CRUD extras)
+- [x] POS: ConfiguradorPizzaDialog (selector multi-paso: tamaño → sabores → exclusiones/extras)
+- [x] POS: catalogo-productos detecta categorias con sabores y abre configurador
+- [x] POS: carrito muestra desglose de sabores, exclusiones y extras
+- [x] POS: crearOrdenAction y crearOrden persisten sabores y extras en orden_items
+- [x] Ordenes: tarjeta-orden muestra desglose de pizza (proporciones, exclusiones, extras)
+
+### Criterio de exito:
+- Admin puede definir sabores con ingredientes para categorias de pizza
+- Admin puede marcar medidas Familiar y Extra como combinables
+- Admin puede definir extras pagados por categoria
+- En POS, al tocar una pizza → se abre ConfiguradorPizzaDialog
+- Se puede seleccionar 1 sabor (Personal/Mediana) o hasta 3 sabores (Familiar/Extra)
+- Se pueden excluir ingredientes por sabor
+- Se pueden agregar extras pagados; el precio se suma al subtotal
+- Cada pizza configurada es un item independiente en el carrito (no se fusionan)
+- En /ordenes, el detalle muestra proporciones, exclusiones y extras correctamente
+
+---
+
 ## Release 5: POS (Punto de Venta) - CRITICO
 
 > **Replanteado:** El flujo correcto para DANI PIZZAS separa la toma de pedido del cobro.

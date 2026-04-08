@@ -1,6 +1,19 @@
 import { z } from "zod";
 import { TIPO_PEDIDO, DELIVERY_METHOD } from "@/lib/constants";
 
+export const saborOrdenSchema = z.object({
+  sabor_id: z.string().uuid(),
+  sabor_nombre: z.string().min(1),
+  proporcion: z.string().min(1),
+  exclusiones: z.array(z.string()),
+});
+
+export const extraOrdenSchema = z.object({
+  extra_id: z.string().uuid(),
+  nombre: z.string().min(1),
+  precio: z.number().min(0),
+});
+
 export const ordenItemSchema = z.object({
   producto_id: z.string().uuid(),
   variante_id: z.string().uuid().nullable().optional(),
@@ -10,6 +23,8 @@ export const ordenItemSchema = z.object({
   precio_unitario: z.number().positive(),
   subtotal: z.number().positive(),
   notas_item: z.string().max(200).nullable().optional(),
+  sabores: z.array(saborOrdenSchema).nullable().optional(),
+  extras: z.array(extraOrdenSchema).nullable().optional(),
 });
 
 export const crearOrdenSchema = z
@@ -76,3 +91,5 @@ export const crearOrdenSchema = z
   });
 
 export type CrearOrdenFormValues = z.infer<typeof crearOrdenSchema>;
+export type SaborOrdenValues = z.infer<typeof saborOrdenSchema>;
+export type ExtraOrdenValues = z.infer<typeof extraOrdenSchema>;

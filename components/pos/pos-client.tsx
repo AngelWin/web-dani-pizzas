@@ -23,6 +23,10 @@ import type { Profile } from "@/lib/services/ventas";
 import type { Orden } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { PromocionActivaPOS } from "@/lib/services/promociones";
+import type {
+  PizzaSaborConIngredientes,
+  ProductoExtra,
+} from "@/lib/services/productos";
 import type { Database } from "@/types/database";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -38,6 +42,8 @@ type Props = {
   rol: string | null;
   modeloNegocio: ModeloNegocio;
   promociones: PromocionActivaPOS[];
+  saboresPorCategoria: Record<string, PizzaSaborConIngredientes[]>;
+  extrasPorCategoria: Record<string, ProductoExtra[]>;
 };
 
 export function PosClient({
@@ -49,6 +55,8 @@ export function PosClient({
   rol,
   modeloNegocio,
   promociones,
+  saboresPorCategoria,
+  extrasPorCategoria,
 }: Props) {
   const router = useRouter();
   const carrito = useCarrito();
@@ -127,6 +135,8 @@ export function PosClient({
             productos={productos}
             categorias={categorias}
             carrito={carrito}
+            saboresPorCategoria={saboresPorCategoria}
+            extrasPorCategoria={extrasPorCategoria}
           />
         </div>
 
