@@ -463,15 +463,16 @@ notas         text (nullable — para cancelaciones con motivo)
 
 ## Release 9: Gestion de Sucursales
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 2
 **Objetivo:** Admin puede editar datos de sucursales.
 **Nota:** Puede ejecutarse en paralelo con Release 10.
 
 ### Commits esperados:
-- [ ] Listado de sucursales
-- [ ] Formulario de editar sucursal
-- [ ] Server Actions + servicio de sucursales
+- [x] Listado de sucursales (cards con dirección, teléfono, estado activa)
+- [x] Formulario de editar sucursal (nombre, dirección, teléfono, activa)
+- [x] Server Actions + servicio de sucursales
+- [x] Validaciones Zod
 
 ### Criterio de exito:
 - CRUD de sucursales con validacion
