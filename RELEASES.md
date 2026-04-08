@@ -397,21 +397,29 @@ notas         text (nullable — para cancelaciones con motivo)
 
 ## Release 6: Reportes
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5
 **Objetivo:** Analytics de ventas con filtros avanzados.
 
 ### Commits esperados:
-- [ ] Pagina de reportes con filtros
-- [ ] Reporte de ventas (por fecha, sucursal, tipo pedido)
-- [ ] Reporte de delivery (costos, tiempos, repartidores)
-- [ ] Reporte por sucursal (rendimiento comparativo)
-- [ ] Ampliar servicio de reportes
+- [x] Pagina de reportes con filtros (rango de fecha, sucursal, tipo pedido)
+- [x] Reporte de ventas: resumen cards (total, promedio, delivery, por tipo)
+- [x] Grafico de ventas por dia (AreaChart con Recharts)
+- [x] Grafico de distribucion por tipo de pedido (BarChart con porcentajes)
+- [x] Top 10 productos mas vendidos con barra de progreso
+- [x] Detalle de delivery (propio vs tercero, fees, promedios)
+- [x] Rendimiento comparativo por sucursal (solo admin)
+- [x] Tabla detalle de ventas (ultimas 50, con cajero, metodo pago, tipo)
+- [x] Servicio `lib/services/reportes.ts` con todas las funciones de agregacion
+- [x] Componente `FiltrosReporte` (client) con navegacion por URL
+- [x] Cajero solo ve datos de su sucursal (sin selector de sucursal)
 
 ### Criterio de exito:
-- Filtros por rango de fecha, sucursal, tipo de pedido
-- Cajero solo ve reportes de su sucursal
-- Graficos de rendimiento
+- Filtros por rango de fecha, sucursal, tipo de pedido funcionan correctamente
+- Cajero solo ve reportes de su sucursal (sin opcion de cambiarla)
+- Admin puede filtrar por cualquier sucursal o ver todas
+- Graficos de rendimiento con Recharts
+- Build pasa sin errores ni warnings de TypeScript
 
 ---
 

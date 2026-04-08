@@ -27,7 +27,8 @@
       "Edit(/.claude/skills/unit-tests/**)",
       "Bash(gh auth:*)",
       "Read(//Users/angelabad/Documents/IAProjects/project-dani-pizzas/**)",
-      "Bash(brew install:*)"
+      "Bash(brew install:*)",
+      "Bash(ping -c 1 github.com)"
     ],
     "deny": [
       "Bash(rm -rf *)",
