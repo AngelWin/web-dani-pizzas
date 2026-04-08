@@ -110,9 +110,12 @@ export async function cobrarOrdenAction(
     return { data: null, error: mensaje };
   }
 
+  const descuentoMembresia = parsed.data.descuento_membresia ?? 0;
+  const totalFinal = Math.max(0, orden.total - descuentoMembresia);
+
   if (
     parsed.data.metodo_pago === "efectivo" &&
-    (parsed.data.monto_recibido ?? 0) < orden.total
+    (parsed.data.monto_recibido ?? 0) < totalFinal
   ) {
     return { data: null, error: "El monto recibido es menor al total" };
   }
@@ -126,9 +129,9 @@ export async function cobrarOrdenAction(
       monto_recibido: parsed.data.monto_recibido ?? null,
       tipo_pedido: orden.tipo_pedido,
       subtotal: orden.subtotal,
-      descuento: orden.descuento,
+      descuento: orden.descuento + descuentoMembresia,
       delivery_fee: orden.delivery_fee,
-      total: orden.total,
+      total: totalFinal,
       notas: orden.notas,
       mesa_referencia: orden.mesa_referencia,
       delivery_method: orden.delivery_method,

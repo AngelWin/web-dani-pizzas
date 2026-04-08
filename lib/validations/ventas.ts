@@ -135,6 +135,7 @@ export const cobrarOrdenSchema = z
       .number({ invalid_type_error: "Ingresa un monto válido" })
       .positive("El monto debe ser mayor a cero")
       .optional(),
+    descuento_membresia: z.number().min(0).optional().default(0),
   })
   .superRefine((data, ctx) => {
     if (data.metodo_pago === METODO_PAGO.EFECTIVO && !data.monto_recibido) {
@@ -146,4 +147,4 @@ export const cobrarOrdenSchema = z
     }
   });
 
-export type CobrarOrdenFormValues = z.infer<typeof cobrarOrdenSchema>;
+export type CobrarOrdenFormValues = z.input<typeof cobrarOrdenSchema>;

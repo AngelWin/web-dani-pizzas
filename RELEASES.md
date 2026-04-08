@@ -445,14 +445,14 @@ notas         text (nullable — para cancelaciones con motivo)
 
 ## Release 8: Membresias y Programa de Puntos
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5
 **Objetivo:** Gestion de niveles de membresia y reglas de puntos.
 
 ### Commits esperados:
-- [ ] Gestion de niveles de membresia
-- [ ] Configuracion de reglas de puntos
-- [ ] Integracion basica con POS (aplicar descuentos por nivel)
+- [x] Gestion de niveles de membresia
+- [x] Configuracion de reglas de puntos
+- [x] Integracion basica con POS (aplicar descuentos por nivel)
 
 ### Criterio de exito:
 - CRUD de niveles y reglas de puntos

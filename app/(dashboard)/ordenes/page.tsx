@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ListaOrdenes } from "@/components/ordenes/lista-ordenes";
 import { getOrdenes } from "@/lib/services/ordenes";
 import { getConfiguracionNegocio } from "@/lib/services/configuracion";
+import { getNivelesMembresia } from "@/lib/services/membresias";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +45,10 @@ export default async function OrdenesPage({
       ? fechaParam
       : hoy;
 
-  const [ordenes, config] = await Promise.all([
+  const [ordenes, config, niveles] = await Promise.all([
     getOrdenes(sucursalId, "todas", fechaFiltro),
     getConfiguracionNegocio(),
+    getNivelesMembresia(),
   ]);
 
   return (
@@ -62,6 +64,7 @@ export default async function OrdenesPage({
         fechaFiltro={fechaFiltro}
         hoy={hoy}
         minFecha={minFecha}
+        niveles={niveles}
       />
     </div>
   );

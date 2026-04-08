@@ -22,6 +22,7 @@ import type {
   OrdenConItems,
 } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
+import type { NivelMembresia } from "@/lib/services/membresias";
 
 const SIGUIENTE_ESTADO_SIMPLE: Partial<Record<EstadoOrden, EstadoOrden>> = {
   confirmada: "en_preparacion",
@@ -59,6 +60,7 @@ type Props = {
   estadoActual: EstadoOrden;
   puedeCobrar: boolean;
   modeloNegocio: ModeloNegocio;
+  niveles?: NivelMembresia[];
 };
 
 export function AccionesOrden({
@@ -66,6 +68,7 @@ export function AccionesOrden({
   estadoActual,
   puedeCobrar,
   modeloNegocio,
+  niveles = [],
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
@@ -169,6 +172,7 @@ export function AccionesOrden({
               orden={orden}
               open={cobrarOpen}
               onOpenChange={setCobrarOpen}
+              niveles={niveles}
             />
           </>
         )}

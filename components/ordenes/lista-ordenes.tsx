@@ -7,6 +7,7 @@ import { CalendarDays, ClipboardList } from "lucide-react";
 import { TarjetaOrden } from "./tarjeta-orden";
 import type { OrdenConItems, FiltroEstadoOrden } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
+import type { NivelMembresia } from "@/lib/services/membresias";
 
 type EstadoTab = FiltroEstadoOrden;
 
@@ -63,6 +64,7 @@ type Props = {
   fechaFiltro: string; // YYYY-MM-DD
   hoy: string; // YYYY-MM-DD
   minFecha: string | null; // YYYY-MM-DD (7 días atrás) — null = sin restricción (admin)
+  niveles?: NivelMembresia[];
 };
 
 export function ListaOrdenes({
@@ -72,6 +74,7 @@ export function ListaOrdenes({
   fechaFiltro,
   hoy,
   minFecha,
+  niveles = [],
 }: Props) {
   const router = useRouter();
   const [filtro, setFiltro] = useState<EstadoTab>("activas");
@@ -179,6 +182,7 @@ export function ListaOrdenes({
               orden={orden}
               rol={rol}
               modeloNegocio={modeloNegocio}
+              niveles={niveles}
             />
           ))}
         </div>

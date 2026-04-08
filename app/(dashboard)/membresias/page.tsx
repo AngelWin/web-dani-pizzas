@@ -1,15 +1,31 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
+import { ListaMembresias } from "@/components/membresias/lista-membresias";
+import {
+  getNivelesMembresia,
+  getReglasPuntos,
+} from "@/lib/services/membresias";
 
-export default function MembresiasPage() {
+export const dynamic = "force-dynamic";
+
+export default async function MembresiasPage() {
+  const supabase = await createClient();
+  const { data: rolNombre } = await supabase.rpc("get_user_role");
+  if (rolNombre !== "administrador") redirect("/dashboard");
+
+  const [niveles, reglas] = await Promise.all([
+    getNivelesMembresia(),
+    getReglasPuntos(),
+  ]);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Membresías"
-        description="Programa de puntos y niveles de membresía"
+        description="Niveles de membresía y reglas del programa de puntos"
       />
-      <div className="flex items-center justify-center rounded-xl border border-dashed p-12">
-        <p className="text-muted-foreground">Próximamente</p>
-      </div>
+      <ListaMembresias niveles={niveles} reglas={reglas} />
     </div>
   );
 }

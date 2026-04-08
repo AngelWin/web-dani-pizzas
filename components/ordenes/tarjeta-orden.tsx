@@ -20,6 +20,7 @@ import { AccionesOrden } from "./acciones-orden";
 import { HistorialTimeline } from "./historial-timeline";
 import type { OrdenConItems } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
+import type { NivelMembresia } from "@/lib/services/membresias";
 
 const TIPO_PEDIDO_CONFIG = {
   local: { label: "Local", icon: UtensilsCrossed, color: "text-blue-600" },
@@ -56,9 +57,15 @@ type Props = {
   orden: OrdenConItems;
   rol: string | null;
   modeloNegocio: ModeloNegocio;
+  niveles?: NivelMembresia[];
 };
 
-export function TarjetaOrden({ orden, rol, modeloNegocio }: Props) {
+export function TarjetaOrden({
+  orden,
+  rol,
+  modeloNegocio,
+  niveles = [],
+}: Props) {
   const puedeCobrar = rol === "administrador" || rol === "cajero";
   const tipoCfg = TIPO_PEDIDO_CONFIG[orden.tipo_pedido];
   const TipoIcon = tipoCfg.icon;
@@ -203,6 +210,7 @@ export function TarjetaOrden({ orden, rol, modeloNegocio }: Props) {
           estadoActual={orden.estado}
           puedeCobrar={puedeCobrar}
           modeloNegocio={modeloNegocio}
+          niveles={niveles}
         />
       </CardFooter>
     </Card>
