@@ -9,7 +9,7 @@ export type ProductoVariante =
   Database["public"]["Tables"]["producto_variantes"]["Row"] & {
     categoria_medidas: Pick<
       CategoriaMedida,
-      "nombre" | "permite_combinacion"
+      "nombre" | "permite_combinacion" | "max_sabores"
     > | null;
   };
 export type ProductoSucursal =

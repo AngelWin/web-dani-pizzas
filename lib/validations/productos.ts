@@ -22,6 +22,13 @@ export const categoriaMedidaSchema = z.object({
   orden: z.coerce.number().int().min(0, "El orden debe ser mayor o igual a 0"),
   activa: z.boolean(),
   permite_combinacion: z.boolean(),
+  max_sabores: z.coerce
+    .number()
+    .int()
+    .min(2, "Mínimo 2 sabores")
+    .max(10, "Máximo 10 sabores")
+    .nullable()
+    .optional(),
 });
 
 export const varianteFormSchema = z.object({

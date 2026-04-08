@@ -193,8 +193,11 @@ function MedidaForm({
       orden: medida?.orden ?? 0,
       activa: medida?.activa ?? true,
       permite_combinacion: medida?.permite_combinacion ?? false,
+      max_sabores: medida?.max_sabores ?? null,
     },
   });
+
+  const permiteCombinan = form.watch("permite_combinacion");
 
   const onSubmit = async (values: CategoriaMedidaFormValues) => {
     const result = isEditing
@@ -289,7 +292,12 @@ function MedidaForm({
                 <FormControl>
                   <Switch
                     checked={field.value}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                      if (!checked) {
+                        form.setValue("max_sabores", null);
+                      }
+                    }}
                   />
                 </FormControl>
                 <div>
@@ -303,6 +311,37 @@ function MedidaForm({
               </FormItem>
             )}
           />
+          {permiteCombinan && (
+            <FormField
+              control={form.control}
+              name="max_sabores"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Máximo de sabores por combinación *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={2}
+                      max={10}
+                      placeholder="Ej: 2, 3, 5..."
+                      {...field}
+                      value={field.value ?? ""}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        field.onChange(val === "" ? null : Number(val));
+                      }}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Cuántos sabores distintos puede elegir el cliente para esta
+                    medida
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
@@ -383,6 +422,7 @@ function MedidasPanel({
                 <TableHead>Descripción</TableHead>
                 <TableHead className="text-center">Orden</TableHead>
                 <TableHead className="text-center">Combinable</TableHead>
+                <TableHead className="text-center">Máx. sabores</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
@@ -401,6 +441,9 @@ function MedidasPanel({
                     >
                       {m.permite_combinacion ? "Sí" : "No"}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-center text-sm">
+                    {m.permite_combinacion ? (m.max_sabores ?? "—") : "—"}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={m.activa ? "default" : "secondary"}>

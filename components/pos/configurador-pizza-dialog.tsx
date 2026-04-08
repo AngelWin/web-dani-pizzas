@@ -78,7 +78,9 @@ export function ConfiguradorPizzaDialog({
 
   const permiteCombinan =
     varianteSeleccionada?.categoria_medidas?.permite_combinacion ?? false;
-  const maxSabores = permiteCombinan ? 3 : 1;
+  const maxSabores = permiteCombinan
+    ? (varianteSeleccionada?.categoria_medidas?.max_sabores ?? 2)
+    : 1;
 
   const precioExtras = extrasSeleccionados.reduce(
     (acc, e) => acc + e.precio,

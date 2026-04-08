@@ -138,6 +138,7 @@ export type Database = {
           created_at: string | null;
           descripcion: string | null;
           id: string;
+          max_sabores: number | null;
           nombre: string;
           orden: number;
           permite_combinacion: boolean;
@@ -149,6 +150,7 @@ export type Database = {
           created_at?: string | null;
           descripcion?: string | null;
           id?: string;
+          max_sabores?: number | null;
           nombre: string;
           orden?: number;
           permite_combinacion?: boolean;
@@ -160,6 +162,7 @@ export type Database = {
           created_at?: string | null;
           descripcion?: string | null;
           id?: string;
+          max_sabores?: number | null;
           nombre?: string;
           orden?: number;
           permite_combinacion?: boolean;
