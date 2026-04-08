@@ -129,6 +129,17 @@ export function FormularioPedidoDialog({
     onClose();
   }
 
+  // Garantizar que delivery_fee sea 0 para pedidos no-delivery al enviar
+  async function handleSubmit(data: CrearOrdenFormValues) {
+    await onSubmit({
+      ...data,
+      delivery_fee:
+        data.tipo_pedido === TIPO_PEDIDO.DELIVERY
+          ? (data.delivery_fee ?? 0)
+          : 0,
+    });
+  }
+
   const deliveryFee =
     tipoPedido === TIPO_PEDIDO.DELIVERY ? (form.watch("delivery_fee") ?? 0) : 0;
   const total = carrito.subtotal + deliveryFee;
@@ -141,7 +152,10 @@ export function FormularioPedidoDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             {/* ── Identificación de cliente ── */}
             <div className="rounded-xl border p-3">
               <BuscadorCliente

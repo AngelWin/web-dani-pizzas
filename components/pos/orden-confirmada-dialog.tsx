@@ -36,28 +36,35 @@ const TIPO_PEDIDO_COLOR: Record<
 export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
   if (!orden) return null;
 
+  const esDelivery = orden.tipo_pedido === "delivery";
+  const tieneDelivery = esDelivery && orden.delivery_fee > 0;
+
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
-        className="max-w-sm text-center"
+        className="max-w-sm"
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <div className="flex justify-center mb-2">
             <CheckCircle className="h-16 w-16 text-green-500" />
           </div>
-          <DialogTitle className="text-xl">¡Pedido confirmado!</DialogTitle>
+          <DialogTitle className="text-center text-xl">
+            ¡Pedido confirmado!
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3 py-2">
-          <div className="flex flex-col items-center gap-2">
+        <div className="space-y-4 py-2">
+          {/* Número de orden */}
+          <div className="flex flex-col items-center gap-1">
             <p className="text-muted-foreground text-sm">N° de orden</p>
-            <span className="text-4xl font-bold text-primary">
+            <span className="text-5xl font-bold text-primary">
               #{orden.numero_orden}
             </span>
           </div>
 
-          <div className="flex justify-center gap-2">
+          {/* Tipo de pedido y referencias */}
+          <div className="flex justify-center gap-2 flex-wrap">
             {orden.tipo_pedido && (
               <Badge
                 variant={TIPO_PEDIDO_COLOR[orden.tipo_pedido] ?? "default"}
@@ -73,31 +80,36 @@ export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
             )}
           </div>
 
-          <div className="rounded-xl border p-3 space-y-1 bg-muted/30">
-            <div className="flex justify-between text-sm">
+          {/* Resumen de totales */}
+          <div className="rounded-xl border bg-muted/30 p-3 space-y-1.5">
+            <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>{formatCurrency(orden.subtotal)}</span>
+              <span className="font-medium">
+                {formatCurrency(orden.subtotal)}
+              </span>
             </div>
-            {orden.delivery_fee > 0 && (
-              <div className="flex justify-between text-sm">
+            {tieneDelivery && (
+              <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Delivery</span>
-                <span>{formatCurrency(orden.delivery_fee)}</span>
+                <span className="font-medium">
+                  {formatCurrency(orden.delivery_fee)}
+                </span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-base border-t pt-1 mt-1">
-              <span>Total</span>
-              <span className="text-primary">
+            <div className="flex items-center justify-between border-t pt-1.5 mt-0.5">
+              <span className="font-bold text-base">Total</span>
+              <span className="font-bold text-base text-primary">
                 {formatCurrency(orden.total)}
               </span>
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground">
             El cobro se realizará cuando el pedido esté listo
           </p>
         </div>
 
-        <Button className="w-full h-14 text-base" onClick={onNuevoPedido}>
+        <Button className="w-full h-12 text-base" onClick={onNuevoPedido}>
           Nuevo pedido
         </Button>
       </DialogContent>

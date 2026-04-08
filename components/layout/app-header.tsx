@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useTransition } from "react";
-import { LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Store, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useUser } from "@/hooks/use-user";
 import { useSucursal } from "@/hooks/use-sucursal";
@@ -22,7 +22,7 @@ import { SucursalSelector } from "@/components/shared/sucursal-selector";
 
 export function AppHeader() {
   const { nombreCompleto, email, role, fotoUrl } = useUser();
-  const { canSelectSucursal } = useSucursal();
+  const { canSelectSucursal, selectedSucursal } = useSucursal();
   const { theme, setTheme } = useTheme();
   const [isPending, startTransition] = useTransition();
 
@@ -41,6 +41,16 @@ export function AppHeader() {
       {canSelectSucursal && <SucursalSelector />}
 
       <div className="ml-auto flex items-center gap-2">
+        {/* Nombre de sucursal (solo roles no-admin) */}
+        {!canSelectSucursal && selectedSucursal && (
+          <div className="flex items-center gap-1.5 rounded-full border bg-primary/10 px-3 py-1">
+            <Store className="h-3.5 w-3.5 text-primary" />
+            <span className="text-sm font-semibold text-primary">
+              {selectedSucursal.nombre}
+            </span>
+          </div>
+        )}
+
         {/* Toggle tema */}
         <Button
           variant="ghost"

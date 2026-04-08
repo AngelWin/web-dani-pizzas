@@ -29,6 +29,7 @@ export type FiltroEstadoOrden = EstadoOrden | "todas" | "activas";
 export async function getOrdenes(
   sucursalId: string | null,
   filtroEstado: FiltroEstadoOrden = "activas",
+  fecha?: string, // formato YYYY-MM-DD (hora Lima UTC-5)
 ): Promise<OrdenConItems[]> {
   const supabase = await createClient();
 
@@ -58,7 +59,14 @@ export async function getOrdenes(
     query = query.eq("estado", filtroEstado);
   }
 
-  const { data, error } = await query.limit(100);
+  // Filtro por día (Lima UTC-5): 00:00 Lima = 05:00 UTC, 23:59 Lima = 04:59 UTC siguiente
+  if (fecha) {
+    const inicioLima = `${fecha}T00:00:00-05:00`;
+    const finLima = `${fecha}T23:59:59.999-05:00`;
+    query = query.gte("created_at", inicioLima).lte("created_at", finLima);
+  }
+
+  const { data, error } = await query.limit(200);
 
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as OrdenConItems[];
