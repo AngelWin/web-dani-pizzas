@@ -8,6 +8,7 @@ import {
   Pencil,
   CheckCircle2,
   XCircle,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,9 +27,21 @@ type Props = {
 
 export function SucursalesCliente({ sucursales: inicial }: Props) {
   const [editando, setEditando] = useState<Sucursal | null>(null);
+  const [creando, setCreando] = useState(false);
 
   return (
     <>
+      {/* Botón nueva sucursal */}
+      <div className="flex justify-end">
+        <Button
+          className="h-10 gap-2 rounded-xl"
+          onClick={() => setCreando(true)}
+        >
+          <Plus className="h-4 w-4" />
+          Nueva sucursal
+        </Button>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         {inicial.map((s) => (
           <div
@@ -91,6 +104,19 @@ export function SucursalesCliente({ sucursales: inicial }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Dialog de creación */}
+      <Dialog
+        open={creando}
+        onOpenChange={(open) => !open && setCreando(false)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nueva sucursal</DialogTitle>
+          </DialogHeader>
+          <SucursalForm onSuccess={() => setCreando(false)} />
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de edición */}
       <Dialog

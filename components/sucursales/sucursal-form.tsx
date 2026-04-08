@@ -19,34 +19,41 @@ import {
   sucursalSchema,
   type SucursalFormData,
 } from "@/lib/validations/sucursales";
-import { updateSucursalAction } from "@/actions/sucursales";
+import {
+  createSucursalAction,
+  updateSucursalAction,
+} from "@/actions/sucursales";
 import type { Sucursal } from "@/lib/services/sucursales";
 
 type Props = {
-  sucursal: Sucursal;
+  sucursal?: Sucursal;
   onSuccess?: () => void;
 };
 
 export function SucursalForm({ sucursal, onSuccess }: Props) {
   const [isPending, startTransition] = useTransition();
+  const isEditing = !!sucursal;
 
   const form = useForm<SucursalFormData>({
     resolver: zodResolver(sucursalSchema),
     defaultValues: {
-      nombre: sucursal.nombre,
-      direccion: sucursal.direccion,
-      telefono: sucursal.telefono ?? "",
-      activa: sucursal.activa ?? true,
+      nombre: sucursal?.nombre ?? "",
+      direccion: sucursal?.direccion ?? "",
+      telefono: sucursal?.telefono ?? "",
+      activa: sucursal?.activa ?? true,
     },
   });
 
   function onSubmit(values: SucursalFormData) {
     startTransition(async () => {
-      const result = await updateSucursalAction(sucursal.id, values);
+      const result = isEditing
+        ? await updateSucursalAction(sucursal.id, values)
+        : await createSucursalAction(values);
+
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Sucursal actualizada");
+        toast.success(isEditing ? "Sucursal actualizada" : "Sucursal creada");
         onSuccess?.();
       }
     });
@@ -129,7 +136,13 @@ export function SucursalForm({ sucursal, onSuccess }: Props) {
             disabled={isPending}
             className="h-11 px-6 rounded-xl"
           >
-            {isPending ? "Guardando..." : "Guardar cambios"}
+            {isPending
+              ? isEditing
+                ? "Guardando..."
+                : "Creando..."
+              : isEditing
+                ? "Guardar cambios"
+                : "Crear sucursal"}
           </Button>
         </div>
       </form>

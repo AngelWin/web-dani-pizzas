@@ -24,6 +24,22 @@ export async function getSucursalById(id: string): Promise<Sucursal | null> {
   return data;
 }
 
+export async function createSucursal(payload: {
+  nombre: string;
+  direccion: string;
+  telefono?: string | null;
+  activa: boolean;
+}): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("sucursales").insert({
+    nombre: payload.nombre,
+    direccion: payload.direccion,
+    telefono: payload.telefono ?? null,
+    activa: payload.activa,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export async function updateSucursal(
   id: string,
   payload: {
