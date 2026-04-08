@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useTransition } from "react";
-import { LogOut, Moon, Store, Sun } from "lucide-react";
+import { LogOut, Moon, Store, Sun, UserCircle2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useUser } from "@/hooks/use-user";
 import { useSucursal } from "@/hooks/use-sucursal";
@@ -106,6 +106,13 @@ export function AppHeader() {
                 </div>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <a href="/perfil">
+                <UserCircle2 className="mr-2 h-4 w-4" />
+                Mi perfil
+              </a>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleLogout}

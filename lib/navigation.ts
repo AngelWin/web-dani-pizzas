@@ -8,6 +8,7 @@ import {
   BarChart3,
   Store,
   Settings,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import type { Role } from "@/lib/constants";
@@ -28,6 +29,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { title: "Membresías", href: "/membresias", icon: Crown },
   { title: "Reportes", href: "/reportes", icon: BarChart3 },
   { title: "Sucursales", href: "/sucursales", icon: Store },
+  { title: "Usuarios", href: "/usuarios", icon: Users },
   { title: "Configuración", href: "/configuracion", icon: Settings },
 ];
 

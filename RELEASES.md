@@ -570,18 +570,23 @@ updated_by (auth.uid)
 
 ## Release 11: Gestion de Usuarios
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 1
 **Objetivo:** Admin puede gestionar usuarios con roles y sucursales.
 
 ### Commits esperados:
-- [ ] Listado de usuarios
-- [ ] Formulario de crear/editar usuario
-- [ ] Asignacion de rol y sucursal
-- [ ] Service role client (admin.ts) para crear usuarios
-- [ ] Proteccion: no eliminar ultimo administrador
-- [ ] Cambiar contrasena propia (disponible para todos los roles)
-- [ ] Editar perfil propio (nombre)
+- [x] Listado de usuarios con tabla (nombre, correo, rol, sucursal, estado)
+- [x] Formulario de crear usuario (email, password, nombre, rol, sucursal)
+- [x] Formulario de editar usuario (nombre, rol, sucursal, estado)
+- [x] Asignacion de rol y sucursal
+- [x] Service role client (lib/supabase/admin.ts) para crear/eliminar en auth
+- [x] Proteccion: no eliminar ultimo administrador
+- [x] Rutas /usuarios y /perfil agregadas al sistema de permisos
+- [x] /usuarios solo accesible para administrador (redirect si no es admin)
+- [x] /perfil accesible para todos los roles
+- [x] Pagina /perfil: editar nombre y cambiar contrasena
+- [x] Enlace "Mi perfil" en el dropdown del header (todos los roles)
+- [x] Server Actions: crear, actualizar, eliminar usuario, cambiar contrasena, actualizar nombre
 
 ### Criterio de exito:
 - CRUD de usuarios con roles (administrador, cajero, mesero, repartidor)
