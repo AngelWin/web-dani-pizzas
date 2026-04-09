@@ -15,6 +15,7 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
                                        -> R9 (Sucursales) [paralelo con R10]
                                        -> R10 (Config: Tarifas + Modelo Negocio)
                                             -> R12 (Servicios Delivery + Detalles Repartidor)
+                                            -> R13 (Config: Moneda/Divisa Global)
                                             -> actualiza comportamiento visual de R5b y R5c
                           R1 -> R11 (Usuarios)
                                     -> R12 (campos repartidor en formulario usuarios)
@@ -749,6 +750,106 @@ id (FK profiles CASCADE), direccion, tipo_vehiculo (text[]), notas, created_at, 
 - En /usuarios → crear/editar usuario repartidor → campos extra visibles
 - Tipo de vehiculo soporta seleccion multiple (auto, motocar, moto lineal)
 - Datos de repartidor persisten en `repartidor_detalles`
+
+---
+
+## Release 13: Configuracion de Moneda (Divisa Global)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 10 (Configuracion base)
+**Objetivo:** Permitir al admin configurar la moneda activa del negocio desde /configuracion, con soporte para monedas predefinidas (PEN, USD) y personalizadas. El simbolo se refleja en toda la app de forma centralizada.
+
+### Contexto del negocio:
+- Actualmente el simbolo `S/.` esta hardcodeado en `formatCurrency()` de `lib/utils.ts`
+- El negocio opera en Peru pero puede expandirse a otros paises
+- La moneda es **global** (no por sucursal): un negocio opera en una sola moneda
+- Se necesita un punto centralizado para cambiar la moneda y que se refleje en POS, reportes, ordenes, productos, etc.
+
+### Decisiones de diseno:
+- **Global, no por sucursal** — un negocio opera en una sola moneda; si se expande a otro pais seria otra instancia
+- **Backward compatible** — `formatCurrency` recibe simbolo opcional con fallback a `S/.`
+- **CurrencyProvider** — provee el simbolo activo a todos los Client Components via React Context
+- **Server Components** — reciben el simbolo como prop desde el layout (que hace fetch de la moneda activa)
+
+### Nueva tabla DB: `monedas`
+
+```
+id            uuid PK DEFAULT gen_random_uuid()
+codigo        text NOT NULL UNIQUE     -- 'PEN', 'USD', 'EUR'
+simbolo       text NOT NULL            -- 'S/.', '$', '€'
+nombre        text NOT NULL            -- 'Sol Peruano', 'Dolar Americano'
+es_predefinida boolean NOT NULL DEFAULT false
+created_at    timestamptz DEFAULT now()
+updated_at    timestamptz DEFAULT now()
+```
+
+### Cambios en tablas existentes:
+- `configuracion_negocio` → agregar `moneda_activa_id uuid REFERENCES monedas(id)`
+
+### Seed data:
+- `('PEN', 'S/.', 'Sol Peruano', true)`
+- `('USD', '$', 'Dolar Americano', true)`
+- `configuracion_negocio.moneda_activa_id` → apunta a PEN por defecto
+
+### RLS:
+- SELECT: todos los usuarios autenticados
+- INSERT/UPDATE/DELETE: solo administrador
+
+### Commits esperados:
+
+**DB:**
+- [ ] Migracion: tabla `monedas` con seed PEN y USD
+- [ ] Migracion: campo `moneda_activa_id` en `configuracion_negocio` con FK
+- [ ] RLS: authenticated SELECT, admin ALL
+- [ ] Tipos TypeScript actualizados (database.ts)
+
+**Backend:**
+- [ ] Servicio `lib/services/monedas.ts`: getMonedas, getMonedaActiva, createMoneda, updateMoneda, deleteMoneda, setMonedaActiva
+- [ ] Validaciones Zod `lib/validations/moneda.ts`: monedaSchema, monedaActivaSchema
+- [ ] Server Actions `actions/monedas.ts`: CRUD + setMonedaActiva (verificacion rol admin)
+- [ ] Modificar `formatCurrency` en `lib/utils.ts`: agregar parametro `symbol` opcional (backward compatible)
+- [ ] Funcion `getMonedaActivaParaLayout` en `lib/services/configuracion.ts` con fallback a S/./PEN
+
+**Providers:**
+- [ ] `components/providers/currency-provider.tsx`: CurrencyProvider con Context (simbolo, codigo, formatCurrency)
+- [ ] `hooks/use-currency.ts`: re-export de useCurrency
+- [ ] Integrar CurrencyProvider en `app/(dashboard)/layout.tsx` (fetch moneda activa + envolver AuthProvider)
+
+**UI — /configuracion (nueva seccion "Moneda"):**
+- [ ] Componente `components/configuracion/moneda-config-section.tsx`
+- [ ] Sub-seccion A: Selector de moneda activa (cards clickeables tipo modelo-negocio-form)
+- [ ] Sub-seccion B: Tabla de monedas personalizadas (agregar, editar, eliminar)
+- [ ] Dialog de crear/editar moneda (react-hook-form + zod)
+- [ ] Monedas predefinidas no eliminables (Badge "Predefinida")
+- [ ] Actualizar `app/(dashboard)/configuracion/page.tsx` con nueva seccion
+
+**Correccion de inconsistencias (hardcodes de simbolo de moneda):**
+- [ ] `components/productos/productos-table.tsx:185` — usar formatCurrency con simbolo del hook
+- [ ] `components/productos/producto-form.tsx:281,328` — labels con simbolo dinamico
+- [ ] `components/productos/extras-section.tsx:102` — label con simbolo dinamico
+- [ ] `components/pos/formulario-pedido-dialog.tsx:421,515` — labels con simbolo dinamico
+- [ ] `components/ordenes/acciones-orden.tsx:186` — span con simbolo del hook
+- [ ] `components/ordenes/cobro-dialog.tsx:296` — label con simbolo dinamico
+- [ ] `components/configuracion/delivery-servicios-form.tsx:373` — label con simbolo dinamico
+- [ ] `components/membresias/formulario-regla-dialog.tsx:117,133,173` — labels con simbolo dinamico
+- [ ] `components/membresias/lista-membresias.tsx:376` — texto con simbolo dinamico
+- [ ] `components/promociones/formulario-promocion-dialog.tsx:246` — SelectItem con simbolo dinamico
+- [ ] `components/reportes/grafico-ventas-dia.tsx` — tickFormatter con simbolo del hook
+- [ ] `components/reportes/grafico-ventas-tipo.tsx` — tickFormatter con simbolo del hook
+- [ ] `components/dashboard/grafico-ventas-tipo.tsx` — tickFormatter con simbolo del hook
+
+**Reglas:**
+- [ ] Actualizar `.claude/rules/frontend.md` seccion "## Moneda" con nuevas reglas (usar useCurrency, nunca hardcodear)
+
+### Criterio de exito:
+- En /configuracion aparece seccion "Moneda" con PEN y USD como opciones predefinidas
+- Admin puede seleccionar moneda activa y el cambio se refleja en toda la app
+- Admin puede agregar monedas personalizadas (ej: EUR, €, Euro)
+- No se pueden eliminar monedas predefinidas (PEN, USD)
+- No se puede eliminar la moneda activa
+- Todos los precios en POS, ordenes, reportes, productos, dashboard muestran el simbolo correcto
+- `formatCurrency` sigue funcionando sin parametro (backward compatible con S/.)
+- Build pasa sin errores
 
 ---
 
