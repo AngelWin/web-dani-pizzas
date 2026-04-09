@@ -173,7 +173,7 @@ export function TarjetaOrden({
         </div>
       </CardHeader>
 
-      <CardContent className="pb-3">
+      <CardContent className="pb-1.5">
         {/* Items */}
         <ul className="space-y-1.5 rounded-lg bg-muted/30 p-2.5">
           {orden.orden_items.map((item) => {
@@ -286,7 +286,7 @@ export function TarjetaOrden({
 
       <Separator />
 
-      <CardFooter className="pt-2">
+      <CardFooter className="pt-1.5">
         <div className="flex w-full flex-col gap-2">
           <div className="flex flex-wrap items-baseline gap-x-1.5">
             <span className="font-inter text-lg font-bold tabular-nums text-foreground">
