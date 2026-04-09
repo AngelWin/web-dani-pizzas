@@ -53,6 +53,7 @@ export default async function EntregasPage({
       },
       // Si es repartidor, solo ver sus propias entregas
       esRepartidor ? userId : null,
+      esAdmin,
     ),
     getSucursalesActivas(),
   ]);

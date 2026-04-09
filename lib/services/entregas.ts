@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -85,11 +86,12 @@ type OrdenDeliveryRaw = {
 export async function getEntregasPorRepartidor(
   filtros: FiltrosEntregas,
   repartidorIdFijo?: string | null,
+  esAdmin = false,
 ): Promise<{
   resumen: ResumenEntregas;
   repartidores: RepartidorEntregas[];
 }> {
-  const supabase = await createClient();
+  const supabase = esAdmin ? createAdminClient() : await createClient();
   const { desde, hasta } = rangoFechasUTC(
     filtros.fechaDesde,
     filtros.fechaHasta,

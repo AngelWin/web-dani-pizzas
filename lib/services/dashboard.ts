@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { TIPO_PEDIDO } from "@/lib/constants";
 
 export type StatsHoy = {
@@ -79,8 +80,9 @@ function getTodayRangePeru() {
 
 export async function getStatsHoy(
   sucursalId?: string | null,
+  esAdmin = false,
 ): Promise<StatsHoy> {
-  const supabase = await createClient();
+  const supabase = esAdmin ? createAdminClient() : await createClient();
   const { desde, hasta } = getTodayRangePeru();
 
   const base = supabase
@@ -130,8 +132,9 @@ import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
 
 export async function getDesglosePorTipo(
   sucursalId?: string | null,
+  esAdmin = false,
 ): Promise<DesgloseTipo[]> {
-  const supabase = await createClient();
+  const supabase = esAdmin ? createAdminClient() : await createClient();
   const { desde, hasta } = getTodayRangePeru();
 
   const base = supabase
@@ -165,8 +168,9 @@ export async function getDesglosePorTipo(
 
 export async function getVentasPorHora(
   sucursalId?: string | null,
+  esAdmin = false,
 ): Promise<VentaPorHora[]> {
-  const supabase = await createClient();
+  const supabase = esAdmin ? createAdminClient() : await createClient();
   const { desde, hasta } = getTodayRangePeru();
 
   const base = supabase
@@ -203,8 +207,9 @@ export async function getVentasPorHora(
 export async function getPedidosRecientes(
   sucursalId?: string | null,
   limit = 8,
+  esAdmin = false,
 ): Promise<PedidoReciente[]> {
-  const supabase = await createClient();
+  const supabase = esAdmin ? createAdminClient() : await createClient();
 
   const base = supabase
     .from("ventas")

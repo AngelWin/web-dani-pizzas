@@ -68,9 +68,9 @@ export default async function DashboardPage({
 
   // Fetch paralelo de todos los datos
   const [stats, desglose, pedidos] = await Promise.all([
-    getStatsHoy(sucursalId),
-    getDesglosePorTipo(sucursalId),
-    getPedidosRecientes(sucursalId, 8),
+    getStatsHoy(sucursalId, isAdmin),
+    getDesglosePorTipo(sucursalId, isAdmin),
+    getPedidosRecientes(sucursalId, 8, isAdmin),
   ]);
 
   const sucursalActiva = isAdmin
