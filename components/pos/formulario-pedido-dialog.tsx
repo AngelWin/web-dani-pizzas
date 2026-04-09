@@ -102,6 +102,11 @@ export function FormularioPedidoDialog({
   const tipoPedido = form.watch("tipo_pedido");
   const deliveryMethod = form.watch("delivery_method");
 
+  // Sincronizar sucursal seleccionada → form
+  useEffect(() => {
+    form.setValue("sucursal_id", sucursalId);
+  }, [sucursalId, form]);
+
   // Sincronizar cliente seleccionado → form
   function handleClienteSeleccionado(cliente: ClienteConMembresia | null) {
     setClienteSeleccionado(cliente);

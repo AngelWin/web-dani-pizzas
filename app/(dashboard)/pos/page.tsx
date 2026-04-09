@@ -84,6 +84,7 @@ export default async function PosPage({
 
   return (
     <PosClient
+      key={sucursalId}
       productos={productos}
       categorias={categorias}
       repartidores={repartidores}
