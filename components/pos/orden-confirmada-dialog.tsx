@@ -73,8 +73,11 @@ export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
             {orden.mesa_referencia && (
               <Badge variant="outline">{orden.mesa_referencia}</Badge>
             )}
-            {orden.third_party_name && (
-              <Badge variant="outline">{orden.third_party_name}</Badge>
+            {orden.delivery_method && (
+              <Badge variant="outline">
+                {orden.delivery_method === "propio" ? "Propio" : "Tercero"}
+                {orden.third_party_name ? ` - ${orden.third_party_name}` : ""}
+              </Badge>
             )}
           </div>
 

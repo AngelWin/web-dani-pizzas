@@ -239,7 +239,7 @@ export function TarjetaOrden({
                 <p>
                   <span className="font-medium">Método:</span>{" "}
                   {orden.delivery_method === "propio"
-                    ? "Propio"
+                    ? `Propio${orden.third_party_name ? ` - ${orden.third_party_name}` : ""}`
                     : `Tercero${orden.third_party_name ? ` - ${orden.third_party_name}` : ""}`}
                 </p>
               )}
