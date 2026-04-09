@@ -45,17 +45,19 @@ export const METODO_PAGO = {
 
 export type MetodoPago = (typeof METODO_PAGO)[keyof typeof METODO_PAGO];
 
-export const THIRD_PARTY_SERVICES = [
-  "Rappi",
-  "PedidosYa",
-  "Glovo",
-  "Otro",
-] as const;
-
-export const DEFAULT_DELIVERY_FEES = {
-  propio: 3,
-  tercero: 4,
+export const TIPOS_VEHICULO = {
+  AUTO: "auto",
+  MOTOCAR: "motocar",
+  MOTO_LINEAL: "moto_lineal",
 } as const;
+
+export type TipoVehiculo = (typeof TIPOS_VEHICULO)[keyof typeof TIPOS_VEHICULO];
+
+export const TIPOS_VEHICULO_LABELS: Record<TipoVehiculo, string> = {
+  auto: "Auto",
+  motocar: "Motocar",
+  moto_lineal: "Moto lineal",
+};
 
 export const SUCURSALES = {
   CASMA: "Casma Av. Reina",

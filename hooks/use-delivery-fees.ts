@@ -2,39 +2,44 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { DEFAULT_DELIVERY_FEES } from "@/lib/constants";
 
-type DeliveryFees = {
-  propio: number;
-  tercero: number;
+export type DeliveryServicioClient = {
+  id: string;
+  nombre: string;
+  tipo: "propio" | "tercero";
+  precio_base: number;
 };
 
-export function useDeliveryFees(sucursalId: string | null) {
-  const [fees, setFees] = useState<DeliveryFees>(DEFAULT_DELIVERY_FEES);
+export function useDeliveryServicios(sucursalId: string | null) {
+  const [servicios, setServicios] = useState<DeliveryServicioClient[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!sucursalId) return;
 
-    async function fetchFees() {
+    async function fetchServicios() {
       setIsLoading(true);
       const supabase = createClient();
       const { data } = await supabase
-        .from("delivery_fees_config")
-        .select("tipo, monto")
-        .eq("sucursal_id", sucursalId!);
+        .from("delivery_servicios")
+        .select("id, nombre, tipo, precio_base")
+        .eq("sucursal_id", sucursalId!)
+        .eq("activo", true)
+        .order("orden");
 
-      const result: DeliveryFees = { ...DEFAULT_DELIVERY_FEES };
-      for (const row of data ?? []) {
-        if (row.tipo === "propio") result.propio = row.monto;
-        if (row.tipo === "tercero") result.tercero = row.monto;
-      }
-      setFees(result);
+      setServicios(
+        (data ?? []).map((s) => ({
+          id: s.id,
+          nombre: s.nombre,
+          tipo: s.tipo as "propio" | "tercero",
+          precio_base: s.precio_base,
+        })),
+      );
       setIsLoading(false);
     }
 
-    fetchFees();
+    fetchServicios();
   }, [sucursalId]);
 
-  return { fees, isLoading };
+  return { servicios, isLoading };
 }

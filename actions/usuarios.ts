@@ -8,7 +8,9 @@ import {
   cambiarContrasena,
   actualizarNombrePerfil,
   countAdmins,
+  getRolNombreById,
 } from "@/lib/services/usuarios";
+import { upsertRepartidorDetalles } from "@/lib/services/repartidor-detalles";
 import {
   crearUsuarioSchema,
   actualizarUsuarioSchema,
@@ -26,7 +28,17 @@ export async function crearUsuarioAction(
   }
 
   try {
-    await crearUsuario(parsed.data);
+    const { repartidor_detalles, ...usuarioData } = parsed.data;
+    const userId = await crearUsuario(usuarioData);
+
+    // Si el rol es repartidor y hay detalles, guardarlos
+    if (repartidor_detalles && userId) {
+      const rolNombre = await getRolNombreById(usuarioData.rol_id);
+      if (rolNombre === "repartidor") {
+        await upsertRepartidorDetalles(userId, repartidor_detalles);
+      }
+    }
+
     revalidatePath("/usuarios");
     return { data: null, error: null };
   } catch (e) {
@@ -47,7 +59,17 @@ export async function actualizarUsuarioAction(
   }
 
   try {
-    await actualizarUsuario(profileId, parsed.data);
+    const { repartidor_detalles, ...usuarioData } = parsed.data;
+    await actualizarUsuario(profileId, usuarioData);
+
+    // Si el rol es repartidor y hay detalles, guardarlos
+    if (repartidor_detalles) {
+      const rolNombre = await getRolNombreById(usuarioData.rol_id);
+      if (rolNombre === "repartidor") {
+        await upsertRepartidorDetalles(profileId, repartidor_detalles);
+      }
+    }
+
     revalidatePath("/usuarios");
     return { data: null, error: null };
   } catch (e) {

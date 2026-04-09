@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+export const repartidorDetallesSchema = z.object({
+  direccion: z
+    .string()
+    .max(300, "Máximo 300 caracteres")
+    .nullable()
+    .transform((v) => v || null),
+  tipo_vehiculo: z.array(z.enum(["auto", "motocar", "moto_lineal"])),
+  notas: z
+    .string()
+    .max(500, "Máximo 500 caracteres")
+    .nullable()
+    .transform((v) => v || null),
+});
+
+export type RepartidorDetallesFormData = z.infer<
+  typeof repartidorDetallesSchema
+>;
+
 export const crearUsuarioSchema = z.object({
   email: z.string().min(1, "El correo es requerido").email("Correo inválido"),
   password: z
@@ -24,6 +42,7 @@ export const crearUsuarioSchema = z.object({
     .string()
     .nullable()
     .transform((v) => v || null),
+  repartidor_detalles: repartidorDetallesSchema.nullable().optional(),
 });
 
 export const actualizarUsuarioSchema = z.object({
@@ -46,6 +65,7 @@ export const actualizarUsuarioSchema = z.object({
     .nullable()
     .transform((v) => v || null),
   estado: z.enum(["activo", "inactivo", "eliminado"]),
+  repartidor_detalles: repartidorDetallesSchema.nullable().optional(),
 });
 
 export const cambiarContrasenaSchema = z

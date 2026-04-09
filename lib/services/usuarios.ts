@@ -79,6 +79,17 @@ export async function getSucursalesActivas(): Promise<Sucursal[]> {
   return data ?? [];
 }
 
+export async function getRolNombreById(rolId: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("roles")
+    .select("nombre")
+    .eq("id", rolId)
+    .single();
+  if (error) return null;
+  return data?.nombre ?? null;
+}
+
 export async function countAdmins(): Promise<number> {
   const supabase = await createClient();
 
@@ -104,7 +115,7 @@ export async function countAdmins(): Promise<number> {
 
 // ─── Mutations (usan admin client) ───────────────────────────────────────────
 
-export async function crearUsuario(data: CrearUsuarioData): Promise<void> {
+export async function crearUsuario(data: CrearUsuarioData): Promise<string> {
   const admin = createAdminClient();
 
   // 1. Crear en auth.users con display_name = nombre del rol (para compatibilidad)
@@ -137,6 +148,8 @@ export async function crearUsuario(data: CrearUsuarioData): Promise<void> {
     .eq("id", authUser.user.id);
 
   if (profileError) throw new Error(profileError.message);
+
+  return authUser.user.id;
 }
 
 export async function actualizarUsuario(

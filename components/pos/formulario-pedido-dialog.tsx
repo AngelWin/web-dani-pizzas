@@ -30,11 +30,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
-import {
-  TIPO_PEDIDO,
-  DELIVERY_METHOD,
-  THIRD_PARTY_SERVICES,
-} from "@/lib/constants";
+import { TIPO_PEDIDO, DELIVERY_METHOD } from "@/lib/constants";
+import type { DeliveryServicioClient } from "@/hooks/use-delivery-fees";
 import {
   crearOrdenSchema,
   type CrearOrdenFormValues,
@@ -55,7 +52,7 @@ type Props = {
   onClose: () => void;
   carrito: ReturnType<typeof useCarrito>;
   repartidores: Repartidor[];
-  deliveryFees: { propio: number; tercero: number };
+  deliveryServicios: DeliveryServicioClient[];
   rol: string | null;
   onSubmit: (data: CrearOrdenFormValues) => Promise<void>;
   isSubmitting: boolean;
@@ -67,7 +64,7 @@ export function FormularioPedidoDialog({
   onClose,
   carrito,
   repartidores,
-  deliveryFees,
+  deliveryServicios,
   rol,
   onSubmit,
   isSubmitting,
@@ -89,7 +86,8 @@ export function FormularioPedidoDialog({
       delivery_method: DELIVERY_METHOD.PROPIO,
       repartidor_id: null,
       third_party_name: null,
-      delivery_fee: deliveryFees.propio,
+      delivery_fee:
+        deliveryServicios.find((s) => s.tipo === "propio")?.precio_base ?? 0,
       delivery_address: "",
       delivery_referencia: "",
       items: [],
@@ -129,11 +127,14 @@ export function FormularioPedidoDialog({
   // Auto-llenar tarifa al cambiar método de delivery
   useEffect(() => {
     if (deliveryMethod === DELIVERY_METHOD.PROPIO) {
-      form.setValue("delivery_fee", deliveryFees.propio);
+      const servicio = deliveryServicios.find((s) => s.tipo === "propio");
+      form.setValue("delivery_fee", servicio?.precio_base ?? 0);
     } else if (deliveryMethod === DELIVERY_METHOD.TERCERO) {
-      form.setValue("delivery_fee", deliveryFees.tercero);
+      // No auto-llenar hasta que seleccionen un servicio específico
+      form.setValue("delivery_fee", 0);
+      form.setValue("third_party_name", null);
     }
-  }, [deliveryMethod, deliveryFees, form]);
+  }, [deliveryMethod, deliveryServicios, form]);
 
   // Sincronizar promoción seleccionada → form (descuento)
   useEffect(() => {
@@ -368,7 +369,18 @@ export function FormularioPedidoDialog({
                       <FormItem>
                         <FormLabel>Servicio de delivery</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            const servicio = deliveryServicios.find(
+                              (s) => s.tipo === "tercero" && s.nombre === value,
+                            );
+                            if (servicio) {
+                              form.setValue(
+                                "delivery_fee",
+                                servicio.precio_base,
+                              );
+                            }
+                          }}
                           value={field.value ?? ""}
                         >
                           <FormControl>
@@ -377,11 +389,13 @@ export function FormularioPedidoDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {THIRD_PARTY_SERVICES.map((s) => (
-                              <SelectItem key={s} value={s}>
-                                {s}
-                              </SelectItem>
-                            ))}
+                            {deliveryServicios
+                              .filter((s) => s.tipo === "tercero")
+                              .map((s) => (
+                                <SelectItem key={s.id} value={s.nombre}>
+                                  {s.nombre}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

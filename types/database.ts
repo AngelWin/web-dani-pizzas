@@ -14,131 +14,14 @@ export type Database = {
   };
   public: {
     Tables: {
-      pizza_sabores: {
-        Row: {
-          categoria_id: string;
-          created_at: string | null;
-          descripcion: string | null;
-          disponible: boolean;
-          id: string;
-          imagen_url: string | null;
-          nombre: string;
-          orden: number;
-          updated_at: string | null;
-        };
-        Insert: {
-          categoria_id: string;
-          created_at?: string | null;
-          descripcion?: string | null;
-          disponible?: boolean;
-          id?: string;
-          imagen_url?: string | null;
-          nombre: string;
-          orden?: number;
-          updated_at?: string | null;
-        };
-        Update: {
-          categoria_id?: string;
-          created_at?: string | null;
-          descripcion?: string | null;
-          disponible?: boolean;
-          id?: string;
-          imagen_url?: string | null;
-          nombre?: string;
-          orden?: number;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "pizza_sabores_categoria_id_fkey";
-            columns: ["categoria_id"];
-            isOneToOne: false;
-            referencedRelation: "categorias";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      sabor_ingredientes: {
-        Row: {
-          es_principal: boolean;
-          id: string;
-          nombre: string;
-          orden: number;
-          sabor_id: string;
-        };
-        Insert: {
-          es_principal?: boolean;
-          id?: string;
-          nombre: string;
-          orden?: number;
-          sabor_id: string;
-        };
-        Update: {
-          es_principal?: boolean;
-          id?: string;
-          nombre?: string;
-          orden?: number;
-          sabor_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "sabor_ingredientes_sabor_id_fkey";
-            columns: ["sabor_id"];
-            isOneToOne: false;
-            referencedRelation: "pizza_sabores";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producto_extras: {
-        Row: {
-          categoria_id: string;
-          created_at: string | null;
-          disponible: boolean;
-          id: string;
-          nombre: string;
-          orden: number;
-          precio: number;
-          updated_at: string | null;
-        };
-        Insert: {
-          categoria_id: string;
-          created_at?: string | null;
-          disponible?: boolean;
-          id?: string;
-          nombre: string;
-          orden?: number;
-          precio?: number;
-          updated_at?: string | null;
-        };
-        Update: {
-          categoria_id?: string;
-          created_at?: string | null;
-          disponible?: boolean;
-          id?: string;
-          nombre?: string;
-          orden?: number;
-          precio?: number;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producto_extras_categoria_id_fkey";
-            columns: ["categoria_id"];
-            isOneToOne: false;
-            referencedRelation: "categorias";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       categoria_medidas: {
         Row: {
           activa: boolean;
           categoria_id: string;
           created_at: string | null;
           descripcion: string | null;
-          id: string;
           es_acompanante: boolean;
+          id: string;
           max_sabores: number | null;
           nombre: string;
           orden: number;
@@ -312,53 +195,97 @@ export type Database = {
           },
         ];
       };
+      delivery_servicios: {
+        Row: {
+          activo: boolean;
+          created_at: string | null;
+          id: string;
+          nombre: string;
+          orden: number;
+          precio_base: number;
+          sucursal_id: string;
+          tipo: Database["public"]["Enums"]["delivery_method_tipo"];
+          updated_at: string | null;
+        };
+        Insert: {
+          activo?: boolean;
+          created_at?: string | null;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          precio_base?: number;
+          sucursal_id: string;
+          tipo: Database["public"]["Enums"]["delivery_method_tipo"];
+          updated_at?: string | null;
+        };
+        Update: {
+          activo?: boolean;
+          created_at?: string | null;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          precio_base?: number;
+          sucursal_id?: string;
+          tipo?: Database["public"]["Enums"]["delivery_method_tipo"];
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "delivery_servicios_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       membresias: {
         Row: {
           activa: boolean;
+          cliente_id: string;
           created_at: string;
           fecha_fin: string | null;
           fecha_inicio: string;
           id: string;
           nivel_id: string;
-          perfil_id: string;
           puntos_acumulados: number;
           updated_at: string;
         };
         Insert: {
           activa?: boolean;
+          cliente_id: string;
           created_at?: string;
           fecha_fin?: string | null;
           fecha_inicio?: string;
           id?: string;
           nivel_id: string;
-          perfil_id: string;
           puntos_acumulados?: number;
           updated_at?: string;
         };
         Update: {
           activa?: boolean;
+          cliente_id?: string;
           created_at?: string;
           fecha_fin?: string | null;
           fecha_inicio?: string;
           id?: string;
           nivel_id?: string;
-          perfil_id?: string;
           puntos_acumulados?: number;
           updated_at?: string;
         };
         Relationships: [
           {
+            foreignKeyName: "membresias_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "membresias_nivel_id_fkey";
             columns: ["nivel_id"];
             isOneToOne: false;
             referencedRelation: "membresias_niveles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "membresias_perfil_id_fkey";
-            columns: ["perfil_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -626,6 +553,91 @@ export type Database = {
             columns: ["sucursal_id"];
             isOneToOne: false;
             referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pizza_sabores: {
+        Row: {
+          categoria_id: string;
+          created_at: string | null;
+          descripcion: string | null;
+          disponible: boolean;
+          id: string;
+          imagen_url: string | null;
+          nombre: string;
+          orden: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          categoria_id: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean;
+          id?: string;
+          imagen_url?: string | null;
+          nombre: string;
+          orden?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          categoria_id?: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean;
+          id?: string;
+          imagen_url?: string | null;
+          nombre?: string;
+          orden?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pizza_sabores_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producto_extras: {
+        Row: {
+          categoria_id: string;
+          created_at: string | null;
+          disponible: boolean;
+          id: string;
+          nombre: string;
+          orden: number;
+          precio: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          categoria_id: string;
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          precio?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          categoria_id?: string;
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          precio?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producto_extras_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
             referencedColumns: ["id"];
           },
         ];
@@ -953,6 +965,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      repartidor_detalles: {
+        Row: {
+          created_at: string | null;
+          direccion: string | null;
+          id: string;
+          notas: string | null;
+          tipo_vehiculo: string[] | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          direccion?: string | null;
+          id: string;
+          notas?: string | null;
+          tipo_vehiculo?: string[] | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          direccion?: string | null;
+          id?: string;
+          notas?: string | null;
+          tipo_vehiculo?: string[] | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "repartidor_detalles_id_fkey";
+            columns: ["id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       roles: {
         Row: {
           activo: boolean;
@@ -979,6 +1026,38 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      sabor_ingredientes: {
+        Row: {
+          es_principal: boolean;
+          id: string;
+          nombre: string;
+          orden: number;
+          sabor_id: string;
+        };
+        Insert: {
+          es_principal?: boolean;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          sabor_id: string;
+        };
+        Update: {
+          es_principal?: boolean;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          sabor_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sabor_ingredientes_sabor_id_fkey";
+            columns: ["sabor_id"];
+            isOneToOne: false;
+            referencedRelation: "pizza_sabores";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       sucursales: {
         Row: {

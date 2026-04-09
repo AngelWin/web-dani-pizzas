@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2, UserPlus } from "lucide-react";
 import {
   Table,
@@ -54,6 +55,25 @@ export function UsuariosTabla({
   const [editando, setEditando] = useState<UsuarioCompleto | null>(null);
   const [eliminando, setEliminando] = useState<UsuarioCompleto | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [repartidorDetalles, setRepartidorDetalles] = useState<{
+    direccion: string | null;
+    tipo_vehiculo: string[] | null;
+    notas: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!editando || editando.rol_nombre !== "repartidor") {
+      setRepartidorDetalles(null);
+      return;
+    }
+    const supabase = createClient();
+    supabase
+      .from("repartidor_detalles")
+      .select("direccion, tipo_vehiculo, notas")
+      .eq("id", editando.id)
+      .maybeSingle()
+      .then(({ data }) => setRepartidorDetalles(data ?? null));
+  }, [editando]);
 
   function handleEliminar() {
     if (!eliminando) return;
@@ -203,6 +223,7 @@ export function UsuariosTabla({
               usuario={editando}
               roles={roles}
               sucursales={sucursales}
+              repartidorDetalles={repartidorDetalles}
               onSuccess={() => setEditando(null)}
             />
           )}

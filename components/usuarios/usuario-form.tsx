@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { Bike } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -14,6 +15,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -32,11 +35,111 @@ import {
   actualizarUsuarioAction,
 } from "@/actions/usuarios";
 import type { UsuarioCompleto, Rol, Sucursal } from "@/lib/services/usuarios";
+import { TIPOS_VEHICULO_LABELS, type TipoVehiculo } from "@/lib/constants";
 
 const ESTADOS = [
   { value: "activo", label: "Activo" },
   { value: "inactivo", label: "Inactivo" },
 ];
+
+const TIPOS_VEHICULO_OPTIONS = Object.entries(TIPOS_VEHICULO_LABELS) as [
+  TipoVehiculo,
+  string,
+][];
+
+/** Sección condicional con los campos de repartidor */
+function RepartidorDetallesFields({
+  control,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: any;
+}) {
+  return (
+    <div className="space-y-4 rounded-xl border border-border bg-surface/50 p-4">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <Bike className="h-4 w-4" />
+        Detalles de repartidor
+      </div>
+
+      <FormField
+        control={control}
+        name="repartidor_detalles.direccion"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Direccion</FormLabel>
+            <FormControl>
+              <Input
+                {...field}
+                value={field.value ?? ""}
+                maxLength={300}
+                placeholder="Av. Ejemplo 123, Casma"
+                className="h-10 rounded-xl"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="repartidor_detalles.tipo_vehiculo"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Tipo de vehiculo</FormLabel>
+            <div className="flex flex-wrap gap-4 pt-1">
+              {TIPOS_VEHICULO_OPTIONS.map(([value, label]) => {
+                const checked =
+                  (field.value as string[] | undefined)?.includes(value) ??
+                  false;
+                return (
+                  <label
+                    key={value}
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(isChecked) => {
+                        const current = (field.value as string[]) ?? [];
+                        field.onChange(
+                          isChecked
+                            ? [...current, value]
+                            : current.filter((v: string) => v !== value),
+                        );
+                      }}
+                    />
+                    <span className="text-sm">{label}</span>
+                  </label>
+                );
+              })}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="repartidor_detalles.notas"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Notas (opcional)</FormLabel>
+            <FormControl>
+              <Textarea
+                {...field}
+                value={field.value ?? ""}
+                maxLength={500}
+                placeholder="Observaciones adicionales..."
+                className="min-h-[80px] rounded-xl"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+}
 
 // ─── Formulario de creación ───────────────────────────────────────────────────
 
@@ -59,8 +162,13 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
       apellido_materno: null,
       rol_id: "",
       sucursal_id: null,
+      repartidor_detalles: null,
     },
   });
+
+  const watchedRolId = form.watch("rol_id");
+  const isRepartidor =
+    roles.find((r) => r.id === watchedRolId)?.nombre === "repartidor";
 
   function onSubmit(values: CrearUsuarioFormData) {
     startTransition(async () => {
@@ -129,7 +237,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Correo electrónico</FormLabel>
+              <FormLabel>Correo electronico</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -148,7 +256,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contraseña inicial</FormLabel>
+              <FormLabel>Contrasena inicial</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -169,7 +277,22 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Rol</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    const selected = roles.find((r) => r.id === v);
+                    if (selected?.nombre !== "repartidor") {
+                      form.setValue("repartidor_detalles", null);
+                    } else {
+                      form.setValue("repartidor_detalles", {
+                        direccion: null,
+                        tipo_vehiculo: [],
+                        notas: null,
+                      });
+                    }
+                  }}
+                >
                   <FormControl>
                     <SelectTrigger className="h-10 rounded-xl">
                       <SelectValue placeholder="Selecciona un rol" />
@@ -218,6 +341,8 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
           />
         </div>
 
+        {isRepartidor && <RepartidorDetallesFields control={form.control} />}
+
         <div className="flex justify-end pt-2">
           <Button
             type="submit"
@@ -232,12 +357,17 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
   );
 }
 
-// ─── Formulario de edición ────────────────────────────────────────────────────
+// ─── Formulario de edicion ────────────────────────────────────────────────────
 
 type EditarProps = {
   usuario: UsuarioCompleto;
   roles: Rol[];
   sucursales: Sucursal[];
+  repartidorDetalles?: {
+    direccion: string | null;
+    tipo_vehiculo: string[] | null;
+    notas: string | null;
+  } | null;
   onSuccess?: () => void;
 };
 
@@ -245,6 +375,7 @@ export function EditarUsuarioForm({
   usuario,
   roles,
   sucursales,
+  repartidorDetalles,
   onSuccess,
 }: EditarProps) {
   const [isPending, startTransition] = useTransition();
@@ -258,8 +389,20 @@ export function EditarUsuarioForm({
       rol_id: usuario.rol_id ?? "",
       sucursal_id: usuario.sucursal_id ?? null,
       estado: usuario.estado,
+      repartidor_detalles: repartidorDetalles
+        ? {
+            direccion: repartidorDetalles.direccion ?? null,
+            tipo_vehiculo:
+              (repartidorDetalles.tipo_vehiculo as TipoVehiculo[]) ?? [],
+            notas: repartidorDetalles.notas ?? null,
+          }
+        : null,
     },
   });
+
+  const watchedRolId = form.watch("rol_id");
+  const isRepartidor =
+    roles.find((r) => r.id === watchedRolId)?.nombre === "repartidor";
 
   function onSubmit(values: ActualizarUsuarioFormData) {
     startTransition(async () => {
@@ -330,7 +473,22 @@ export function EditarUsuarioForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Rol</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    const selected = roles.find((r) => r.id === v);
+                    if (selected?.nombre !== "repartidor") {
+                      form.setValue("repartidor_detalles", null);
+                    } else if (!form.getValues("repartidor_detalles")) {
+                      form.setValue("repartidor_detalles", {
+                        direccion: null,
+                        tipo_vehiculo: [],
+                        notas: null,
+                      });
+                    }
+                  }}
+                >
                   <FormControl>
                     <SelectTrigger className="h-10 rounded-xl">
                       <SelectValue placeholder="Selecciona un rol" />
@@ -403,6 +561,8 @@ export function EditarUsuarioForm({
             </FormItem>
           )}
         />
+
+        {isRepartidor && <RepartidorDetallesFields control={form.control} />}
 
         <div className="flex justify-end pt-2">
           <Button

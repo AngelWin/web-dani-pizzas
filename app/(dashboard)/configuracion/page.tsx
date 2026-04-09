@@ -1,25 +1,23 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { ModeloNegocioForm } from "@/components/configuracion/modelo-negocio-form";
-import { TarifasDeliveryForm } from "@/components/configuracion/tarifas-delivery-form";
-import {
-  getConfiguracionNegocio,
-  getDeliveryFeesPorSucursal,
-} from "@/lib/services/configuracion";
+import { DeliveryServiciosForm } from "@/components/configuracion/delivery-servicios-form";
+import { getConfiguracionNegocio } from "@/lib/services/configuracion";
+import { getAllDeliveryServiciosConSucursal } from "@/lib/services/delivery-servicios";
 import { Separator } from "@/components/ui/separator";
 
 export const dynamic = "force-dynamic";
 
 export default async function ConfiguracionPage() {
-  const [config, tarifas] = await Promise.all([
+  const [config, serviciosPorSucursal] = await Promise.all([
     getConfiguracionNegocio(),
-    getDeliveryFeesPorSucursal(),
+    getAllDeliveryServiciosConSucursal(),
   ]);
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Configuración"
-        description="Ajustes generales del negocio y tarifas de delivery"
+        description="Ajustes generales del negocio y servicios de delivery"
       />
 
       {/* Modelo de operación */}
@@ -38,18 +36,18 @@ export default async function ConfiguracionPage() {
 
       <Separator />
 
-      {/* Tarifas de delivery */}
+      {/* Servicios de delivery */}
       <section className="space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">
-            Tarifas de delivery
+            Servicios de delivery
           </h2>
           <p className="text-sm text-muted-foreground">
-            Costo predeterminado de delivery por sucursal. El cajero puede
-            editarlo en cada pedido.
+            Gestiona los servicios de delivery por sucursal. El precio base se
+            auto-llena en el POS al seleccionar el servicio.
           </p>
         </div>
-        <TarifasDeliveryForm tarifas={tarifas} />
+        <DeliveryServiciosForm serviciosPorSucursal={serviciosPorSucursal} />
       </section>
     </div>
   );

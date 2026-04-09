@@ -14,8 +14,10 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
                                                                           -> R8 (Membresias)
                                        -> R9 (Sucursales) [paralelo con R10]
                                        -> R10 (Config: Tarifas + Modelo Negocio)
+                                            -> R12 (Servicios Delivery + Detalles Repartidor)
                                             -> actualiza comportamiento visual de R5b y R5c
                           R1 -> R11 (Usuarios)
+                                    -> R12 (campos repartidor en formulario usuarios)
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -677,6 +679,76 @@ updated_by (auth.uid)
 - Solo admin puede acceder al CRUD de usuarios
 - Cualquier usuario puede cambiar su propia contrasena
 - Cualquier usuario puede editar su nombre
+
+---
+
+## Release 12: Servicios de Delivery + Detalles de Repartidor
+
+**Estado:** [x] Completado
+**Dependencia:** Release 10 + Release 11
+**Objetivo:** Mover servicios de delivery a la BD (gestionables desde /configuracion), cada uno con su precio por sucursal, y agregar detalles de repartidor (direccion, tipo de vehiculo) al formulario de usuarios.
+
+### Contexto del negocio:
+- Los servicios de delivery (Rappi, PedidosYa, Glovo, etc.) estaban hardcodeados en constantes
+- Las tarifas vivian en `delivery_fees_config` con solo 2 filas por sucursal (propio/tercero)
+- El admin no podia agregar ni editar servicios desde la UI
+- Los repartidores no tenian campos para direccion ni tipo de vehiculo
+
+### Nuevas tablas DB:
+
+**`delivery_servicios`** — Servicios de delivery por sucursal (reemplaza delivery_fees_config + THIRD_PARTY_SERVICES)
+```
+id, sucursal_id, nombre, tipo (propio|tercero), precio_base, activo, orden, created_at, updated_at
+```
+
+**`repartidor_detalles`** — Detalles 1:1 con profiles (solo para repartidores)
+```
+id (FK profiles CASCADE), direccion, tipo_vehiculo (text[]), notas, created_at, updated_at
+```
+
+### Commits esperados:
+
+**DB:**
+- [x] Migracion: tabla `delivery_servicios` con RLS (authenticated SELECT, admin ALL)
+- [x] Migracion: datos de `delivery_fees_config` migrados a `delivery_servicios`
+- [x] Migracion: tabla `repartidor_detalles` con RLS (admin ALL, repartidor SELECT own)
+- [x] Tipos TypeScript regenerados
+
+**Backend:**
+- [x] Servicio `lib/services/delivery-servicios.ts`: CRUD completo
+- [x] Servicio `lib/services/repartidor-detalles.ts`: get/upsert
+- [x] Validaciones Zod: `lib/validations/delivery-servicios.ts`
+- [x] Validaciones Zod: `lib/validations/usuarios.ts` extendido con repartidor_detalles
+- [x] Server Actions `actions/delivery-servicios.ts`: CRUD con verificacion de rol admin
+- [x] Server Actions `actions/usuarios.ts`: upsert repartidor_detalles al crear/editar
+- [x] Hook `hooks/use-delivery-fees.ts` reescrito como `useDeliveryServicios`
+- [x] Constantes: `TIPOS_VEHICULO` y `TIPOS_VEHICULO_LABELS` en `lib/constants.ts`
+- [x] Limpieza: eliminadas constantes deprecadas `THIRD_PARTY_SERVICES` y `DEFAULT_DELIVERY_FEES`
+
+**UI — /configuracion:**
+- [x] Nuevo componente `DeliveryServiciosForm` (reemplaza tarifas-delivery-form)
+- [x] Por sucursal: tabla de servicios (nombre, tipo badge, precio, toggle activo)
+- [x] Dialog para agregar/editar servicio
+- [x] Eliminar servicio con confirmacion
+
+**UI — POS:**
+- [x] `pos-client.tsx` usa `useDeliveryServicios` en vez de `useDeliveryFees`
+- [x] `formulario-pedido-dialog.tsx` con selector dinamico de servicios terceros desde BD
+- [x] Fee auto-llenado desde `precio_base` del servicio seleccionado
+
+**UI — Usuarios:**
+- [x] `usuario-form.tsx` con campos condicionales cuando rol = repartidor
+- [x] Campos: direccion, tipo de vehiculo (checkboxes multi-select), notas
+- [x] `usuarios-tabla.tsx` carga repartidor_detalles client-side al editar
+
+### Criterio de exito:
+- En /configuracion → seccion "Servicios de delivery" visible por sucursal
+- Admin puede agregar, editar, activar/desactivar y eliminar servicios
+- En /pos → crear pedido delivery tercero → selector dinamico con servicios activos
+- Fee se auto-llena con precio_base del servicio seleccionado
+- En /usuarios → crear/editar usuario repartidor → campos extra visibles
+- Tipo de vehiculo soporta seleccion multiple (auto, motocar, moto lineal)
+- Datos de repartidor persisten en `repartidor_detalles`
 
 ---
 
