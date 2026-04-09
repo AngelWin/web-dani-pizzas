@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   Clock,
   UserCheck,
+  Store,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { EstadoOrdenBadge, EstadoDeliveryBadge } from "./estado-badge";
@@ -133,7 +134,7 @@ export function TarjetaOrden({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {formatHora(orden.created_at)}
@@ -142,6 +143,12 @@ export function TarjetaOrden({
             <User className="h-3 w-3" />
             {nombreCajero(orden.cajero)}
           </span>
+          {orden.sucursal && (
+            <span className="flex items-center gap-1">
+              <Store className="h-3 w-3" />
+              {orden.sucursal.nombre}
+            </span>
+          )}
           {orden.mesa_referencia && (
             <span className="font-medium text-foreground">
               Mesa: {orden.mesa_referencia}

@@ -21,6 +21,7 @@ export type OrdenConItems = Orden & {
   repartidor: { nombre: string; apellido_paterno: string } | null;
   cliente: { nombre: string; apellido: string | null } | null;
   orden_estado_historial: HistorialConUsuario[];
+  sucursal: { nombre: string } | null;
 };
 
 export type FiltroEstadoOrden = EstadoOrden | "todas" | "activas";
@@ -43,6 +44,7 @@ export async function getOrdenes(
       cajero:profiles!ordenes_cajero_id_fkey (nombre, apellido_paterno),
       repartidor:profiles!ordenes_repartidor_id_fkey (nombre, apellido_paterno),
       cliente:clientes!ordenes_cliente_id_fkey (nombre, apellido),
+      sucursal:sucursales!ordenes_sucursal_id_fkey (nombre),
       orden_estado_historial (
         *,
         cambiado_por_profile:profiles!orden_estado_historial_cambiado_por_fkey (nombre, apellido_paterno)
