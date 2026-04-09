@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { TIPO_PEDIDO } from "@/lib/constants";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -12,6 +13,7 @@ export type FiltrosReporte = {
   fechaHasta: string; // YYYY-MM-DD
   sucursalId?: string | null;
   tipoPedido?: string | null;
+  esAdmin?: boolean;
 };
 
 export type ResumenVentas = {
@@ -143,7 +145,7 @@ type VentaRaw = {
 // ─── Funciones de servicio ────────────────────────────────────────────────────
 
 async function getVentasBase(filtros: FiltrosReporte): Promise<VentaRaw[]> {
-  const supabase = await createClient();
+  const supabase = filtros.esAdmin ? createAdminClient() : await createClient();
   const { desde, hasta } = rangoFechasUTC(
     filtros.fechaDesde,
     filtros.fechaHasta,
@@ -340,7 +342,7 @@ export async function getTopProductos(
   filtros: FiltrosReporte,
   limit = 10,
 ): Promise<TopProducto[]> {
-  const supabase = await createClient();
+  const supabase = filtros.esAdmin ? createAdminClient() : await createClient();
   const { desde, hasta } = rangoFechasUTC(
     filtros.fechaDesde,
     filtros.fechaHasta,

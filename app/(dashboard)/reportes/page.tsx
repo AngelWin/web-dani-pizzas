@@ -79,6 +79,7 @@ export default async function ReportesPage({
     fechaHasta,
     sucursalId: sucursalParam,
     tipoPedido,
+    esAdmin,
   };
 
   const [
