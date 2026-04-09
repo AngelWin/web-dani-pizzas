@@ -151,7 +151,7 @@ export function CatalogoProductos({
                   )}
                 >
                   {/* Imagen */}
-                  <div className="relative aspect-square w-full bg-muted">
+                  <div className="relative aspect-[4/3] w-full bg-muted">
                     {producto.imagen_url ? (
                       <Image
                         src={producto.imagen_url}
