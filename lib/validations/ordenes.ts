@@ -77,23 +77,10 @@ export const crearOrdenSchema = z
         path: ["delivery_address"],
       });
     }
-    if (
-      data.delivery_method === DELIVERY_METHOD.PROPIO &&
-      !data.repartidor_id
-    ) {
+    if (!data.third_party_name) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Selecciona un repartidor",
-        path: ["repartidor_id"],
-      });
-    }
-    if (
-      data.delivery_method === DELIVERY_METHOD.TERCERO &&
-      !data.third_party_name
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Ingresa el nombre del servicio de delivery",
+        message: "Selecciona un servicio de delivery",
         path: ["third_party_name"],
       });
     }

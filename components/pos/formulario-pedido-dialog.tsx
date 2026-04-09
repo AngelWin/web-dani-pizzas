@@ -127,17 +127,11 @@ export function FormularioPedidoDialog({
     );
   }, [carrito.items, form]);
 
-  // Auto-llenar tarifa al cambiar método de delivery
+  // Limpiar servicio y tarifa al cambiar método de delivery
   useEffect(() => {
-    if (deliveryMethod === DELIVERY_METHOD.PROPIO) {
-      const servicio = deliveryServicios.find((s) => s.tipo === "propio");
-      form.setValue("delivery_fee", servicio?.precio_base ?? 0);
-    } else if (deliveryMethod === DELIVERY_METHOD.TERCERO) {
-      // No auto-llenar hasta que seleccionen un servicio específico
-      form.setValue("delivery_fee", 0);
-      form.setValue("third_party_name", null);
-    }
-  }, [deliveryMethod, deliveryServicios, form]);
+    form.setValue("third_party_name", null);
+    form.setValue("delivery_fee", 0);
+  }, [deliveryMethod, form]);
 
   // Sincronizar promoción seleccionada → form (descuento)
   useEffect(() => {
@@ -331,31 +325,38 @@ export function FormularioPedidoDialog({
                 {deliveryMethod === DELIVERY_METHOD.PROPIO && (
                   <FormField
                     control={form.control}
-                    name="repartidor_id"
+                    name="third_party_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Repartidor</FormLabel>
+                        <FormLabel>Servicio de delivery</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            const servicio = deliveryServicios.find(
+                              (s) => s.tipo === "propio" && s.nombre === value,
+                            );
+                            if (servicio) {
+                              form.setValue(
+                                "delivery_fee",
+                                servicio.precio_base,
+                              );
+                            }
+                          }}
                           value={field.value ?? ""}
                         >
                           <FormControl>
                             <SelectTrigger className="h-12">
-                              <SelectValue placeholder="Selecciona repartidor" />
+                              <SelectValue placeholder="Selecciona servicio" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {repartidores.length === 0 ? (
-                              <SelectItem value="_none" disabled>
-                                Sin repartidores disponibles
-                              </SelectItem>
-                            ) : (
-                              repartidores.map((r) => (
-                                <SelectItem key={r.id} value={r.id}>
-                                  {r.nombre} {r.apellido_paterno}
+                            {deliveryServicios
+                              .filter((s) => s.tipo === "propio")
+                              .map((s) => (
+                                <SelectItem key={s.id} value={s.nombre}>
+                                  {s.nombre}
                                 </SelectItem>
-                              ))
-                            )}
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
