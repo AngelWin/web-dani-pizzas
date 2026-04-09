@@ -103,7 +103,6 @@ export async function getEntregasPorRepartidor(
        repartidor:profiles!ordenes_repartidor_id_fkey(nombre, apellido_paterno)`,
     )
     .eq("tipo_pedido", "delivery")
-    .eq("delivery_method", "propio")
     .neq("estado", "cancelada")
     .gte("created_at", desde)
     .lte("created_at", hasta);
