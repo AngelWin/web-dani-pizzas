@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import { TIPO_PEDIDO, DELIVERY_METHOD } from "@/lib/constants";
-import type { DeliveryServicioClient } from "@/hooks/use-delivery-fees";
+import type { DeliveryServicio } from "@/lib/services/delivery-servicios";
 import {
   crearOrdenSchema,
   type CrearOrdenFormValues,
@@ -52,7 +52,7 @@ type Props = {
   onClose: () => void;
   carrito: ReturnType<typeof useCarrito>;
   repartidores: Repartidor[];
-  deliveryServicios: DeliveryServicioClient[];
+  deliveryServicios: DeliveryServicio[];
   rol: string | null;
   onSubmit: (data: CrearOrdenFormValues) => Promise<void>;
   isSubmitting: boolean;

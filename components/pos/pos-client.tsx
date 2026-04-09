@@ -8,7 +8,7 @@ import { Carrito } from "./carrito";
 import { FormularioPedidoDialog } from "./formulario-pedido-dialog";
 import { OrdenConfirmadaDialog } from "./orden-confirmada-dialog";
 import { useCarrito } from "@/hooks/use-carrito";
-import { useDeliveryServicios } from "@/hooks/use-delivery-fees";
+import type { DeliveryServicio } from "@/lib/services/delivery-servicios";
 import { crearOrdenAction } from "@/actions/ordenes";
 import {
   Select,
@@ -52,6 +52,7 @@ type Props = {
   promociones: PromocionActivaPOS[];
   saboresPorCategoria: Record<string, PizzaSaborConIngredientes[]>;
   extrasPorCategoria: Record<string, ProductoExtra[]>;
+  deliveryServicios: DeliveryServicio[];
 };
 
 export function PosClient({
@@ -65,10 +66,10 @@ export function PosClient({
   promociones,
   saboresPorCategoria,
   extrasPorCategoria,
+  deliveryServicios,
 }: Props) {
   const router = useRouter();
   const carrito = useCarrito();
-  const { servicios: deliveryServicios } = useDeliveryServicios(sucursalId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ordenConfirmada, setOrdenConfirmada] = useState<Orden | null>(null);
