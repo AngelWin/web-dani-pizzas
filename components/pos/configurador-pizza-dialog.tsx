@@ -81,7 +81,9 @@ export function ConfiguradorPizzaDialog({
 
   if (!producto) return null;
 
-  const variantes = producto.producto_variantes.filter((v) => v.disponible);
+  const variantes = producto.producto_variantes.filter(
+    (v) => v.disponible && !v.categoria_medidas?.es_acompanante,
+  );
   const saboresDisponibles = sabores.filter((s) => s.disponible);
   const extrasDisponibles = extras.filter((e) => e.disponible);
 
