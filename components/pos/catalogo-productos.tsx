@@ -6,8 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, ShoppingCart } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 import { SelectorVarianteDialog } from "./selector-variante-dialog";
-import { ConfiguradorPizzaDialog } from "./configurador-pizza-dialog";
+
+const ConfiguradorPizzaDialog = dynamic(
+  () =>
+    import("./configurador-pizza-dialog").then(
+      (mod) => mod.ConfiguradorPizzaDialog,
+    ),
+  { ssr: false },
+);
 import type { ProductoPOS } from "@/lib/services/ventas";
 import type {
   PizzaSaborConIngredientes,

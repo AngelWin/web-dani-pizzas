@@ -14,8 +14,18 @@ import {
   cambiarEstadoOrdenAction,
   cambiarEstadoDeliveryAction,
 } from "@/app/(dashboard)/ordenes/actions";
-import { CobroDialog } from "./cobro-dialog";
-import { CancelarOrdenDialog } from "./cancelar-orden-dialog";
+import dynamic from "next/dynamic";
+
+const CobroDialog = dynamic(
+  () => import("./cobro-dialog").then((mod) => mod.CobroDialog),
+  { ssr: false },
+);
+
+const CancelarOrdenDialog = dynamic(
+  () =>
+    import("./cancelar-orden-dialog").then((mod) => mod.CancelarOrdenDialog),
+  { ssr: false },
+);
 import type {
   EstadoOrden,
   EstadoDelivery,

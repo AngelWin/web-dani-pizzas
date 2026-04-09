@@ -70,7 +70,7 @@ export async function getOrdenes(
     query = query.gte("created_at", inicioLima).lte("created_at", finLima);
   }
 
-  const { data, error } = await query.limit(200);
+  const { data, error } = await query.limit(100);
 
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as OrdenConItems[];

@@ -3,10 +3,25 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 import { CatalogoProductos } from "./catalogo-productos";
 import { Carrito } from "./carrito";
-import { FormularioPedidoDialog } from "./formulario-pedido-dialog";
-import { OrdenConfirmadaDialog } from "./orden-confirmada-dialog";
+
+const FormularioPedidoDialog = dynamic(
+  () =>
+    import("./formulario-pedido-dialog").then(
+      (mod) => mod.FormularioPedidoDialog,
+    ),
+  { ssr: false },
+);
+
+const OrdenConfirmadaDialog = dynamic(
+  () =>
+    import("./orden-confirmada-dialog").then(
+      (mod) => mod.OrdenConfirmadaDialog,
+    ),
+  { ssr: false },
+);
 import { useCarrito } from "@/hooks/use-carrito";
 import type { DeliveryServicio } from "@/lib/services/delivery-servicios";
 import { crearOrdenAction } from "@/actions/ordenes";

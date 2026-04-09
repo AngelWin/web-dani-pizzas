@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { PosClient } from "@/components/pos/pos-client";
 import {
   getProductosPOS,
-  getCategoriasConProductos,
   getRepartidoresSucursal,
 } from "@/lib/services/ventas";
 import { getConfiguracionNegocio } from "@/lib/services/configuracion";
@@ -64,7 +63,6 @@ export default async function PosPage({
 
   const [
     productos,
-    categorias,
     repartidores,
     config,
     promociones,
@@ -73,7 +71,6 @@ export default async function PosPage({
     deliveryServicios,
   ] = await Promise.all([
     getProductosPOS(sucursalId),
-    getCategoriasConProductos(sucursalId),
     getRepartidoresSucursal(sucursalId),
     getConfiguracionNegocio(),
     getPromocionesActivas(),
@@ -81,6 +78,15 @@ export default async function PosPage({
     getAllProductoExtras(),
     getDeliveryServiciosPorSucursal(sucursalId),
   ]);
+
+  // Extraer categorías directamente de los productos ya cargados (evita doble fetch)
+  const categoriasMap = new Map<string, { id: string; nombre: string }>();
+  for (const p of productos) {
+    if (p.categorias && !categoriasMap.has(p.categorias.id)) {
+      categoriasMap.set(p.categorias.id, p.categorias);
+    }
+  }
+  const categorias = Array.from(categoriasMap.values());
 
   return (
     <PosClient

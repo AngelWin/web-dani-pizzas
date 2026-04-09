@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, ClipboardList } from "lucide-react";
@@ -80,7 +80,22 @@ export function ListaOrdenes({
   const [filtro, setFiltro] = useState<EstadoTab>("activas");
 
   const tabs = getTabs(modeloNegocio);
-  const ordenesFiltradas = filtrarOrdenes(ordenes, filtro);
+  const ordenesFiltradas = useMemo(
+    () => filtrarOrdenes(ordenes, filtro),
+    [ordenes, filtro],
+  );
+
+  // Pre-calcular conteos una sola vez por cambio de órdenes
+  const conteosPorTab = useMemo(() => {
+    const conteos: Record<string, number> = { todas: ordenes.length };
+    let activas = 0;
+    for (const o of ordenes) {
+      conteos[o.estado] = (conteos[o.estado] ?? 0) + 1;
+      if (o.estado !== "entregada" && o.estado !== "cancelada") activas++;
+    }
+    conteos["activas"] = activas;
+    return conteos;
+  }, [ordenes]);
 
   function handleFechaChange(e: React.ChangeEvent<HTMLInputElement>) {
     const nueva = e.target.value;
@@ -129,14 +144,7 @@ export function ListaOrdenes({
       {/* Tabs de filtro por estado */}
       <div className="flex flex-wrap gap-2">
         {tabs.map((tab) => {
-          const count =
-            tab.value === "activas"
-              ? ordenes.filter(
-                  (o) => o.estado !== "entregada" && o.estado !== "cancelada",
-                ).length
-              : tab.value === "todas"
-                ? ordenes.length
-                : ordenes.filter((o) => o.estado === tab.value).length;
+          const count = conteosPorTab[tab.value] ?? 0;
 
           return (
             <Button
