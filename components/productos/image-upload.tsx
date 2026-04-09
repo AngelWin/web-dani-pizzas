@@ -182,7 +182,7 @@ export function ImageUpload({
       {showTips && (
         <ul className="text-xs text-muted-foreground space-y-1 pl-5 list-disc">
           <li>
-            <strong>Tamaño:</strong> 600 x 600 px (cuadrado 1:1)
+            <strong>Tamaño:</strong> 800 x 600 px (horizontal 4:3)
           </li>
           <li>
             <strong>Peso:</strong> menos de 100 KB
