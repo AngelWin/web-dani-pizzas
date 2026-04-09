@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Upload, X, ImageIcon } from "lucide-react";
+import { Upload, X, ImageIcon, Info, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { uploadProductoImageAction } from "@/actions/productos";
@@ -24,6 +24,7 @@ export function ImageUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showTips, setShowTips] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const uploadImage = useCallback(
@@ -162,6 +163,41 @@ export function ImageUpload({
       />
 
       {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
+
+      {/* Recomendaciones colapsables */}
+      <button
+        type="button"
+        onClick={() => setShowTips((v) => !v)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <Info className="h-3.5 w-3.5" />
+        <span>Recomendaciones para la imagen</span>
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 transition-transform",
+            showTips && "rotate-180",
+          )}
+        />
+      </button>
+      {showTips && (
+        <ul className="text-xs text-muted-foreground space-y-1 pl-5 list-disc">
+          <li>
+            <strong>Tamaño:</strong> 600 x 600 px (cuadrado 1:1)
+          </li>
+          <li>
+            <strong>Peso:</strong> menos de 100 KB
+          </li>
+          <li>
+            <strong>Formatos:</strong> WebP, PNG o JPG
+          </li>
+          <li>
+            <strong>Fondo:</strong> transparente o color sólido
+          </li>
+          <li>
+            <strong>Composición:</strong> producto centrado en la imagen
+          </li>
+        </ul>
+      )}
     </div>
   );
 }
