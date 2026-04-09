@@ -86,12 +86,12 @@ export function CatalogoProductos({
         />
       </div>
 
-      {/* Filtro por categoría */}
-      <div className="flex gap-2 flex-wrap mb-4">
+      {/* Filtro por categoría — scroll horizontal en mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-none">
         <Button
           variant={categoriaActiva === null ? "default" : "outline"}
           size="sm"
-          className="h-9"
+          className="h-9 shrink-0"
           onClick={() => setCategoriaActiva(null)}
         >
           Todos
@@ -101,7 +101,7 @@ export function CatalogoProductos({
             key={cat.id}
             variant={categoriaActiva === cat.id ? "default" : "outline"}
             size="sm"
-            className="h-9"
+            className="h-9 shrink-0"
             onClick={() =>
               setCategoriaActiva(cat.id === categoriaActiva ? null : cat.id)
             }
@@ -119,7 +119,7 @@ export function CatalogoProductos({
             <p>No hay productos disponibles</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {productosFiltrados.map((producto) => {
               const tieneVariantes = producto.producto_variantes.length > 0;
               const precioDesde = tieneVariantes
