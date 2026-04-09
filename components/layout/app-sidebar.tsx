@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-user";
 import { getNavItemsByRole } from "@/lib/navigation";
@@ -16,6 +17,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 
@@ -29,6 +31,11 @@ const ROLE_LABELS: Record<string, string> = {
 export function AppSidebar() {
   const pathname = usePathname();
   const { role, nombreCompleto, fotoUrl, email } = useUser();
+  const { setOpenMobile, isMobile } = useSidebar();
+
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false);
+  }, [pathname, isMobile, setOpenMobile]);
 
   const navItems = role ? getNavItemsByRole(role) : [];
 
