@@ -70,7 +70,8 @@ function utcToHoraLima(isoString: string): string {
 type OrdenDeliveryRaw = {
   id: string;
   numero_orden: number;
-  repartidor_id: string;
+  repartidor_id: string | null;
+  third_party_name: string | null;
   delivery_address: string | null;
   delivery_fee: number | null;
   delivery_status: string;
@@ -97,13 +98,12 @@ export async function getEntregasPorRepartidor(
   let query = supabase
     .from("ordenes")
     .select(
-      `id, numero_orden, repartidor_id, delivery_address, delivery_fee,
-       delivery_status, delivery_status_updated_at, created_at,
+      `id, numero_orden, repartidor_id, third_party_name, delivery_address,
+       delivery_fee, delivery_status, delivery_status_updated_at, created_at,
        repartidor:profiles!ordenes_repartidor_id_fkey(nombre, apellido_paterno)`,
     )
     .eq("tipo_pedido", "delivery")
     .eq("delivery_method", "propio")
-    .not("repartidor_id", "is", null)
     .neq("estado", "cancelada")
     .gte("created_at", desde)
     .lte("created_at", hasta);
@@ -123,22 +123,25 @@ export async function getEntregasPorRepartidor(
 
   const ordenes = (data ?? []) as unknown as OrdenDeliveryRaw[];
 
-  // Agrupar por repartidor
+  // Agrupar por repartidor (perfil) o por nombre del servicio de delivery
   const porRepartidor = new Map<
     string,
     { nombre: string; entregas: OrdenDeliveryRaw[] }
   >();
 
   for (const o of ordenes) {
-    if (!o.repartidor_id) continue;
-    const existing = porRepartidor.get(o.repartidor_id);
+    // Clave: repartidor_id si existe, sino third_party_name
+    const clave = o.repartidor_id ?? o.third_party_name;
+    if (!clave) continue;
+
+    const existing = porRepartidor.get(clave);
     if (existing) {
       existing.entregas.push(o);
     } else {
       const nombre = o.repartidor
         ? `${o.repartidor.nombre} ${o.repartidor.apellido_paterno}`
-        : "Sin nombre";
-      porRepartidor.set(o.repartidor_id, { nombre, entregas: [o] });
+        : (o.third_party_name ?? "Sin nombre");
+      porRepartidor.set(clave, { nombre, entregas: [o] });
     }
   }
 
