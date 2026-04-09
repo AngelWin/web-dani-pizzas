@@ -121,33 +121,41 @@ export function CatalogoProductos({
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {productosFiltrados.map((producto) => {
-              const tieneVariantes = producto.producto_variantes.length > 0;
+              const variantesConPrecio = producto.producto_variantes.filter(
+                (v) => v.precio > 0,
+              );
+              const tieneVariantes = variantesConPrecio.length > 0;
               const precioDesde = tieneVariantes
-                ? Math.min(...producto.producto_variantes.map((v) => v.precio))
+                ? Math.min(...variantesConPrecio.map((v) => v.precio))
                 : (producto.precio ?? 0);
+              const numMedidas = producto.producto_variantes.filter(
+                (v) => v.precio > 0,
+              ).length;
 
               return (
                 <button
                   key={producto.id}
                   onClick={() => handleClickProducto(producto)}
                   className={cn(
-                    "group relative flex flex-col rounded-xl border bg-card p-3 text-left",
+                    "group flex flex-col rounded-xl border bg-card p-3 text-left",
                     "shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all",
                     "hover:border-primary hover:shadow-md active:scale-95",
                     "min-h-[100px]",
                   )}
                 >
-                  {tieneVariantes && (
-                    <Badge
-                      variant="secondary"
-                      className="absolute top-2 right-2 text-xs"
-                    >
-                      {producto.producto_variantes.length} medidas
-                    </Badge>
-                  )}
-                  <span className="font-medium text-sm leading-tight line-clamp-2 mb-2 flex-1">
-                    {producto.nombre}
-                  </span>
+                  <div className="flex items-start justify-between gap-1 mb-2 flex-1">
+                    <span className="font-medium text-sm leading-tight line-clamp-3">
+                      {producto.nombre}
+                    </span>
+                    {numMedidas > 0 && (
+                      <Badge
+                        variant="secondary"
+                        className="text-xs shrink-0 ml-1"
+                      >
+                        {numMedidas} {numMedidas === 1 ? "medida" : "medidas"}
+                      </Badge>
+                    )}
+                  </div>
                   <span className="text-primary font-bold text-base">
                     {tieneVariantes
                       ? `Desde ${formatCurrency(precioDesde)}`
