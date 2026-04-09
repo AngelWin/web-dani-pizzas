@@ -443,6 +443,7 @@ export type Database = {
       };
       orden_items: {
         Row: {
+          acompanante: Json | null;
           cantidad: number;
           created_at: string;
           extras: Json | null;
@@ -458,6 +459,7 @@ export type Database = {
           variante_nombre: string | null;
         };
         Insert: {
+          acompanante?: Json | null;
           cantidad: number;
           created_at?: string;
           extras?: Json | null;
@@ -473,6 +475,7 @@ export type Database = {
           variante_nombre?: string | null;
         };
         Update: {
+          acompanante?: Json | null;
           cantidad?: number;
           created_at?: string;
           extras?: Json | null;

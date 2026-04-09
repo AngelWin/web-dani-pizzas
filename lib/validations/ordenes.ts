@@ -14,6 +14,13 @@ export const extraOrdenSchema = z.object({
   precio: z.number().min(0),
 });
 
+export const acompananteOrdenSchema = z.object({
+  variante_id: z.string().uuid(),
+  variante_nombre: z.string().min(1),
+  sabor_id: z.string().uuid(),
+  sabor_nombre: z.string().min(1),
+});
+
 export const ordenItemSchema = z.object({
   producto_id: z.string().uuid(),
   variante_id: z.string().uuid().nullable().optional(),
@@ -25,6 +32,7 @@ export const ordenItemSchema = z.object({
   notas_item: z.string().max(200).nullable().optional(),
   sabores: z.array(saborOrdenSchema).nullable().optional(),
   extras: z.array(extraOrdenSchema).nullable().optional(),
+  acompanante: acompananteOrdenSchema.nullable().optional(),
 });
 
 export const crearOrdenSchema = z

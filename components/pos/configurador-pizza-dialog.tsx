@@ -523,12 +523,29 @@ export function ConfiguradorPizzaDialog({
                     {extrasSeleccionados.map((e) => e.nombre).join(", ")}
                   </p>
                 )}
+                {acompanante && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                    + {acompanante.variante.categoria_medidas?.nombre}:{" "}
+                    {acompanante.sabor.nombre}
+                  </p>
+                )}
               </div>
               <span className="text-primary font-bold text-lg">
                 {formatCurrency(precioTotal)}
               </span>
             </div>
           )}
+
+          {/* Aviso de acompañante pendiente */}
+          {paso === 3 &&
+            tieneAcompanante &&
+            variantesAcompanante.length > 0 &&
+            !acompanante && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <PlusCircle className="h-3.5 w-3.5 shrink-0" />
+                Esta pizza incluye un acompañante gratis — recuerda agregarlo
+              </p>
+            )}
 
           <Separator />
 
@@ -569,7 +586,12 @@ export function ConfiguradorPizzaDialog({
               <Button
                 className="h-12 flex-1"
                 onClick={handleConfirmar}
-                disabled={saboresSeleccionados.length === 0}
+                disabled={
+                  saboresSeleccionados.length === 0 ||
+                  (tieneAcompanante &&
+                    variantesAcompanante.length > 0 &&
+                    !acompanante)
+                }
               >
                 Agregar al carrito
               </Button>

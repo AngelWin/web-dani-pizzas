@@ -34,6 +34,13 @@ type ExtraOrdenJson = {
   precio: number;
 };
 
+type AcompananteOrdenJson = {
+  variante_id: string;
+  variante_nombre: string;
+  sabor_id: string;
+  sabor_nombre: string;
+};
+
 function parseSabores(raw: Json | null): SaborOrdenJson[] {
   if (!Array.isArray(raw)) return [];
   return raw as SaborOrdenJson[];
@@ -42,6 +49,11 @@ function parseSabores(raw: Json | null): SaborOrdenJson[] {
 function parseExtras(raw: Json | null): ExtraOrdenJson[] {
   if (!Array.isArray(raw)) return [];
   return raw as ExtraOrdenJson[];
+}
+
+function parseAcompanante(raw: Json | null): AcompananteOrdenJson | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  return raw as AcompananteOrdenJson;
 }
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { NivelMembresia } from "@/lib/services/membresias";
@@ -150,6 +162,7 @@ export function TarjetaOrden({
           {orden.orden_items.map((item) => {
             const sabores = parseSabores(item.sabores);
             const extras = parseExtras(item.extras);
+            const acompanante = parseAcompanante(item.acompanante);
             return (
               <li key={item.id} className="flex justify-between text-sm">
                 <span className="text-foreground">
@@ -186,6 +199,12 @@ export function TarjetaOrden({
                       {extras.length > 0 && (
                         <span className="block text-primary/70">
                           +{extras.map((e) => e.nombre).join(", ")}
+                        </span>
+                      )}
+                      {acompanante && (
+                        <span className="block text-amber-600 dark:text-amber-400 font-medium">
+                          + {acompanante.variante_nombre}:{" "}
+                          {acompanante.sabor_nombre}
                         </span>
                       )}
                     </span>

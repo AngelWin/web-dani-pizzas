@@ -121,6 +121,7 @@ export function FormularioPedidoDialog({
         subtotal: i.subtotal,
         sabores: i.sabores ?? null,
         extras: i.extras ?? null,
+        acompanante: i.acompanante ?? null,
       })),
     );
   }, [carrito.items, form]);

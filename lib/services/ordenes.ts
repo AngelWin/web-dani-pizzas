@@ -195,6 +195,12 @@ export type CrearOrdenData = {
         }[]
       | null;
     extras?: { extra_id: string; nombre: string; precio: number }[] | null;
+    acompanante?: {
+      variante_id: string;
+      variante_nombre: string;
+      sabor_id: string;
+      sabor_nombre: string;
+    } | null;
   }[];
 };
 
@@ -250,6 +256,7 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
       notas_item: item.notas_item ?? null,
       sabores: item.sabores ?? null,
       extras: item.extras ?? null,
+      acompanante: item.acompanante ?? null,
     })),
   );
 
