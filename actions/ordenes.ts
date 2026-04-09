@@ -64,6 +64,7 @@ export async function crearOrdenAction(
         notas_item: i.notas_item ?? null,
         sabores: i.sabores ?? null,
         extras: i.extras ?? null,
+        acompanante: i.acompanante ?? null,
       })),
     });
 
