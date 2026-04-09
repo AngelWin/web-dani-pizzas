@@ -138,10 +138,12 @@ export type Database = {
           created_at: string | null;
           descripcion: string | null;
           id: string;
+          es_acompanante: boolean;
           max_sabores: number | null;
           nombre: string;
           orden: number;
           permite_combinacion: boolean;
+          tiene_acompanante: boolean;
           updated_at: string | null;
         };
         Insert: {
@@ -149,11 +151,13 @@ export type Database = {
           categoria_id: string;
           created_at?: string | null;
           descripcion?: string | null;
+          es_acompanante?: boolean;
           id?: string;
           max_sabores?: number | null;
           nombre: string;
           orden?: number;
           permite_combinacion?: boolean;
+          tiene_acompanante?: boolean;
           updated_at?: string | null;
         };
         Update: {
@@ -161,11 +165,13 @@ export type Database = {
           categoria_id?: string;
           created_at?: string | null;
           descripcion?: string | null;
+          es_acompanante?: boolean;
           id?: string;
           max_sabores?: number | null;
           nombre?: string;
           orden?: number;
           permite_combinacion?: boolean;
+          tiene_acompanante?: boolean;
           updated_at?: string | null;
         };
         Relationships: [

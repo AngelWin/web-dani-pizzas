@@ -193,6 +193,8 @@ function MedidaForm({
       orden: medida?.orden ?? 0,
       activa: medida?.activa ?? true,
       permite_combinacion: medida?.permite_combinacion ?? false,
+      tiene_acompanante: medida?.tiene_acompanante ?? false,
+      es_acompanante: medida?.es_acompanante ?? false,
       max_sabores: medida?.max_sabores ?? null,
     },
   });
@@ -311,6 +313,50 @@ function MedidaForm({
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="tiene_acompanante"
+            render={({ field }) => (
+              <FormItem className="flex items-end gap-3 space-y-0 pb-1 col-span-2">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div>
+                  <FormLabel className="cursor-pointer">
+                    Permite acompañante gratis
+                  </FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    Activa en medidas grandes (ej: Familiar, Extra)
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="es_acompanante"
+            render={({ field }) => (
+              <FormItem className="flex items-end gap-3 space-y-0 pb-1 col-span-2">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div>
+                  <FormLabel className="cursor-pointer">
+                    Es acompañante
+                  </FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    Esta medida puede ser seleccionada como acompañante gratis
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
           {permiteCombinan && (
             <FormField
               control={form.control}
@@ -423,6 +469,7 @@ function MedidasPanel({
                 <TableHead className="text-center">Orden</TableHead>
                 <TableHead className="text-center">Combinable</TableHead>
                 <TableHead className="text-center">Máx. sabores</TableHead>
+                <TableHead className="text-center">Acompañante</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
@@ -444,6 +491,23 @@ function MedidasPanel({
                   </TableCell>
                   <TableCell className="text-center text-sm">
                     {m.permite_combinacion ? (m.max_sabores ?? "—") : "—"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex flex-col items-center gap-0.5">
+                      {m.tiene_acompanante && (
+                        <Badge variant="secondary" className="text-xs">
+                          Permite
+                        </Badge>
+                      )}
+                      {m.es_acompanante && (
+                        <Badge variant="default" className="text-xs">
+                          Es acomp.
+                        </Badge>
+                      )}
+                      {!m.tiene_acompanante && !m.es_acompanante && (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={m.activa ? "default" : "secondary"}>

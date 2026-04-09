@@ -12,14 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, PlusCircle, X } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import type { ProductoPOS } from "@/lib/services/ventas";
 import type {
   PizzaSaborConIngredientes,
   ProductoExtra,
 } from "@/lib/services/productos";
-import type { ExtraOrden } from "@/hooks/use-carrito";
+import type { AcompananteOrden, ExtraOrden } from "@/hooks/use-carrito";
 
 type VariantePOS = ProductoPOS["producto_variantes"][number];
 
@@ -43,6 +43,7 @@ type Props = {
       exclusiones: string[];
     }[];
     extras: ExtraOrden[];
+    acompanante?: AcompananteOrden;
   }) => void;
 };
 
@@ -69,6 +70,14 @@ export function ConfiguradorPizzaDialog({
   const [extrasSeleccionados, setExtrasSeleccionados] = useState<
     ProductoExtra[]
   >([]);
+  const [acompanante, setAcompanante] = useState<{
+    variante: VariantePOS;
+    sabor: PizzaSaborConIngredientes;
+  } | null>(null);
+  const [acompananteVariante, setAcompananteVariante] =
+    useState<VariantePOS | null>(null);
+  const [mostrandoSelectorAcompanante, setMostrandoSelectorAcompanante] =
+    useState(false);
 
   if (!producto) return null;
 
@@ -76,6 +85,11 @@ export function ConfiguradorPizzaDialog({
   const saboresDisponibles = sabores.filter((s) => s.disponible);
   const extrasDisponibles = extras.filter((e) => e.disponible);
 
+  const tieneAcompanante =
+    varianteSeleccionada?.categoria_medidas?.tiene_acompanante ?? false;
+  const variantesAcompanante = variantes.filter(
+    (v) => v.categoria_medidas?.es_acompanante,
+  );
   const permiteCombinan =
     varianteSeleccionada?.categoria_medidas?.permite_combinacion ?? false;
   const maxSabores = permiteCombinan
@@ -93,6 +107,9 @@ export function ConfiguradorPizzaDialog({
     setVarianteSeleccionada(null);
     setSaboresSeleccionados([]);
     setExtrasSeleccionados([]);
+    setAcompanante(null);
+    setAcompananteVariante(null);
+    setMostrandoSelectorAcompanante(false);
   };
 
   const handleClose = () => {
@@ -167,6 +184,15 @@ export function ConfiguradorPizzaDialog({
         nombre: e.nombre,
         precio: e.precio,
       })),
+      acompanante: acompanante
+        ? {
+            variante_id: acompanante.variante.id,
+            variante_nombre:
+              acompanante.variante.categoria_medidas?.nombre ?? "",
+            sabor_id: acompanante.sabor.id,
+            sabor_nombre: acompanante.sabor.nombre,
+          }
+        : undefined,
     });
     handleReset();
   };
@@ -362,11 +388,115 @@ export function ConfiguradorPizzaDialog({
                 </div>
               )}
 
+              {/* Acompañante */}
+              {tieneAcompanante && variantesAcompanante.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    Acompañante
+                    <span className="text-xs text-muted-foreground font-normal">
+                      (sin costo)
+                    </span>
+                  </p>
+
+                  {!acompanante ? (
+                    <>
+                      <button
+                        onClick={() =>
+                          setMostrandoSelectorAcompanante((v) => !v)
+                        }
+                        className={cn(
+                          "flex items-center gap-2 rounded-xl border-2 border-dashed p-3 w-full text-sm transition-colors",
+                          mostrandoSelectorAcompanante
+                            ? "border-primary text-primary"
+                            : "border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary",
+                        )}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                        Agregar acompañante
+                      </button>
+                      {mostrandoSelectorAcompanante && (
+                        <div className="space-y-3">
+                          {/* Paso A: elegir medida del acompañante */}
+                          {!acompananteVariante && (
+                            <>
+                              <p className="text-xs text-muted-foreground">
+                                Elige la medida del acompañante:
+                              </p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {variantesAcompanante.map((v) => (
+                                  <button
+                                    key={v.id}
+                                    onClick={() => setAcompananteVariante(v)}
+                                    className="flex flex-col items-center gap-0.5 rounded-xl border p-3 text-sm hover:border-primary hover:bg-primary/5 active:scale-95 transition-all"
+                                  >
+                                    <span className="font-medium">
+                                      {v.categoria_medidas?.nombre}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      gratis
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                          {/* Paso B: elegir sabor */}
+                          {acompananteVariante && (
+                            <>
+                              <p className="text-xs text-muted-foreground">
+                                Sabor del{" "}
+                                {acompananteVariante.categoria_medidas?.nombre}:
+                              </p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {saboresDisponibles.map((s) => (
+                                  <button
+                                    key={s.id}
+                                    onClick={() => {
+                                      setAcompanante({
+                                        variante: acompananteVariante,
+                                        sabor: s,
+                                      });
+                                      setMostrandoSelectorAcompanante(false);
+                                      setAcompananteVariante(null);
+                                    }}
+                                    className="flex items-center gap-2 rounded-xl border p-3 text-sm text-left hover:border-primary hover:bg-primary/5 active:scale-95 transition-all"
+                                  >
+                                    {s.nombre}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-sm flex-1">
+                        {acompanante.variante.categoria_medidas?.nombre} —{" "}
+                        {acompanante.sabor.nombre}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setAcompanante(null);
+                          setAcompananteVariante(null);
+                        }}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Si no hay nada configurable en paso 3 */}
               {saboresSeleccionados.every(
                 (s) => s.sabor.sabor_ingredientes.length === 0,
               ) &&
-                extrasDisponibles.length === 0 && (
+                extrasDisponibles.length === 0 &&
+                !tieneAcompanante && (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No hay modificaciones disponibles para esta selección.
                   </p>

@@ -75,6 +75,12 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
                           +{item.extras.map((e) => e.nombre).join(", ")}
                         </p>
                       )}
+                      {item.acompanante && (
+                        <p className="text-amber-600 dark:text-amber-400 font-medium">
+                          + {item.acompanante.variante_nombre}:{" "}
+                          {item.acompanante.sabor_nombre}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

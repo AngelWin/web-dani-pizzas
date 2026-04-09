@@ -27,6 +27,8 @@ export type ProductoPOS = {
       nombre: string;
       permite_combinacion: boolean;
       max_sabores: number | null;
+      tiene_acompanante: boolean;
+      es_acompanante: boolean;
     } | null;
   }[];
 };
@@ -54,7 +56,7 @@ export async function getProductosPOS(
     .select(
       `id, nombre, descripcion, precio, imagen_url, disponible, categoria_id,
        categorias(id, nombre),
-       producto_variantes(id, medida_id, precio, disponible, orden, categoria_medidas(nombre, permite_combinacion, max_sabores))`,
+       producto_variantes(id, medida_id, precio, disponible, orden, categoria_medidas(nombre, permite_combinacion, max_sabores, tiene_acompanante, es_acompanante))`,
     )
     .eq("disponible", true)
     .order("nombre", { ascending: true });

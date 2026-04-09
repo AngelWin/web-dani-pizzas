@@ -16,6 +16,13 @@ export interface ExtraOrden {
   precio: number;
 }
 
+export interface AcompananteOrden {
+  variante_id: string;
+  variante_nombre: string; // nombre de la medida acompañante (ej: "Mini", "Chiquita")
+  sabor_id: string;
+  sabor_nombre: string;
+}
+
 export type ItemCarrito = {
   key: string; // único por configuración
   producto_id: string;
@@ -30,6 +37,7 @@ export type ItemCarrito = {
   // Solo para pizzas con sabores:
   sabores?: SaborOrden[];
   extras?: ExtraOrden[];
+  acompanante?: AcompananteOrden;
 };
 
 function buildKey(
@@ -119,8 +127,9 @@ export function useCarrito() {
         exclusiones: string[];
       }[];
       extras: ExtraOrden[];
+      acompanante?: AcompananteOrden;
     }) => {
-      const { producto, variante, sabores, extras } = data;
+      const { producto, variante, sabores, extras, acompanante } = data;
       const precioBase = variante.precio;
       const proporcion = calcularProporciones(sabores.length);
       const saboresConProporcion: SaborOrden[] = sabores.map((s) => ({
@@ -144,6 +153,7 @@ export function useCarrito() {
           subtotal: precioUnitario,
           sabores: saboresConProporcion,
           extras: extras.length > 0 ? extras : undefined,
+          acompanante,
         },
       ]);
     },

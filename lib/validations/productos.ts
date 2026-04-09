@@ -22,6 +22,8 @@ export const categoriaMedidaSchema = z.object({
   orden: z.coerce.number().int().min(0, "El orden debe ser mayor o igual a 0"),
   activa: z.boolean(),
   permite_combinacion: z.boolean(),
+  tiene_acompanante: z.boolean(),
+  es_acompanante: z.boolean(),
   max_sabores: z.coerce
     .number()
     .int()
