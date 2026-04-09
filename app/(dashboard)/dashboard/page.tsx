@@ -2,12 +2,21 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { ResumenVentas } from "@/components/dashboard/resumen-ventas";
-import { GraficoVentasTipo } from "@/components/dashboard/grafico-ventas-tipo";
+import nextDynamic from "next/dynamic";
+
+const GraficoVentasTipo = nextDynamic(
+  () =>
+    import("@/components/dashboard/grafico-ventas-tipo").then(
+      (mod) => mod.GraficoVentasTipo,
+    ),
+  {
+    loading: () => <Skeleton className="h-72 rounded-xl" />,
+  },
+);
 import { PedidosRecientes } from "@/components/dashboard/pedidos-recientes";
 import { FiltroSucursalDashboard } from "@/components/dashboard/filtro-sucursal-dashboard";
 import {
-  getStatsHoy,
-  getDesglosePorTipo,
+  getStatsYDesglose,
   getPedidosRecientes,
 } from "@/lib/services/dashboard";
 import { ROLES } from "@/lib/constants";
@@ -66,10 +75,9 @@ export default async function DashboardPage({
     sucursalId = profile?.sucursal_id ?? null;
   }
 
-  // Fetch paralelo de todos los datos
-  const [stats, desglose, pedidos] = await Promise.all([
-    getStatsHoy(sucursalId, isAdmin),
-    getDesglosePorTipo(sucursalId, isAdmin),
+  // Fetch paralelo de todos los datos (stats + desglose en una sola query)
+  const [{ stats, desglose }, pedidos] = await Promise.all([
+    getStatsYDesglose(sucursalId, isAdmin),
     getPedidosRecientes(sucursalId, 8, isAdmin),
   ]);
 

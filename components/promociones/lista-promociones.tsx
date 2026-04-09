@@ -28,7 +28,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { FormularioPromocionDialog } from "./formulario-promocion-dialog";
+import dynamic from "next/dynamic";
+
+const FormularioPromocionDialog = dynamic(
+  () =>
+    import("./formulario-promocion-dialog").then(
+      (mod) => mod.FormularioPromocionDialog,
+    ),
+  { ssr: false },
+);
 import {
   deletePromocionAction,
   togglePromocionActivaAction,

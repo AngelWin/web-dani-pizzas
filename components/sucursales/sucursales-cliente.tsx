@@ -18,7 +18,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SucursalForm } from "./sucursal-form";
+import dynamic from "next/dynamic";
+
+const SucursalForm = dynamic(
+  () => import("./sucursal-form").then((mod) => mod.SucursalForm),
+  { ssr: false },
+);
 import type { Sucursal } from "@/lib/services/sucursales";
 
 type Props = {

@@ -78,10 +78,15 @@ function getTodayRangePeru() {
   return { desde: desde.toISOString(), hasta: hasta.toISOString() };
 }
 
-export async function getStatsHoy(
+import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
+
+/**
+ * Obtiene stats y desglose en una sola query (antes eran 2 queries idénticas).
+ */
+export async function getStatsYDesglose(
   sucursalId?: string | null,
   esAdmin = false,
-): Promise<StatsHoy> {
+): Promise<{ stats: StatsHoy; desglose: DesgloseTipo[] }> {
   const supabase = esAdmin ? createAdminClient() : await createClient();
   const { desde, hasta } = getTodayRangePeru();
 
@@ -98,15 +103,24 @@ export async function getStatsHoy(
   const data = raw as VentaStatsRaw[] | null;
 
   if (error || !data || data.length === 0) {
-    return {
+    const emptyStats: StatsHoy = {
       total_ventas: 0,
       num_pedidos: 0,
       promedio_venta: 0,
       total_delivery: 0,
       num_delivery: 0,
     };
+    const emptyDesglose = Object.values(TIPO_PEDIDO).map((tipo) => ({
+      tipo,
+      label:
+        TIPO_PEDIDO_LABELS[tipo as keyof typeof TIPO_PEDIDO_LABELS] ?? tipo,
+      total: 0,
+      cantidad: 0,
+    }));
+    return { stats: emptyStats, desglose: emptyDesglose };
   }
 
+  // Stats
   const total_ventas = data.reduce((sum, v) => sum + (v.total ?? 0), 0);
   const num_pedidos = data.length;
   const promedio_venta = num_pedidos > 0 ? total_ventas / num_pedidos : 0;
@@ -119,42 +133,17 @@ export async function getStatsHoy(
   );
   const num_delivery = deliveries.length;
 
-  return {
+  const stats: StatsHoy = {
     total_ventas,
     num_pedidos,
     promedio_venta,
     total_delivery,
     num_delivery,
   };
-}
 
-import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
-
-export async function getDesglosePorTipo(
-  sucursalId?: string | null,
-  esAdmin = false,
-): Promise<DesgloseTipo[]> {
-  const supabase = esAdmin ? createAdminClient() : await createClient();
-  const { desde, hasta } = getTodayRangePeru();
-
-  const base = supabase
-    .from("ventas")
-    .select("total, ordenes!ventas_orden_id_fkey(tipo_pedido)")
-    .gte("created_at", desde)
-    .lte("created_at", hasta);
-
-  const { data: raw, error } = await (sucursalId
-    ? base.eq("sucursal_origen_id", sucursalId)
-    : base);
-
-  const data = raw as
-    | { total: number; ordenes: { tipo_pedido: string } | null }[]
-    | null;
-
-  if (error || !data) return [];
-
+  // Desglose por tipo
   const tipos = Object.values(TIPO_PEDIDO);
-  return tipos.map((tipo) => {
+  const desglose = tipos.map((tipo) => {
     const ventas = data.filter((v) => v.ordenes?.tipo_pedido === tipo);
     return {
       tipo,
@@ -164,6 +153,8 @@ export async function getDesglosePorTipo(
       cantidad: ventas.length,
     };
   });
+
+  return { stats, desglose };
 }
 
 export async function getVentasPorHora(

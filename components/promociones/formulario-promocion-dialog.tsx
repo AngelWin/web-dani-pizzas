@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -164,10 +164,14 @@ export function FormularioPromocionDialog({
   }
 
   const tipoDescuento = form.watch("tipo_descuento");
-  const productosFiltrados = productos.filter(
-    (p) =>
-      !productosSeleccionados.some((s) => s.id === p.id) &&
-      p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()),
+  const productosFiltrados = useMemo(
+    () =>
+      productos.filter(
+        (p) =>
+          !productosSeleccionados.some((s) => s.id === p.id) &&
+          p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()),
+      ),
+    [productos, productosSeleccionados, busquedaProducto],
   );
 
   return (

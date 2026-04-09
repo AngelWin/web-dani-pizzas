@@ -21,7 +21,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { CrearUsuarioForm, EditarUsuarioForm } from "./usuario-form";
+import dynamic from "next/dynamic";
+
+const CrearUsuarioForm = dynamic(
+  () => import("./usuario-form").then((mod) => mod.CrearUsuarioForm),
+  { ssr: false },
+);
+
+const EditarUsuarioForm = dynamic(
+  () => import("./usuario-form").then((mod) => mod.EditarUsuarioForm),
+  { ssr: false },
+);
 import { eliminarUsuarioAction } from "@/actions/usuarios";
 import type { UsuarioCompleto, Rol, Sucursal } from "@/lib/services/usuarios";
 

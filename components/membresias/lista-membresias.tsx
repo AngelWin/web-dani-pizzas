@@ -26,8 +26,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FormularioNivelDialog } from "./formulario-nivel-dialog";
-import { FormularioReglaDialog } from "./formulario-regla-dialog";
+import dynamic from "next/dynamic";
+
+const FormularioNivelDialog = dynamic(
+  () =>
+    import("./formulario-nivel-dialog").then(
+      (mod) => mod.FormularioNivelDialog,
+    ),
+  { ssr: false },
+);
+
+const FormularioReglaDialog = dynamic(
+  () =>
+    import("./formulario-regla-dialog").then(
+      (mod) => mod.FormularioReglaDialog,
+    ),
+  { ssr: false },
+);
 import {
   deleteNivelMembresiaAction,
   deleteReglaPuntosAction,

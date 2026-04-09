@@ -2,21 +2,33 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { FiltrosReporte } from "@/components/reportes/filtros-reporte";
 import { ResumenCards } from "@/components/reportes/resumen-cards";
-import { GraficoVentasDia } from "@/components/reportes/grafico-ventas-dia";
-import { GraficoVentasTipoReporte } from "@/components/reportes/grafico-ventas-tipo";
+import nextDynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const GraficoVentasDia = nextDynamic(
+  () =>
+    import("@/components/reportes/grafico-ventas-dia").then(
+      (mod) => mod.GraficoVentasDia,
+    ),
+  {
+    loading: () => <Skeleton className="h-64 rounded-xl" />,
+  },
+);
+
+const GraficoVentasTipoReporte = nextDynamic(
+  () =>
+    import("@/components/reportes/grafico-ventas-tipo").then(
+      (mod) => mod.GraficoVentasTipoReporte,
+    ),
+  {
+    loading: () => <Skeleton className="h-64 rounded-xl" />,
+  },
+);
 import { TablaTopProductos } from "@/components/reportes/tabla-top-productos";
 import { TablaDetalleDelivery } from "@/components/reportes/tabla-detalle-delivery";
 import { TablaSucursales } from "@/components/reportes/tabla-sucursales";
 import { TablaVentasDetalle } from "@/components/reportes/tabla-ventas-detalle";
-import {
-  getResumenVentas,
-  getVentasPorDia,
-  getVentasPorTipo,
-  getVentasPorSucursal,
-  getDetalleDelivery,
-  getTopProductos,
-  getVentasDetalle,
-} from "@/lib/services/reportes";
+import { getReporteCompleto } from "@/lib/services/reportes";
 import type { Database } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -82,7 +94,8 @@ export default async function ReportesPage({
     esAdmin,
   };
 
-  const [
+  // Una sola query a ventas + 1 a venta_items (antes eran 6+1)
+  const {
     resumen,
     ventasPorDia,
     ventasPorTipo,
@@ -90,15 +103,7 @@ export default async function ReportesPage({
     detalleDelivery,
     topProductos,
     ventasDetalle,
-  ] = await Promise.all([
-    getResumenVentas(filtros),
-    getVentasPorDia(filtros),
-    getVentasPorTipo(filtros),
-    esAdmin ? getVentasPorSucursal(filtros) : Promise.resolve([]),
-    getDetalleDelivery(filtros),
-    getTopProductos(filtros, 10),
-    getVentasDetalle(filtros, 50),
-  ]);
+  } = await getReporteCompleto(filtros, esAdmin, 10, 50);
 
   return (
     <div className="space-y-6">

@@ -21,10 +21,40 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProductosTable } from "@/components/productos/productos-table";
-import { ProductoForm } from "@/components/productos/producto-form";
-import { CategoriasSection } from "@/components/productos/categorias-section";
-import { SaboresSection } from "@/components/productos/sabores-section";
-import { ExtrasSection } from "@/components/productos/extras-section";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ProductoForm = dynamic(
+  () =>
+    import("@/components/productos/producto-form").then(
+      (mod) => mod.ProductoForm,
+    ),
+  { ssr: false },
+);
+
+const CategoriasSection = dynamic(
+  () =>
+    import("@/components/productos/categorias-section").then(
+      (mod) => mod.CategoriasSection,
+    ),
+  { ssr: false, loading: () => <Skeleton className="h-64 rounded-xl" /> },
+);
+
+const SaboresSection = dynamic(
+  () =>
+    import("@/components/productos/sabores-section").then(
+      (mod) => mod.SaboresSection,
+    ),
+  { ssr: false, loading: () => <Skeleton className="h-64 rounded-xl" /> },
+);
+
+const ExtrasSection = dynamic(
+  () =>
+    import("@/components/productos/extras-section").then(
+      (mod) => mod.ExtrasSection,
+    ),
+  { ssr: false, loading: () => <Skeleton className="h-64 rounded-xl" /> },
+);
 import type {
   Categoria,
   CategoriaMedida,

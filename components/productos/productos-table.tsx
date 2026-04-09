@@ -28,7 +28,15 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTablePagination } from "@/components/shared/data-table-pagination";
-import { ProductoForm } from "@/components/productos/producto-form";
+import dynamic from "next/dynamic";
+
+const ProductoForm = dynamic(
+  () =>
+    import("@/components/productos/producto-form").then(
+      (mod) => mod.ProductoForm,
+    ),
+  { ssr: false },
+);
 import {
   deleteProductoAction,
   toggleDisponibleAction,

@@ -28,29 +28,17 @@ export default async function DashboardLayout({
   // El rol viene del JWT (app_metadata) — sin query DB extra
   const roleName = (user.app_metadata?.role as string | undefined) ?? null;
 
-  // Obtener perfil
-  let profile: Profile | null = null;
-  let sucursal: Sucursal | null = null;
-
+  // Obtener perfil + sucursal en una sola query (JOIN)
   const { data: profileData } = await supabase
     .from("profiles")
-    .select("*")
+    .select("*, sucursal:sucursales!profiles_sucursal_id_fkey(*)")
     .eq("id", user.id)
-    .single<Profile>();
+    .single<Profile & { sucursal: Sucursal | null }>();
 
-  if (profileData) {
-    profile = profileData;
-
-    if (profileData.sucursal_id) {
-      const { data: sucursalData } = await supabase
-        .from("sucursales")
-        .select("*")
-        .eq("id", profileData.sucursal_id)
-        .single<Sucursal>();
-
-      sucursal = sucursalData;
-    }
-  }
+  const profile: Profile | null = profileData
+    ? ({ ...profileData, sucursal: undefined } as unknown as Profile)
+    : null;
+  const sucursal: Sucursal | null = profileData?.sucursal ?? null;
 
   return (
     <AuthProvider
