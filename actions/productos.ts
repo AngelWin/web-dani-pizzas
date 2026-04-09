@@ -309,26 +309,65 @@ export async function updateProductoAction(
 
   if (productoError) return { data: null, error: productoError.message };
 
-  // Reemplazar variantes: borrar y reinsertar
-  const { error: deleteVariantesError } = await supabase
-    .from("producto_variantes")
-    .delete()
-    .eq("producto_id", id);
-  if (deleteVariantesError)
-    return { data: null, error: deleteVariantesError.message };
-
+  // Actualizar variantes preservando IDs (para no romper FK de orden_items)
   if (variantesArray.length > 0) {
-    const variantesPayload = variantesArray.map((v, idx) => ({
-      producto_id: id,
-      medida_id: v.medida_id,
-      precio: v.precio,
-      disponible: v.disponible,
-      orden: idx,
-    }));
-    const { error: variantesError } = await supabase
+    const { data: existentes } = await supabase
       .from("producto_variantes")
-      .insert(variantesPayload);
-    if (variantesError) return { data: null, error: variantesError.message };
+      .select("id, medida_id")
+      .eq("producto_id", id);
+
+    const existentesMap = new Map(
+      (existentes ?? []).map((v) => [v.medida_id, v.id]),
+    );
+
+    const toUpdate: {
+      id: string;
+      precio: number;
+      disponible: boolean;
+      orden: number;
+    }[] = [];
+    const toInsert: {
+      producto_id: string;
+      medida_id: string;
+      precio: number;
+      disponible: boolean;
+      orden: number;
+    }[] = [];
+
+    variantesArray.forEach((v, idx) => {
+      const existenteId = existentesMap.get(v.medida_id);
+      if (existenteId) {
+        toUpdate.push({
+          id: existenteId,
+          precio: v.precio,
+          disponible: v.disponible,
+          orden: idx,
+        });
+      } else {
+        toInsert.push({
+          producto_id: id,
+          medida_id: v.medida_id,
+          precio: v.precio,
+          disponible: v.disponible,
+          orden: idx,
+        });
+      }
+    });
+
+    for (const v of toUpdate) {
+      const { error } = await supabase
+        .from("producto_variantes")
+        .update({ precio: v.precio, disponible: v.disponible, orden: v.orden })
+        .eq("id", v.id);
+      if (error) return { data: null, error: error.message };
+    }
+
+    if (toInsert.length > 0) {
+      const { error } = await supabase
+        .from("producto_variantes")
+        .insert(toInsert);
+      if (error) return { data: null, error: error.message };
+    }
   }
 
   // Reemplazar disponibilidad por sucursal: borrar y reinsertar

@@ -122,7 +122,7 @@ export function ProductoForm({
     !!imagenValue &&
     (tieneVariantes
       ? (variantesValue?.length ?? 0) > 0 &&
-        variantesValue!.every((v) => (v.precio ?? 0) > 0)
+        variantesValue!.every((v) => (v.precio ?? -1) >= 0)
       : precioValue != null && precioValue > 0);
 
   // Cuando cambia la categoría, reconstruir las variantes
