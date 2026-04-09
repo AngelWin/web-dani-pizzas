@@ -202,12 +202,28 @@ export function FormularioPedidoDialog({
                 Productos
               </p>
               {carrito.items.map((item) => (
-                <div key={item.key} className="flex justify-between text-sm">
-                  <span>
-                    {item.cantidad}× {item.producto_nombre}
-                    {item.variante_nombre ? ` (${item.variante_nombre})` : ""}
+                <div
+                  key={item.key}
+                  className="flex justify-between text-sm gap-2"
+                >
+                  <span className="flex-1 min-w-0">
+                    <span>
+                      {item.cantidad}× {item.producto_nombre}
+                      {item.variante_nombre ? ` (${item.variante_nombre})` : ""}
+                    </span>
+                    {item.sabores && item.sabores.length > 0 && (
+                      <span className="block text-xs text-muted-foreground">
+                        {item.sabores.map((s) => s.sabor_nombre).join(" · ")}
+                      </span>
+                    )}
+                    {item.acompanante && (
+                      <span className="block text-xs text-amber-600 dark:text-amber-400 font-medium">
+                        + {item.acompanante.variante_nombre}:{" "}
+                        {item.acompanante.sabor_nombre}
+                      </span>
+                    )}
                   </span>
-                  <span className="font-medium">
+                  <span className="font-medium shrink-0">
                     {formatCurrency(item.subtotal)}
                   </span>
                 </div>
