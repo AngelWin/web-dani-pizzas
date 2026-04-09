@@ -63,7 +63,7 @@ const TIPO_PEDIDO_CONFIG = {
   local: { label: "Local", icon: UtensilsCrossed, color: "text-blue-600" },
   delivery: { label: "Delivery", icon: Bike, color: "text-orange-600" },
   para_llevar: {
-    label: "Para llevar",
+    label: "Recojo",
     icon: ShoppingBag,
     color: "text-purple-600",
   },

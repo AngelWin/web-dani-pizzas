@@ -24,7 +24,7 @@ type Props = {
 const TIPOS_PEDIDO = [
   { value: "todos", label: "Todos los tipos" },
   { value: "local", label: "En Local" },
-  { value: "para_llevar", label: "Para Llevar" },
+  { value: "para_llevar", label: "Recojo" },
   { value: "delivery", label: "Delivery" },
 ];
 

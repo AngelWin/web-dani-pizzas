@@ -18,11 +18,7 @@ type Props = {
   onNuevoPedido: () => void;
 };
 
-const TIPO_PEDIDO_LABEL: Record<string, string> = {
-  local: "En local",
-  para_llevar: "Para llevar",
-  delivery: "Delivery",
-};
+import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
 
 const TIPO_PEDIDO_COLOR: Record<
   string,
@@ -69,7 +65,9 @@ export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
               <Badge
                 variant={TIPO_PEDIDO_COLOR[orden.tipo_pedido] ?? "default"}
               >
-                {TIPO_PEDIDO_LABEL[orden.tipo_pedido] ?? orden.tipo_pedido}
+                {TIPO_PEDIDO_LABELS[
+                  orden.tipo_pedido as keyof typeof TIPO_PEDIDO_LABELS
+                ] ?? orden.tipo_pedido}
               </Badge>
             )}
             {orden.mesa_referencia && (

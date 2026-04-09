@@ -13,7 +13,7 @@ export async function crearOrdenAction(
 ): Promise<ActionResult<Orden>> {
   const supabase = await createClient();
 
-  const [{ data: rolNombre }, { data: sucursalId }] = await Promise.all([
+  const [{ data: rolNombre }, { data: sucursalIdPerfil }] = await Promise.all([
     supabase.rpc("get_user_role"),
     supabase.rpc("get_user_sucursal"),
   ]);
@@ -23,7 +23,7 @@ export async function crearOrdenAction(
   } = await supabase.auth.getUser();
 
   if (!user) return { data: null, error: "No autenticado" };
-  if (!sucursalId) return { data: null, error: "Sin sucursal asignada" };
+  if (!sucursalIdPerfil) return { data: null, error: "Sin sucursal asignada" };
   if (!["administrador", "cajero", "mesero"].includes(rolNombre ?? "")) {
     return { data: null, error: "Sin permiso para crear órdenes" };
   }
@@ -37,6 +37,11 @@ export async function crearOrdenAction(
   }
 
   const { items, ...resto } = parsed.data;
+
+  // Admins pueden crear órdenes para cualquier sucursal (seleccionada en POS)
+  // Cajeros y meseros solo pueden usar su propia sucursal
+  const sucursalId =
+    rolNombre === "administrador" ? resto.sucursal_id : sucursalIdPerfil;
 
   try {
     const orden = await crearOrden({

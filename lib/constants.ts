@@ -18,6 +18,12 @@ export const TIPO_PEDIDO = {
 
 export type TipoPedido = (typeof TIPO_PEDIDO)[keyof typeof TIPO_PEDIDO];
 
+export const TIPO_PEDIDO_LABELS: Record<TipoPedido, string> = {
+  local: "En local",
+  para_llevar: "Recojo",
+  delivery: "Delivery",
+};
+
 export const DELIVERY_METHOD = {
   PROPIO: "propio",
   TERCERO: "tercero",

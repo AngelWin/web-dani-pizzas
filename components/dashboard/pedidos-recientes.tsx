@@ -9,11 +9,7 @@ type PedidosRecientesProps = {
   pedidos: PedidoReciente[];
 };
 
-const TIPO_LABELS: Record<string, string> = {
-  [TIPO_PEDIDO.EN_LOCAL]: "En Local",
-  [TIPO_PEDIDO.PARA_LLEVAR]: "Para Llevar",
-  [TIPO_PEDIDO.DELIVERY]: "Delivery",
-};
+import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
 
 const METODO_LABELS: Record<string, string> = {
   efectivo: "Efectivo",
@@ -34,7 +30,7 @@ function TipoBadge({ tipo }: { tipo: string }) {
   };
   return (
     <Badge variant={variants[tipo] ?? "outline"} className="text-xs">
-      {TIPO_LABELS[tipo] ?? tipo}
+      {TIPO_PEDIDO_LABELS[tipo as keyof typeof TIPO_PEDIDO_LABELS] ?? tipo}
     </Badge>
   );
 }

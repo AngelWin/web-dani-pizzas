@@ -49,7 +49,7 @@ export function ResumenCards({ resumen }: Props) {
       bg: "bg-indigo-50 dark:bg-indigo-950/30",
     },
     {
-      label: "Para llevar",
+      label: "Recojo",
       value: `${resumen.num_para_llevar}`,
       sub: "pedidos",
       icon: Package,

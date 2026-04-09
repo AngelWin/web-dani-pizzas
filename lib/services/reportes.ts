@@ -120,11 +120,7 @@ function formatFechaLabel(fecha: string): string {
   });
 }
 
-const TIPO_LABELS: Record<string, string> = {
-  [TIPO_PEDIDO.EN_LOCAL]: "En Local",
-  [TIPO_PEDIDO.PARA_LLEVAR]: "Para Llevar",
-  [TIPO_PEDIDO.DELIVERY]: "Delivery",
-};
+import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
 
 // ─── Tipos raw de Supabase ────────────────────────────────────────────────────
 
@@ -270,7 +266,8 @@ export async function getVentasPorTipo(
     const cantidad = ventasTipo.length;
     return {
       tipo,
-      label: TIPO_LABELS[tipo] ?? tipo,
+      label:
+        TIPO_PEDIDO_LABELS[tipo as keyof typeof TIPO_PEDIDO_LABELS] ?? tipo,
       total,
       cantidad,
       porcentaje: totalGeneral > 0 ? (total / totalGeneral) * 100 : 0,

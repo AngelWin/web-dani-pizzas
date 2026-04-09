@@ -8,11 +8,7 @@ type Props = {
   mostrarSucursal: boolean;
 };
 
-const TIPO_LABELS: Record<string, string> = {
-  local: "Local",
-  para_llevar: "Para llevar",
-  delivery: "Delivery",
-};
+import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
 
 const METODO_LABELS: Record<string, string> = {
   efectivo: "Efectivo",
@@ -83,7 +79,9 @@ export function TablaVentasDetalle({ data, mostrarSucursal }: Props) {
                       {venta.fecha}
                     </td>
                     <td className="px-4 py-2.5 text-xs">
-                      {TIPO_LABELS[venta.tipo_pedido] ?? venta.tipo_pedido}
+                      {TIPO_PEDIDO_LABELS[
+                        venta.tipo_pedido as keyof typeof TIPO_PEDIDO_LABELS
+                      ] ?? venta.tipo_pedido}
                       {venta.tipo_pedido === "delivery" &&
                         venta.delivery_method && (
                           <span className="ml-1 text-muted-foreground">

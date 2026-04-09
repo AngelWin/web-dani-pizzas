@@ -126,11 +126,7 @@ export async function getStatsHoy(
   };
 }
 
-const TIPO_LABELS: Record<string, string> = {
-  [TIPO_PEDIDO.EN_LOCAL]: "En Local",
-  [TIPO_PEDIDO.PARA_LLEVAR]: "Para Llevar",
-  [TIPO_PEDIDO.DELIVERY]: "Delivery",
-};
+import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
 
 export async function getDesglosePorTipo(
   sucursalId?: string | null,
@@ -159,7 +155,8 @@ export async function getDesglosePorTipo(
     const ventas = data.filter((v) => v.ordenes?.tipo_pedido === tipo);
     return {
       tipo,
-      label: TIPO_LABELS[tipo] ?? tipo,
+      label:
+        TIPO_PEDIDO_LABELS[tipo as keyof typeof TIPO_PEDIDO_LABELS] ?? tipo,
       total: ventas.reduce((sum, v) => sum + (v.total ?? 0), 0),
       cantidad: ventas.length,
     };

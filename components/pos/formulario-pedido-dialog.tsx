@@ -53,6 +53,7 @@ type Props = {
   carrito: ReturnType<typeof useCarrito>;
   repartidores: Repartidor[];
   deliveryServicios: DeliveryServicio[];
+  sucursalId: string;
   rol: string | null;
   onSubmit: (data: CrearOrdenFormValues) => Promise<void>;
   isSubmitting: boolean;
@@ -65,6 +66,7 @@ export function FormularioPedidoDialog({
   carrito,
   repartidores,
   deliveryServicios,
+  sucursalId,
   rol,
   onSubmit,
   isSubmitting,
@@ -79,6 +81,7 @@ export function FormularioPedidoDialog({
   const form = useForm<CrearOrdenFormValues>({
     resolver: zodResolver(crearOrdenSchema),
     defaultValues: {
+      sucursal_id: sucursalId,
       cliente_id: null,
       tipo_pedido: TIPO_PEDIDO.EN_LOCAL,
       mesa_referencia: "",
@@ -254,7 +257,7 @@ export function FormularioPedidoDialog({
                         En local
                       </SelectItem>
                       <SelectItem value={TIPO_PEDIDO.PARA_LLEVAR}>
-                        Para llevar
+                        Recojo
                       </SelectItem>
                       {!esMesero && (
                         <SelectItem value={TIPO_PEDIDO.DELIVERY}>

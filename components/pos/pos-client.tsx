@@ -209,6 +209,7 @@ export function PosClient({
         carrito={carrito}
         repartidores={repartidores}
         deliveryServicios={deliveryServicios}
+        sucursalId={sucursalId}
         rol={rol}
         onSubmit={handleConfirmarPedido}
         isSubmitting={isSubmitting}

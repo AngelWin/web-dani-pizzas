@@ -37,6 +37,7 @@ export const ordenItemSchema = z.object({
 
 export const crearOrdenSchema = z
   .object({
+    sucursal_id: z.string().uuid(),
     cliente_id: z.string().uuid().nullable().optional(),
     tipo_pedido: z.enum(
       [TIPO_PEDIDO.EN_LOCAL, TIPO_PEDIDO.PARA_LLEVAR, TIPO_PEDIDO.DELIVERY],

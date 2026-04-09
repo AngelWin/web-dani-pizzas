@@ -133,20 +133,25 @@ export async function getRepartidoresSucursal(
 ): Promise<Pick<Profile, "id" | "nombre" | "apellido_paterno">[]> {
   const supabase = await createClient();
 
+  // Obtener el id del rol "repartidor" para filtrar directamente por rol_id
+  const { data: rol } = await supabase
+    .from("roles")
+    .select("id")
+    .eq("nombre", "repartidor")
+    .single();
+
+  if (!rol) return [];
+
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, nombre, apellido_paterno, roles!inner(nombre)")
+    .select("id, nombre, apellido_paterno")
     .eq("sucursal_id", sucursalId)
     .eq("estado", "activo")
-    .eq("roles.nombre", "repartidor")
+    .eq("rol_id", rol.id)
     .order("nombre", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []).map((p) => ({
-    id: p.id,
-    nombre: p.nombre,
-    apellido_paterno: p.apellido_paterno,
-  }));
+  return data ?? [];
 }
 
 // ─── Tarifas de delivery ───────────────────────────────────────────────────

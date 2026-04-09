@@ -17,11 +17,7 @@ type Props = {
   onNuevoPedido: () => void;
 };
 
-const TIPO_PEDIDO_LABEL: Record<string, string> = {
-  local: "En local",
-  para_llevar: "Para llevar",
-  delivery: "Delivery",
-};
+import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
 
 const METODO_PAGO_LABEL: Record<string, string> = {
   efectivo: "Efectivo",
@@ -58,7 +54,9 @@ export function VentaExitosaDialog({ venta, open, onNuevoPedido }: Props) {
             Tipo:{" "}
             <span className="font-medium text-foreground">
               {venta.tipo_pedido
-                ? (TIPO_PEDIDO_LABEL[venta.tipo_pedido] ?? venta.tipo_pedido)
+                ? (TIPO_PEDIDO_LABELS[
+                    venta.tipo_pedido as keyof typeof TIPO_PEDIDO_LABELS
+                  ] ?? venta.tipo_pedido)
                 : "-"}
             </span>
           </p>
