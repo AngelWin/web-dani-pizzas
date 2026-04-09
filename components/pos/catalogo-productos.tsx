@@ -129,9 +129,9 @@ export function CatalogoProductos({
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {productosFiltrados.map((producto) => {
-              // Excluir variantes acompañantes (precio 0 / es_acompanante)
+              // Solo excluir variantes sin precio (las acompañantes sí se cuentan)
               const variantesVenta = producto.producto_variantes.filter(
-                (v) => !v.categoria_medidas?.es_acompanante && v.precio > 0,
+                (v) => v.precio > 0,
               );
               const tieneVariantes = variantesVenta.length > 0;
               const precioDesde = tieneVariantes
