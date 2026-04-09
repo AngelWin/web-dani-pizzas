@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -15,7 +17,8 @@ import {
   UserCheck,
   Store,
 } from "lucide-react";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 
 const ESTADO_BORDE_COLOR: Record<string, string> = {
   borrador: "border-l-gray-400",
@@ -112,6 +115,7 @@ export function TarjetaOrden({
   modeloNegocio,
   niveles = [],
 }: Props) {
+  const { formatCurrency } = useCurrency();
   const puedeCobrar = rol === "administrador" || rol === "cajero";
   const tipoCfg = TIPO_PEDIDO_CONFIG[orden.tipo_pedido];
   const TipoIcon = tipoCfg.icon;

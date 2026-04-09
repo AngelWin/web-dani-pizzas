@@ -1,6 +1,8 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClipboardList } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { VentaDetalle } from "@/lib/services/reportes";
 
 type Props = {
@@ -19,6 +21,7 @@ const METODO_LABELS: Record<string, string> = {
 };
 
 export function TablaVentasDetalle({ data, mostrarSucursal }: Props) {
+  const { formatCurrency } = useCurrency();
   return (
     <Card className="shadow-[0_4px_12px_rgba(0,0,0,0.08)] rounded-xl">
       <CardHeader className="pb-2">

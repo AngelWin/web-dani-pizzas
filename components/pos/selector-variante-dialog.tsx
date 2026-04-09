@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { ProductoPOS } from "@/lib/services/ventas";
 
 type Props = {
@@ -26,6 +26,7 @@ export function SelectorVarianteDialog({
   onClose,
   onSelect,
 }: Props) {
+  const { formatCurrency } = useCurrency();
   if (!producto) return null;
 
   return (

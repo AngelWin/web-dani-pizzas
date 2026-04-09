@@ -1,5 +1,8 @@
+"use client";
+
 import { Package, CheckCircle2, Banknote, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { ResumenEntregas } from "@/lib/services/entregas";
 
 type Props = {
@@ -34,6 +37,7 @@ const CARDS = [
 ];
 
 export function ResumenEntregasCards({ resumen }: Props) {
+  const { formatCurrency } = useCurrency();
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {CARDS.map(({ key, label, icon: Icon, format }) => (

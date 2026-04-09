@@ -32,6 +32,7 @@ import {
   updateReglaPuntosAction,
 } from "@/actions/membresias";
 import type { ReglaPuntos } from "@/lib/services/membresias";
+import { useCurrency } from "@/hooks/use-currency";
 
 type Props = {
   open: boolean;
@@ -41,6 +42,7 @@ type Props = {
 
 export function FormularioReglaDialog({ open, onClose, regla }: Props) {
   const esEdicion = !!regla;
+  const { simbolo } = useCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ReglaPuntosFormValues>({
@@ -114,7 +116,7 @@ export function FormularioReglaDialog({ open, onClose, regla }: Props) {
                   <FormLabel>Nombre</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Ej: 1 punto por cada S/. 5"
+                      placeholder={`Ej: 1 punto por cada ${simbolo} 5`}
                       className="h-12"
                       {...field}
                     />
@@ -130,7 +132,7 @@ export function FormularioReglaDialog({ open, onClose, regla }: Props) {
                 name="soles_por_punto"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Soles por punto (S/.)</FormLabel>
+                    <FormLabel>Monto por punto ({simbolo})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -170,7 +172,7 @@ export function FormularioReglaDialog({ open, onClose, regla }: Props) {
               <p className="rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
                 Por cada{" "}
                 <span className="font-medium text-foreground">
-                  S/. {solesPorPunto}
+                  {simbolo} {solesPorPunto}
                 </span>{" "}
                 de compra el cliente acumula{" "}
                 <span className="font-medium text-foreground">

@@ -41,6 +41,7 @@ import {
   updatePromocionAction,
 } from "@/actions/promociones";
 import type { PromocionConProductos } from "@/lib/services/promociones";
+import { useCurrency } from "@/hooks/use-currency";
 
 type ProductoBasico = { id: string; nombre: string };
 
@@ -63,6 +64,7 @@ export function FormularioPromocionDialog({
   productos,
 }: Props) {
   const esEdicion = !!promocion;
+  const { simbolo } = useCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [productosSeleccionados, setProductosSeleccionados] = useState<
     ProductoBasico[]
@@ -243,7 +245,9 @@ export function FormularioPromocionDialog({
                         <SelectItem value="porcentaje">
                           Porcentaje (%)
                         </SelectItem>
-                        <SelectItem value="fijo">Monto fijo (S/.)</SelectItem>
+                        <SelectItem value="fijo">
+                          Monto fijo ({simbolo})
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -259,7 +263,7 @@ export function FormularioPromocionDialog({
                     <FormLabel>
                       {tipoDescuento === "porcentaje"
                         ? "Porcentaje (%)"
-                        : "Monto (S/.)"}
+                        : `Monto (${simbolo})`}
                     </FormLabel>
                     <FormControl>
                       <Input

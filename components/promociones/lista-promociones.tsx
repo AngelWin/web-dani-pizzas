@@ -41,7 +41,7 @@ import {
   deletePromocionAction,
   togglePromocionActivaAction,
 } from "@/actions/promociones";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { PromocionConProductos } from "@/lib/services/promociones";
 
 type ProductoBasico = { id: string; nombre: string };
@@ -111,6 +111,7 @@ function BadgeEstado({ promocion }: { promocion: PromocionConProductos }) {
 }
 
 export function ListaPromociones({ promociones: inicial, productos }: Props) {
+  const { formatCurrency } = useCurrency();
   const [promociones, setPromociones] =
     useState<PromocionConProductos[]>(inicial);
   const [dialogOpen, setDialogOpen] = useState(false);

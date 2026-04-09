@@ -28,9 +28,11 @@ paths: "app/**/*.tsx,components/**/*.tsx,components/**/*.ts"
 
 ## Moneda
 
-- Usar SIEMPRE el formato `S/. X.XX` para valores monetarios
-- Usar `formatCurrency(amount)` de `@/lib/utils` — nunca escribir el símbolo manualmente
-- No usar `$`, `PEN`, ni `S/` sin el punto
+- En Client Components: usar `const { formatCurrency } = useCurrency()` de `@/hooks/use-currency`
+- En funciones fuera del componente (tooltips, etc.): usar `formatCurrency(amount)` de `@/lib/utils` como fallback
+- Para obtener solo el símbolo: `const { simbolo } = useCurrency()` (para labels, tickFormatters, etc.)
+- NUNCA hardcodear `S/.`, `S/`, `PEN`, `$` ni ningún símbolo monetario fijo
+- La moneda activa se gestiona en /configuracion → sección Moneda
 
 ## Textos
 

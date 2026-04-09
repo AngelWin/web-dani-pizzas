@@ -39,7 +39,7 @@ import type { OrdenConItems } from "@/lib/services/ordenes";
 import type { Venta } from "@/lib/services/ventas";
 import type { NivelMembresia } from "@/lib/services/membresias";
 import { calcularDescuentoNivel } from "@/lib/membresias-utils";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import { METODO_PAGO } from "@/lib/constants";
 
 const METODO_PAGO_LABELS: Record<string, string> = {
@@ -70,6 +70,7 @@ export function CobroDialog({
   const [nivelSeleccionado, setNivelSeleccionado] =
     useState<NivelMembresia | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { simbolo, formatCurrency } = useCurrency();
 
   const form = useForm<CobrarOrdenFormValues>({
     resolver: zodResolver(cobrarOrdenSchema),
@@ -293,7 +294,7 @@ export function CobroDialog({
                     name="monto_recibido"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Monto recibido (S/)</FormLabel>
+                        <FormLabel>Monto recibido ({simbolo})</FormLabel>
                         <FormControl>
                           <Input
                             type="number"

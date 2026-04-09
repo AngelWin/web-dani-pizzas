@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import {
   crearDeliveryServicioAction,
   actualizarDeliveryServicioAction,
@@ -73,6 +73,7 @@ type Props = {
 };
 
 export function DeliveryServiciosForm({ serviciosPorSucursal }: Props) {
+  const { formatCurrency } = useCurrency();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<Servicio | null>(null);
   const [sucursalActiva, setSucursalActiva] = useState<string>("");
@@ -256,6 +257,7 @@ function ServicioDialog({
   sucursalId,
 }: ServicioDialogProps) {
   const esEdicion = !!servicio;
+  const { simbolo, formatCurrency } = useCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<DeliveryServicioFormData>({
@@ -370,7 +372,7 @@ function ServicioDialog({
                 name="precio_base"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Precio base (S/.)</FormLabel>
+                    <FormLabel>Precio base ({simbolo})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

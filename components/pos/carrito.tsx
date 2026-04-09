@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { useCarrito } from "@/hooks/use-carrito";
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
 };
 
 export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
+  const { formatCurrency } = useCurrency();
   const total = carrito.subtotal + deliveryFee;
 
   return (

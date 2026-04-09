@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { Venta } from "@/lib/services/ventas";
 
 type Props = {
@@ -28,6 +28,7 @@ const METODO_PAGO_LABEL: Record<string, string> = {
 };
 
 export function VentaExitosaDialog({ venta, open, onNuevoPedido }: Props) {
+  const { formatCurrency } = useCurrency();
   if (!venta) return null;
 
   return (

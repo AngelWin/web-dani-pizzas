@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { Orden } from "@/lib/services/ordenes";
 
 type Props = {
@@ -30,6 +30,7 @@ const TIPO_PEDIDO_COLOR: Record<
 };
 
 export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
+  const { formatCurrency } = useCurrency();
   if (!orden) return null;
 
   const esDelivery = orden.tipo_pedido === "delivery";

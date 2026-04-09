@@ -13,7 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, ChevronRight, Check, PlusCircle, X } from "lucide-react";
-import { formatCurrency, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { ProductoPOS } from "@/lib/services/ventas";
 import type {
   PizzaSaborConIngredientes,
@@ -61,6 +62,7 @@ export function ConfiguradorPizzaDialog({
   onClose,
   onConfirmar,
 }: Props) {
+  const { formatCurrency } = useCurrency();
   const [paso, setPaso] = useState<1 | 2 | 3>(1);
   const [varianteSeleccionada, setVarianteSeleccionada] =
     useState<VariantePOS | null>(null);

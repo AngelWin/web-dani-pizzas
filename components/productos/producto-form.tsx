@@ -40,6 +40,7 @@ import type {
   Sucursal,
 } from "@/lib/services/productos";
 import { ImageUpload } from "@/components/productos/image-upload";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface ProductoFormProps {
   producto?: ProductoCompleto | null;
@@ -61,6 +62,7 @@ export function ProductoForm({
   onCancel,
 }: ProductoFormProps) {
   const isEditing = !!producto && !isDuplicate;
+  const { simbolo } = useCurrency();
   const [isImageUploading, setIsImageUploading] = useState(false);
 
   // Medidas de la categoría seleccionada actualmente
@@ -278,7 +280,7 @@ export function ProductoForm({
               <FormItem>
                 <FormLabel className="flex items-center gap-1.5">
                   <DollarSign className="h-3.5 w-3.5" />
-                  Precio (S/) *
+                  Precio ({simbolo}) *
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -325,7 +327,7 @@ export function ProductoForm({
                         <FormControl>
                           <div className="relative">
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                              S/
+                              {simbolo}
                             </span>
                             <Input
                               type="number"

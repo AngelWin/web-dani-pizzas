@@ -25,6 +25,7 @@ import type {
   EstadoDelivery,
   OrdenConItems,
 } from "@/lib/services/ordenes";
+import { useCurrency } from "@/hooks/use-currency";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { NivelMembresia } from "@/lib/services/membresias";
 
@@ -78,6 +79,7 @@ export function AccionesOrden({
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [cobrarOpen, setCobrarOpen] = useState(false);
   const [cancelarOpen, setCancelarOpen] = useState(false);
+  const { simbolo } = useCurrency();
 
   const ordenId = orden.id;
   const deliveryStatus = orden.delivery_status;
@@ -183,7 +185,7 @@ export function AccionesOrden({
               onClick={() => setCobrarOpen(true)}
               disabled={pending}
             >
-              <span className="mr-1 text-[10px] font-bold">S/.</span>
+              <span className="mr-1 text-[10px] font-bold">{simbolo}</span>
               Cobrar
             </Button>
             <CobroDialog

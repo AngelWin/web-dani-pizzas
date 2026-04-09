@@ -1,7 +1,10 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag } from "lucide-react";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import { TIPO_PEDIDO, DELIVERY_STATUS } from "@/lib/constants";
 import type { PedidoReciente } from "@/lib/services/dashboard";
 
@@ -66,6 +69,7 @@ function DeliveryStatusBadge({ status }: { status: string | null }) {
 }
 
 export function PedidosRecientes({ pedidos }: PedidosRecientesProps) {
+  const { formatCurrency } = useCurrency();
   return (
     <Card className="shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
       <CardHeader className="pb-2">

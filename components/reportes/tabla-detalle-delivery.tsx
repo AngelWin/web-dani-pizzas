@@ -1,6 +1,8 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bike } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { DetalleDelivery } from "@/lib/services/reportes";
 
 type Props = {
@@ -8,6 +10,7 @@ type Props = {
 };
 
 export function TablaDetalleDelivery({ data }: Props) {
+  const { formatCurrency } = useCurrency();
   const totalDeliveries = data.reduce((s, d) => s + d.cantidad, 0);
   const totalFees = data.reduce((s, d) => s + d.total_fees, 0);
 

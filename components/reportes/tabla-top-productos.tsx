@@ -1,6 +1,8 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { TopProducto } from "@/lib/services/reportes";
 
 type Props = {
@@ -8,6 +10,7 @@ type Props = {
 };
 
 export function TablaTopProductos({ data }: Props) {
+  const { formatCurrency } = useCurrency();
   const maxCantidad = data[0]?.cantidad ?? 1;
 
   return (

@@ -29,7 +29,7 @@ import {
   updateProductoExtraAction,
   deleteProductoExtraAction,
 } from "@/actions/productos";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { Categoria, ProductoExtra } from "@/lib/services/productos";
 
 // ─── Form de extra ─────────────────────────────────────────────────────────
@@ -46,6 +46,7 @@ function ExtraForm({
   onCancel: () => void;
 }) {
   const isEditing = !!extra;
+  const { simbolo } = useCurrency();
   const [nombre, setNombre] = useState(extra?.nombre ?? "");
   const [precio, setPrecio] = useState(String(extra?.precio ?? ""));
   const [disponible, setDisponible] = useState(extra?.disponible ?? true);
@@ -99,7 +100,7 @@ function ExtraForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Precio (S/.)*</Label>
+          <Label>Precio ({simbolo})*</Label>
           <Input
             type="number"
             min={0}
@@ -162,6 +163,7 @@ export function ExtrasSection({
   const [showForm, setShowForm] = useState(false);
   const [editExtra, setEditExtra] = useState<ProductoExtra | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { simbolo, formatCurrency } = useCurrency();
   const [isPending, startTransition] = useTransition();
 
   const categoriaSeleccionada = categorias.find(

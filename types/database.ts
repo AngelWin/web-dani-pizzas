@@ -143,22 +143,33 @@ export type Database = {
         Row: {
           id: string;
           modelo_negocio: Database["public"]["Enums"]["modelo_negocio"];
+          moneda_activa_id: string | null;
           updated_at: string;
           updated_by: string | null;
         };
         Insert: {
           id?: string;
           modelo_negocio?: Database["public"]["Enums"]["modelo_negocio"];
+          moneda_activa_id?: string | null;
           updated_at?: string;
           updated_by?: string | null;
         };
         Update: {
           id?: string;
           modelo_negocio?: Database["public"]["Enums"]["modelo_negocio"];
+          moneda_activa_id?: string | null;
           updated_at?: string;
           updated_by?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "configuracion_negocio_moneda_activa_id_fkey";
+            columns: ["moneda_activa_id"];
+            isOneToOne: false;
+            referencedRelation: "monedas";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       delivery_fees_config: {
         Row: {
@@ -319,6 +330,36 @@ export type Database = {
           nombre?: string;
           orden?: number | null;
           puntos_requeridos?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      monedas: {
+        Row: {
+          id: string;
+          codigo: string;
+          simbolo: string;
+          nombre: string;
+          es_predefinida: boolean;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          codigo: string;
+          simbolo: string;
+          nombre: string;
+          es_predefinida?: boolean;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          codigo?: string;
+          simbolo?: string;
+          nombre?: string;
+          es_predefinida?: boolean;
+          created_at?: string | null;
           updated_at?: string | null;
         };
         Relationships: [];

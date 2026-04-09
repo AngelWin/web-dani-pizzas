@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { DesgloseTipo } from "@/lib/services/dashboard";
 import { PieChart } from "lucide-react";
 
@@ -61,6 +62,7 @@ function CustomTooltip({
 }
 
 export function GraficoVentasTipo({ data }: GraficoVentasTipoProps) {
+  const { simbolo, formatCurrency } = useCurrency();
   const hayDatos = data.some((d) => d.cantidad > 0);
 
   return (
@@ -93,7 +95,7 @@ export function GraficoVentasTipo({ data }: GraficoVentasTipoProps) {
                 tick={{ fontSize: 12 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v: number) => `S/${v}`}
+                tickFormatter={(v: number) => `${simbolo}${v}`}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar

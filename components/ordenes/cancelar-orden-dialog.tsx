@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import { cancelarOrdenAction } from "@/app/(dashboard)/ordenes/actions";
 import type { OrdenConItems } from "@/lib/services/ordenes";
 
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export function CancelarOrdenDialog({ orden, open, onOpenChange }: Props) {
+  const { formatCurrency } = useCurrency();
   const [motivo, setMotivo] = useState("");
   const [pending, startTransition] = useTransition();
 

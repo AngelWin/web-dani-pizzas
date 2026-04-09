@@ -1,6 +1,8 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { VentaPorSucursal } from "@/lib/services/reportes";
 
 type Props = {
@@ -8,6 +10,7 @@ type Props = {
 };
 
 export function TablaSucursales({ data }: Props) {
+  const { formatCurrency } = useCurrency();
   const maxTotal = Math.max(...data.map((s) => s.total), 1);
 
   return (

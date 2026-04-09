@@ -29,6 +29,7 @@ import {
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTablePagination } from "@/components/shared/data-table-pagination";
 import dynamic from "next/dynamic";
+import { useCurrency } from "@/hooks/use-currency";
 
 const ProductoForm = dynamic(
   () =>
@@ -86,6 +87,7 @@ export function ProductosTable({
   );
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { formatCurrency } = useCurrency();
 
   const handleEditClick = async (id: string) => {
     setLoadingEditId(id);
@@ -182,7 +184,7 @@ export function ProductosTable({
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {p.precio != null ? (
-                      `S/ ${Number(p.precio).toFixed(2)}`
+                      formatCurrency(Number(p.precio))
                     ) : (
                       <span className="text-muted-foreground text-xs">
                         Por variante

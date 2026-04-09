@@ -29,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency } from "@/lib/utils";
 import { TIPO_PEDIDO, DELIVERY_METHOD } from "@/lib/constants";
 import type { DeliveryServicio } from "@/lib/services/delivery-servicios";
 import {
@@ -44,6 +43,7 @@ import type { Profile } from "@/lib/services/ventas";
 import type { ClienteConMembresia } from "@/lib/services/clientes";
 import type { PromocionActivaPOS } from "@/lib/services/promociones";
 import { calcularDescuento } from "@/lib/promociones-utils";
+import { useCurrency } from "@/hooks/use-currency";
 
 type Repartidor = Pick<Profile, "id" | "nombre" | "apellido_paterno">;
 
@@ -73,6 +73,7 @@ export function FormularioPedidoDialog({
   promociones,
 }: Props) {
   const esMesero = rol === "mesero";
+  const { simbolo, formatCurrency } = useCurrency();
   const [clienteSeleccionado, setClienteSeleccionado] =
     useState<ClienteConMembresia | null>(null);
   const [promocionSeleccionada, setPromocionSeleccionada] =
@@ -418,7 +419,7 @@ export function FormularioPedidoDialog({
                   name="delivery_fee"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Costo de delivery (S/)</FormLabel>
+                      <FormLabel>Costo de delivery ({simbolo})</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -512,7 +513,7 @@ export function FormularioPedidoDialog({
                         <p className="text-xs text-green-600/80 dark:text-green-500">
                           {promocionSeleccionada.tipo_descuento === "porcentaje"
                             ? `${promocionSeleccionada.valor_descuento}% de descuento`
-                            : `S/. ${promocionSeleccionada.valor_descuento} de descuento`}
+                            : `${simbolo} ${promocionSeleccionada.valor_descuento} de descuento`}
                         </p>
                       </div>
                     </div>
@@ -541,7 +542,7 @@ export function FormularioPedidoDialog({
                           {p.nombre}
                           {p.tipo_descuento === "porcentaje"
                             ? ` — ${p.valor_descuento}%`
-                            : ` — S/. ${p.valor_descuento}`}
+                            : ` — ${simbolo} ${p.valor_descuento}`}
                         </SelectItem>
                       ))}
                     </SelectContent>

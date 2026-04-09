@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { VentaPorTipo } from "@/lib/services/reportes";
 
 type Props = {
@@ -51,6 +52,7 @@ function CustomTooltip({
 }
 
 export function GraficoVentasTipoReporte({ data }: Props) {
+  const { simbolo, formatCurrency } = useCurrency();
   const hayDatos = data.some((d) => d.cantidad > 0);
 
   return (
@@ -87,7 +89,7 @@ export function GraficoVentasTipoReporte({ data }: Props) {
                   tick={{ fontSize: 11 }}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v: number) => `S/${v}`}
+                  tickFormatter={(v: number) => `${simbolo}${v}`}
                   width={56}
                 />
                 <Tooltip content={<CustomTooltip />} />

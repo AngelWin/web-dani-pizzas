@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Store, Utensils, Zap, ShoppingCart } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { ProductoPOS } from "@/lib/services/ventas";
 import type { Profile } from "@/lib/services/ventas";
 import type { Orden } from "@/lib/services/ordenes";
@@ -83,6 +83,7 @@ export function PosClient({
   extrasPorCategoria,
   deliveryServicios,
 }: Props) {
+  const { formatCurrency } = useCurrency();
   const router = useRouter();
   const carrito = useCarrito();
   const [dialogOpen, setDialogOpen] = useState(false);

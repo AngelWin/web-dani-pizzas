@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ShoppingBag,
   TrendingUp,
@@ -7,7 +9,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { ResumenVentas } from "@/lib/services/reportes";
 
 type Props = {
@@ -15,6 +17,7 @@ type Props = {
 };
 
 export function ResumenCards({ resumen }: Props) {
+  const { formatCurrency } = useCurrency();
   const cards = [
     {
       label: "Total ventas",

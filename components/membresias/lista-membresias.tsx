@@ -49,6 +49,7 @@ import {
   toggleReglaPuntosActivaAction,
 } from "@/actions/membresias";
 import type { NivelMembresia, ReglaPuntos } from "@/lib/services/membresias";
+import { useCurrency } from "@/hooks/use-currency";
 
 const NIVEL_COLORES = [
   "from-amber-600 to-amber-400",
@@ -69,6 +70,7 @@ export function ListaMembresias({
 }: Props) {
   const [niveles, setNiveles] = useState<NivelMembresia[]>(inicial);
   const [reglas, setReglas] = useState<ReglaPuntos[]>(inicialesReglas);
+  const { simbolo } = useCurrency();
 
   const [nivelDialogOpen, setNivelDialogOpen] = useState(false);
   const [editandoNivel, setEditandoNivel] = useState<NivelMembresia | null>(
@@ -373,8 +375,8 @@ export function ListaMembresias({
                     <Zap className="h-4 w-4 text-primary shrink-0" />
                     <span className="text-sm font-semibold text-primary">
                       {regla.puntos_otorgados} punto
-                      {regla.puntos_otorgados !== 1 ? "s" : ""} por cada S/.{" "}
-                      {regla.soles_por_punto}
+                      {regla.puntos_otorgados !== 1 ? "s" : ""} por cada{" "}
+                      {simbolo} {regla.soles_por_punto}
                     </span>
                   </div>
 

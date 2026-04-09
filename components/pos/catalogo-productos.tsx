@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, ShoppingCart, Package } from "lucide-react";
 import Image from "next/image";
-import { formatCurrency, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import dynamic from "next/dynamic";
 import { SelectorVarianteDialog } from "./selector-variante-dialog";
 
@@ -41,6 +42,7 @@ export function CatalogoProductos({
   saboresPorCategoria,
   extrasPorCategoria,
 }: Props) {
+  const { formatCurrency } = useCurrency();
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState<string | null>(null);
   const [productoParaVariante, setProductoParaVariante] =

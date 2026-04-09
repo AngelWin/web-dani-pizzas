@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { VentaPorDia } from "@/lib/services/reportes";
 
 type Props = {
@@ -55,6 +56,7 @@ function CustomTooltip({
 }
 
 export function GraficoVentasDia({ data }: Props) {
+  const { simbolo, formatCurrency } = useCurrency();
   const hayDatos = data.length > 0 && data.some((d) => d.total > 0);
 
   return (
@@ -93,7 +95,7 @@ export function GraficoVentasDia({ data }: Props) {
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v: number) => `S/${v}`}
+                tickFormatter={(v: number) => `${simbolo}${v}`}
                 width={56}
               />
               <Tooltip content={<CustomTooltip />} />

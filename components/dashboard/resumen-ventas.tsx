@@ -1,6 +1,8 @@
+"use client";
+
 import { ShoppingBag, TrendingUp, ReceiptText, Bike } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { StatsHoy } from "@/lib/services/dashboard";
 
 type ResumenVentasProps = {
@@ -8,6 +10,7 @@ type ResumenVentasProps = {
 };
 
 export function ResumenVentas({ stats }: ResumenVentasProps) {
+  const { formatCurrency } = useCurrency();
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatsCard

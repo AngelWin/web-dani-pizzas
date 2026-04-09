@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import type { RepartidorEntregas } from "@/lib/services/entregas";
 
 type Props = {
@@ -29,6 +29,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 export function TablaEntregas({ repartidores }: Props) {
+  const { formatCurrency } = useCurrency();
   const [expandido, setExpandido] = useState<Set<string>>(new Set());
 
   function toggleExpandir(id: string) {
