@@ -286,10 +286,10 @@ export function TarjetaOrden({
 
       <Separator />
 
-      <CardFooter className="pt-3">
+      <CardFooter className="pt-2">
         <div className="flex w-full flex-col gap-2">
-          <div className="flex flex-wrap items-baseline justify-end gap-x-1.5">
-            <span className="font-inter text-base font-bold tabular-nums text-foreground">
+          <div className="flex flex-wrap items-baseline gap-x-1.5">
+            <span className="font-inter text-lg font-bold tabular-nums text-foreground">
               {formatCurrency(orden.total)}
             </span>
             {esDelivery && orden.delivery_fee > 0 && (
@@ -298,7 +298,7 @@ export function TarjetaOrden({
               </span>
             )}
           </div>
-          <div className="flex justify-end">
+          <div className="flex">
             <AccionesOrden
               orden={orden}
               estadoActual={orden.estado}
