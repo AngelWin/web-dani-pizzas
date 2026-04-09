@@ -147,8 +147,8 @@ export function AccionesOrden({
         {puedeCancelar && (
           <Button
             size="sm"
-            variant="ghost"
-            className="h-7 rounded-lg px-2 text-xs text-muted-foreground hover:text-destructive"
+            variant="outline"
+            className="h-7 rounded-lg px-2 text-xs text-muted-foreground hover:border-destructive hover:bg-transparent hover:text-destructive"
             onClick={() => setCancelarOpen(true)}
             disabled={pending}
           >
