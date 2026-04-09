@@ -121,16 +121,15 @@ export function CatalogoProductos({
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {productosFiltrados.map((producto) => {
-              const variantesConPrecio = producto.producto_variantes.filter(
-                (v) => v.precio > 0,
+              // Excluir variantes acompañantes (precio 0 / es_acompanante)
+              const variantesVenta = producto.producto_variantes.filter(
+                (v) => !v.categoria_medidas?.es_acompanante && v.precio > 0,
               );
-              const tieneVariantes = variantesConPrecio.length > 0;
+              const tieneVariantes = variantesVenta.length > 0;
               const precioDesde = tieneVariantes
-                ? Math.min(...variantesConPrecio.map((v) => v.precio))
+                ? Math.min(...variantesVenta.map((v) => v.precio))
                 : (producto.precio ?? 0);
-              const numMedidas = producto.producto_variantes.filter(
-                (v) => v.precio > 0,
-              ).length;
+              const numMedidas = variantesVenta.length;
 
               return (
                 <button
