@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   cambiarEstadoOrdenAction,
@@ -183,7 +183,7 @@ export function AccionesOrden({
               onClick={() => setCobrarOpen(true)}
               disabled={pending}
             >
-              <DollarSign className="mr-1 h-3 w-3" />
+              <span className="mr-1 text-[10px] font-bold">S/.</span>
               Cobrar
             </Button>
             <CobroDialog
