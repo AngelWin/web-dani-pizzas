@@ -87,7 +87,7 @@ export function ConfiguradorPizzaDialog({
 
   const tieneAcompanante =
     varianteSeleccionada?.categoria_medidas?.tiene_acompanante ?? false;
-  const variantesAcompanante = variantes.filter(
+  const variantesAcompanante = producto.producto_variantes.filter(
     (v) => v.categoria_medidas?.es_acompanante,
   );
   const permiteCombinan =
