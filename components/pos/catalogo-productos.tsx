@@ -4,7 +4,8 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search, ShoppingCart, Package } from "lucide-react";
+import Image from "next/image";
 import { formatCurrency, cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { SelectorVarianteDialog } from "./selector-variante-dialog";
@@ -144,30 +145,46 @@ export function CatalogoProductos({
                   key={producto.id}
                   onClick={() => handleClickProducto(producto)}
                   className={cn(
-                    "group flex flex-col rounded-xl border bg-card p-3 text-left",
+                    "group flex flex-col rounded-xl border bg-card overflow-hidden text-left",
                     "shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all",
-                    "hover:border-primary hover:shadow-md active:scale-95",
-                    "min-h-[100px]",
+                    "hover:border-primary hover:shadow-md active:scale-[0.97]",
                   )}
                 >
-                  <div className="flex items-start justify-between gap-1 mb-2 flex-1">
-                    <span className="font-medium text-sm leading-tight line-clamp-3">
+                  {/* Imagen */}
+                  <div className="relative aspect-square w-full bg-muted">
+                    {producto.imagen_url ? (
+                      <Image
+                        src={producto.imagen_url}
+                        alt={producto.nombre}
+                        fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                        className="object-contain p-2"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground/40">
+                        <Package className="h-10 w-10" />
+                        <span className="text-xs mt-1">Sin imagen</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex flex-col gap-1 p-3">
+                    <span className="font-medium text-sm leading-tight line-clamp-2">
                       {producto.nombre}
                     </span>
                     {numMedidas > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs shrink-0 ml-1"
-                      >
+                      <Badge variant="secondary" className="text-[10px] w-fit">
                         {numMedidas} {numMedidas === 1 ? "medida" : "medidas"}
                       </Badge>
                     )}
+                    <span className="font-inter text-primary font-bold text-base tracking-tight">
+                      {tieneVariantes
+                        ? `Desde ${formatCurrency(precioDesde)}`
+                        : formatCurrency(precioDesde)}
+                    </span>
                   </div>
-                  <span className="text-primary font-bold text-base">
-                    {tieneVariantes
-                      ? `Desde ${formatCurrency(precioDesde)}`
-                      : formatCurrency(precioDesde)}
-                  </span>
                 </button>
               );
             })}
