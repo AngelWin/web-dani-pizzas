@@ -318,8 +318,8 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
               <FormItem>
                 <FormLabel>Sucursal</FormLabel>
                 <Select
-                  value={field.value ?? ""}
-                  onValueChange={(v) => field.onChange(v || null)}
+                  value={field.value ?? "none"}
+                  onValueChange={(v) => field.onChange(v === "none" ? null : v)}
                 >
                   <FormControl>
                     <SelectTrigger className="h-10 rounded-xl">
@@ -327,7 +327,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Sin sucursal</SelectItem>
+                    <SelectItem value="none">Sin sucursal</SelectItem>
                     {sucursales.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.nombre}
@@ -514,8 +514,8 @@ export function EditarUsuarioForm({
               <FormItem>
                 <FormLabel>Sucursal</FormLabel>
                 <Select
-                  value={field.value ?? ""}
-                  onValueChange={(v) => field.onChange(v || null)}
+                  value={field.value ?? "none"}
+                  onValueChange={(v) => field.onChange(v === "none" ? null : v)}
                 >
                   <FormControl>
                     <SelectTrigger className="h-10 rounded-xl">
@@ -523,7 +523,7 @@ export function EditarUsuarioForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Sin sucursal</SelectItem>
+                    <SelectItem value="none">Sin sucursal</SelectItem>
                     {sucursales.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.nombre}
