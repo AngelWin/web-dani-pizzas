@@ -120,7 +120,7 @@ export function TarjetaOrden({
   return (
     <Card
       className={cn(
-        "rounded-xl border-l-4 shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md",
+        "rounded-xl border-l-[3px] shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md",
         ESTADO_BORDE_COLOR[orden.estado] ?? "border-l-gray-300",
         orden.estado === "cancelada" && "opacity-60",
       )}
@@ -144,7 +144,7 @@ export function TarjetaOrden({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {formatHora(orden.created_at)}
@@ -183,7 +183,7 @@ export function TarjetaOrden({
             return (
               <li key={item.id} className="flex justify-between text-sm">
                 <span className="text-foreground">
-                  <span className="font-medium">{item.cantidad}×</span>{" "}
+                  <span className="font-semibold">{item.cantidad}×</span>{" "}
                   {item.producto_nombre}
                   {item.variante_nombre && !sabores.length && (
                     <span className="text-muted-foreground">
@@ -232,7 +232,7 @@ export function TarjetaOrden({
                     </span>
                   )}
                 </span>
-                <span className="shrink-0 pl-2 tabular-nums text-muted-foreground">
+                <span className="shrink-0 pl-2 tabular-nums font-medium text-foreground/80">
                   {formatCurrency(item.subtotal)}
                 </span>
               </li>
@@ -286,21 +286,8 @@ export function TarjetaOrden({
 
       <Separator />
 
-      <CardFooter className="flex flex-col gap-3 pt-3">
-        <div className="flex w-full items-center justify-between">
-          <div>
-            <span className="font-inter text-lg font-bold tabular-nums text-foreground">
-              {formatCurrency(orden.total)}
-            </span>
-            {esDelivery && orden.delivery_fee > 0 && (
-              <span className="ml-1.5 text-xs text-muted-foreground">
-                (inc. delivery {formatCurrency(orden.delivery_fee)})
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex w-full items-center justify-end">
+      <CardFooter className="pt-3">
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
           <AccionesOrden
             orden={orden}
             estadoActual={orden.estado}
@@ -308,6 +295,16 @@ export function TarjetaOrden({
             modeloNegocio={modeloNegocio}
             niveles={niveles}
           />
+          <div className="shrink-0 sm:text-right">
+            <span className="font-inter text-base font-bold tabular-nums text-foreground">
+              {formatCurrency(orden.total)}
+            </span>
+            {esDelivery && orden.delivery_fee > 0 && (
+              <span className="block text-[11px] text-muted-foreground">
+                inc. delivery {formatCurrency(orden.delivery_fee)}
+              </span>
+            )}
+          </div>
         </div>
       </CardFooter>
     </Card>

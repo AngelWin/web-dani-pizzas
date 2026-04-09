@@ -2,13 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, DollarSign, Loader2, AlertTriangle } from "lucide-react";
+import { DollarSign, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   cambiarEstadoOrdenAction,
@@ -146,32 +140,46 @@ export function AccionesOrden({
     return <span className="text-xs text-muted-foreground">Sin acciones</span>;
   }
 
-  const mostrarDropdown = puedeCancelar || estadoActual === "lista";
-
   return (
     <>
-      <div className="flex flex-wrap gap-2">
-        {/* Avanzar estado */}
-        {siguienteEstado && (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {/* Cancelar — visible directamente */}
+        {puedeCancelar && (
           <Button
             size="sm"
-            className="h-8 rounded-lg bg-primary text-white hover:bg-primary/90"
-            onClick={handleAvanzarEstado}
+            variant="ghost"
+            className="h-7 rounded-lg px-2 text-xs text-muted-foreground hover:text-destructive"
+            onClick={() => setCancelarOpen(true)}
             disabled={pending}
           >
-            {loadingAction === "estado" && (
-              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-            )}
-            → {ESTADO_LABEL[siguienteEstado]}
+            Cancelar
           </Button>
         )}
+
+        {/* Avanzar delivery */}
+        {tipoDelivery &&
+          siguienteDelivery &&
+          deliveryStatus !== "entregado" && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 rounded-lg text-xs"
+              onClick={handleAvanzarDelivery}
+              disabled={pending}
+            >
+              {loadingAction === "delivery" && (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              )}
+              Del → {DELIVERY_LABEL[siguienteDelivery]}
+            </Button>
+          )}
 
         {/* Cobrar */}
         {mostrarCobrar && (
           <>
             <Button
               size="sm"
-              className="h-8 rounded-lg bg-green-600 text-white hover:bg-green-700"
+              className="h-7 rounded-lg bg-green-600 text-xs text-white hover:bg-green-700"
               onClick={() => setCobrarOpen(true)}
               disabled={pending}
             >
@@ -187,62 +195,19 @@ export function AccionesOrden({
           </>
         )}
 
-        {/* Avanzar delivery */}
-        {tipoDelivery &&
-          siguienteDelivery &&
-          deliveryStatus !== "entregado" && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 rounded-lg"
-              onClick={handleAvanzarDelivery}
-              disabled={pending}
-            >
-              {loadingAction === "delivery" && (
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              )}
-              Delivery → {DELIVERY_LABEL[siguienteDelivery]}
-            </Button>
-          )}
-
-        {/* Dropdown */}
-        {mostrarDropdown && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 rounded-lg px-2"
-                disabled={pending}
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {puedeCancelar ? (
-                <DropdownMenuItem
-                  className={
-                    estadoActual === "en_preparacion"
-                      ? "text-amber-600"
-                      : "text-destructive"
-                  }
-                  onClick={() => setCancelarOpen(true)}
-                >
-                  {estadoActual === "en_preparacion" && (
-                    <AlertTriangle className="mr-2 h-3.5 w-3.5" />
-                  )}
-                  Cancelar orden
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  disabled
-                  className="text-xs text-muted-foreground"
-                >
-                  No se puede cancelar en este estado
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Avanzar estado */}
+        {siguienteEstado && (
+          <Button
+            size="sm"
+            className="h-7 rounded-lg bg-primary text-xs text-white hover:bg-primary/90"
+            onClick={handleAvanzarEstado}
+            disabled={pending}
+          >
+            {loadingAction === "estado" && (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            )}
+            → {ESTADO_LABEL[siguienteEstado]}
+          </Button>
         )}
       </div>
 
