@@ -13,7 +13,7 @@
   --color-popover-foreground: hsl(var(--popover-foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-primary-dark: #1d4ed8;
+  --color-primary-dark: #c62828;
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-accent: hsl(var(--accent));
@@ -50,8 +50,87 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ═══ Paleta Enterprise (azul profesional + teal) ═══ */
+/* ═══ Paleta por defecto: Dani Pizzas (rojo pizza + naranja) ═══ */
 :root {
+  --background: 0 0% 96%;
+  --foreground: 0 0% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 13%;
+  --primary: 4 80% 56%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 14 100% 63%;
+  --accent-foreground: 0 0% 100%;
+  --muted: 0 0% 92%;
+  --muted-foreground: 0 0% 46%;
+  --destructive: 4 80% 56%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 88%;
+  --input: 0 0% 88%;
+  --ring: 4 80% 56%;
+  --radius: 0.75rem;
+  --success: 122 39% 49%;
+  --success-foreground: 0 0% 100%;
+  --warning: 43 100% 50%;
+  --warning-foreground: 0 0% 13%;
+  --info: 207 90% 54%;
+  --info-foreground: 0 0% 100%;
+  --chart-1: 4 80% 56%;
+  --chart-2: 14 100% 63%;
+  --chart-3: 122 39% 49%;
+  --chart-4: 207 90% 54%;
+  --chart-5: 43 100% 50%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 0 0% 13%;
+  --sidebar-primary: 4 80% 56%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 14 100% 95%;
+  --sidebar-accent-foreground: 0 0% 13%;
+  --sidebar-border: 0 0% 88%;
+  --sidebar-ring: 4 80% 56%;
+}
+
+.dark {
+  --background: 0 0% 9%;
+  --foreground: 0 0% 96%;
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 96%;
+  --popover: 0 0% 12%;
+  --popover-foreground: 0 0% 96%;
+  --primary: 4 80% 56%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 80%;
+  --secondary-foreground: 0 0% 9%;
+  --accent: 14 100% 63%;
+  --accent-foreground: 0 0% 100%;
+  --muted: 0 0% 18%;
+  --muted-foreground: 0 0% 60%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 4 80% 56%;
+  --chart-1: 4 80% 56%;
+  --chart-2: 14 100% 63%;
+  --chart-3: 122 39% 49%;
+  --chart-4: 207 90% 54%;
+  --chart-5: 43 100% 50%;
+  --sidebar: 0 0% 12%;
+  --sidebar-foreground: 0 0% 96%;
+  --sidebar-primary: 4 80% 56%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 18%;
+  --sidebar-accent-foreground: 0 0% 96%;
+  --sidebar-border: 0 0% 20%;
+  --sidebar-ring: 4 80% 56%;
+}
+
+/* ═══ Paleta Enterprise (azul profesional + teal) ═══ */
+/* Se activa con data-palette="enterprise" en <html> */
+[data-palette="enterprise"] {
   --background: 210 20% 98%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
@@ -93,7 +172,7 @@
   --sidebar-ring: 221 83% 53%;
 }
 
-.dark {
+[data-palette="enterprise"].dark {
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
   --card: 217 33% 17%;
