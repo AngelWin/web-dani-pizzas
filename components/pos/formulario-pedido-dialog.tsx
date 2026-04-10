@@ -109,15 +109,43 @@ export function FormularioPedidoDialog({
   const tipoPedido = form.watch("tipo_pedido");
   const deliveryMethod = form.watch("delivery_method");
 
-  // Resetear form al abrir el dialog
+  // Resetear form al abrir el dialog (incluyendo items del carrito)
   useEffect(() => {
     if (open) {
-      form.reset();
-      form.setValue("sucursal_id", sucursalId);
+      form.reset({
+        sucursal_id: sucursalId,
+        cliente_id: null,
+        tipo_pedido: TIPO_PEDIDO.EN_LOCAL,
+        mesa_id: null,
+        mesa_referencia: "",
+        notas: "",
+        delivery_method: DELIVERY_METHOD.PROPIO,
+        repartidor_id: null,
+        third_party_name: null,
+        delivery_fee:
+          deliveryServicios.find((s) => s.tipo === "propio")?.precio_base ?? 0,
+        delivery_address: "",
+        delivery_referencia: "",
+        items: carrito.items.map((i) => ({
+          producto_id: i.producto_id,
+          variante_id: i.variante_id,
+          cantidad: i.cantidad,
+          producto_nombre: i.producto_nombre,
+          variante_nombre: i.variante_nombre,
+          precio_unitario: i.producto_precio,
+          subtotal: i.subtotal,
+          sabores: i.sabores ?? null,
+          extras: i.extras ?? null,
+          acompanante: i.acompanante ?? null,
+        })),
+        promocion_id: null,
+        descuento: 0,
+      });
       setClienteSeleccionado(null);
       setPromocionSeleccionada(null);
     }
-  }, [open, sucursalId, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Sincronizar sucursal seleccionada → form
   useEffect(() => {
