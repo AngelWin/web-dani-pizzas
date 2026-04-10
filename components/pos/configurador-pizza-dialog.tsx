@@ -21,8 +21,6 @@ import type {
   ProductoExtra,
 } from "@/lib/services/productos";
 import type { AcompananteOrden, ExtraOrden } from "@/hooks/use-carrito";
-import type { PromocionActivaPOS } from "@/lib/services/promociones";
-import { detectarPromoParaVariante } from "@/lib/promociones-utils";
 
 type VariantePOS = ProductoPOS["producto_variantes"][number];
 
@@ -37,7 +35,6 @@ type Props = {
   extras: ProductoExtra[];
   open: boolean;
   onClose: () => void;
-  promociones?: PromocionActivaPOS[];
   onConfirmar: (data: {
     producto: ProductoPOS;
     variante: {
@@ -68,7 +65,6 @@ export function ConfiguradorPizzaDialog({
   extras,
   open,
   onClose,
-  promociones = [],
   onConfirmar,
 }: Props) {
   const { formatCurrency } = useCurrency();
@@ -114,20 +110,6 @@ export function ConfiguradorPizzaDialog({
     0,
   );
   const precioTotal = (varianteSeleccionada?.precio ?? 0) + precioExtras;
-
-  // Promo aplicable a la variante seleccionada (descuento solo al precio base, no extras)
-  const promoVariante =
-    producto && varianteSeleccionada
-      ? detectarPromoParaVariante(
-          promociones,
-          producto.id,
-          varianteSeleccionada.medida_id,
-          varianteSeleccionada.precio,
-        )
-      : null;
-  const precioConPromo = promoVariante
-    ? promoVariante.precioConPromo + precioExtras
-    : null;
 
   const handleReset = () => {
     setPaso(1);
@@ -261,56 +243,28 @@ export function ConfiguradorPizzaDialog({
                 Elige el tamaño
               </p>
               <div className="grid grid-cols-2 gap-3">
-                {variantes.map((v) => {
-                  const promoV = producto
-                    ? detectarPromoParaVariante(
-                        promociones,
-                        producto.id,
-                        v.medida_id,
-                        v.precio,
-                      )
-                    : null;
-
-                  return (
-                    <button
-                      key={v.id}
-                      onClick={() => handleSelectVariante(v)}
-                      className={cn(
-                        "relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 h-20 transition-all",
-                        "hover:border-primary hover:bg-primary/5 active:scale-95",
-                        promoV && "ring-1 ring-red-400/50",
-                      )}
-                    >
-                      {promoV && (
-                        <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] px-1.5 py-0 font-bold">
-                          {promoV.etiqueta}
-                        </Badge>
-                      )}
-                      <span className="font-semibold">
-                        {v.categoria_medidas?.nombre}
+                {variantes.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => handleSelectVariante(v)}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 rounded-xl border p-4 h-20 transition-all",
+                      "hover:border-primary hover:bg-primary/5 active:scale-95",
+                    )}
+                  >
+                    <span className="font-semibold">
+                      {v.categoria_medidas?.nombre}
+                    </span>
+                    <span className="text-primary font-bold">
+                      {formatCurrency(v.precio)}
+                    </span>
+                    {v.categoria_medidas?.permite_combinacion && (
+                      <span className="text-xs text-muted-foreground">
+                        Combinable
                       </span>
-                      {promoV && promoV.descuento > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-muted-foreground line-through">
-                            {formatCurrency(v.precio)}
-                          </span>
-                          <span className="text-red-600 font-bold">
-                            {formatCurrency(promoV.precioConPromo)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-primary font-bold">
-                          {formatCurrency(v.precio)}
-                        </span>
-                      )}
-                      {v.categoria_medidas?.permite_combinacion && (
-                        <span className="text-xs text-muted-foreground">
-                          Combinable
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -591,20 +545,9 @@ export function ConfiguradorPizzaDialog({
                   </p>
                 )}
               </div>
-              {precioConPromo !== null && precioConPromo < precioTotal ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground line-through">
-                    {formatCurrency(precioTotal)}
-                  </span>
-                  <span className="text-red-600 font-bold text-lg">
-                    {formatCurrency(precioConPromo)}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-primary font-bold text-lg">
-                  {formatCurrency(precioTotal)}
-                </span>
-              )}
+              <span className="text-primary font-bold text-lg">
+                {formatCurrency(precioTotal)}
+              </span>
             </div>
           )}
 
