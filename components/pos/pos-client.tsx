@@ -175,6 +175,7 @@ export function PosClient({
             carrito={carrito}
             saboresPorCategoria={saboresPorCategoria}
             extrasPorCategoria={extrasPorCategoria}
+            promociones={promociones}
           />
         </div>
 

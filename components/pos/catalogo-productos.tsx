@@ -24,6 +24,8 @@ import type {
   ProductoExtra,
 } from "@/lib/services/productos";
 import type { useCarrito } from "@/hooks/use-carrito";
+import type { PromocionActivaPOS } from "@/lib/services/promociones";
+import { productoTienePromo } from "@/lib/promociones-utils";
 
 type Categoria = { id: string; nombre: string };
 
@@ -33,6 +35,7 @@ type Props = {
   carrito: ReturnType<typeof useCarrito>;
   saboresPorCategoria: Record<string, PizzaSaborConIngredientes[]>;
   extrasPorCategoria: Record<string, ProductoExtra[]>;
+  promociones: PromocionActivaPOS[];
 };
 
 export function CatalogoProductos({
@@ -41,6 +44,7 @@ export function CatalogoProductos({
   carrito,
   saboresPorCategoria,
   extrasPorCategoria,
+  promociones,
 }: Props) {
   const { formatCurrency } = useCurrency();
   const [busqueda, setBusqueda] = useState("");
@@ -142,6 +146,7 @@ export function CatalogoProductos({
                 ? Math.min(...variantesVenta.map((v) => v.precio))
                 : (producto.precio ?? 0);
               const numMedidas = variantesVenta.length;
+              const promoInfo = productoTienePromo(promociones, producto.id);
 
               return (
                 <button
@@ -151,10 +156,18 @@ export function CatalogoProductos({
                     "group flex flex-col rounded-xl border bg-card overflow-hidden text-left",
                     "shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all",
                     "hover:border-primary hover:shadow-md active:scale-[0.97]",
+                    promoInfo.tienePromo && "ring-1 ring-red-400/50",
                   )}
                 >
                   {/* Imagen */}
                   <div className="relative aspect-[4/3] w-full bg-muted">
+                    {promoInfo.tienePromo && (
+                      <div className="absolute top-1.5 left-1.5 z-10">
+                        <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0 font-bold shadow-sm">
+                          {promoInfo.etiqueta}
+                        </Badge>
+                      </div>
+                    )}
                     {producto.imagen_url ? (
                       <Image
                         src={producto.imagen_url}
@@ -201,6 +214,7 @@ export function CatalogoProductos({
         onSelect={(producto, variante) => {
           carrito.agregarItem(producto, variante);
         }}
+        promociones={promociones}
       />
 
       <ConfiguradorPizzaDialog
@@ -217,6 +231,7 @@ export function CatalogoProductos({
         }
         open={productoParaConfigurar !== null}
         onClose={() => setProductoParaConfigurar(null)}
+        promociones={promociones}
         onConfirmar={(data) => {
           carrito.agregarPizza(data);
           setProductoParaConfigurar(null);
