@@ -22,6 +22,8 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
 R14 (Optimizaciones Rendimiento) [transversal, sin dependencias]
 R9 (Sucursales) + R5a (POS) + R5b/R5c (Ordenes) -> R15 (Gestion de Mesas)
                                                         -> R16 (Reservas de Mesas) [pendiente]
+R7 (Promociones) + R9 (Sucursales) + R5a (POS) -> R17 (Promociones Mejoradas)
+                                                        -> R18 (Promos por Membresia) [pendiente]
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -1028,6 +1030,159 @@ CONSTRAINT  mesas_numero_sucursal_unique UNIQUE (sucursal_id, numero)
 - La action `cambiarEstadoMesaAction` ya permite marcar una mesa como reservada manualmente
 - Se necesita nueva tabla `reservas` con FK a `mesas` y opcionalmente a `clientes`
 - Evaluar si se necesita un cron job para liberar reservas vencidas automaticamente
+
+---
+
+## Release 17: Promociones Mejoradas
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 7 (Promociones base) + Release 9 (Sucursales) + Release 5a (POS)
+**Objetivo:** Evolucionar el sistema de promociones para cubrir escenarios reales de pizzeria: 2x1, combos a precio fijo, happy hours, delivery gratis, programacion por dia de la semana, filtro por sucursal, y mostrar precio antes/despues en el POS.
+
+### Contexto del negocio:
+- El sistema actual solo soporta descuento porcentaje y fijo — insuficiente para pizzerias reales
+- Las promos no se filtran por sucursal ni por dia/hora
+- `promocion_id` no se persiste en ordenes (bug)
+- No se muestra precio antes/despues en el POS
+- Se necesitan promos tipo: 2x1 en pizzas, combo familiar, pizza del dia, happy hour, delivery gratis
+
+### Tipos de promocion soportados:
+
+| Tipo | Ejemplo | Logica |
+|------|---------|--------|
+| `descuento_porcentaje` | 40% OFF pizza del dia | % sobre subtotal de productos elegibles |
+| `descuento_fijo` | S/. 10 off en pedidos > S/. 50 | Resta monto fijo (con pedido minimo opcional) |
+| `2x1` | 2x1 en pizzas medianas (martes) | Cada 2 items elegibles, el mas barato es gratis |
+| `combo_precio_fijo` | 3 pizzas + 3 bebidas por S/. 89.90 | Precio fijo si carrito tiene todos los productos del combo |
+| `delivery_gratis` | Delivery gratis en pedidos > S/. 50 | delivery_fee = 0 si subtotal >= pedido_minimo |
+
+### Nuevo enum DB: `tipo_promocion`
+```
+'descuento_porcentaje' | 'descuento_fijo' | '2x1' | 'combo_precio_fijo' | 'delivery_gratis'
+```
+
+### Nuevas columnas en `promociones`:
+- `tipo_promocion` — enum NOT NULL (reemplaza tipo_descuento)
+- `dias_semana` — integer[] nullable (0=dom..6=sab, null=todos)
+- `hora_inicio` / `hora_fin` — time nullable (happy hours)
+- `pedido_minimo` — numeric nullable (delivery gratis, descuento fijo)
+- `precio_combo` — numeric nullable (combo precio fijo)
+
+### Nueva tabla: `promocion_sucursales`
+```
+promocion_id  uuid FK → promociones ON DELETE CASCADE
+sucursal_id   uuid FK → sucursales ON DELETE CASCADE
+PRIMARY KEY (promocion_id, sucursal_id)
+```
+Si vacia = aplica a todas las sucursales.
+
+### Cambio en tabla `ordenes`:
+- Agregar `promocion_id uuid REFERENCES promociones(id) ON DELETE SET NULL`
+
+### Cambios esperados:
+
+**DB:**
+- [ ] Migracion: enum `tipo_promocion`, columnas nuevas en `promociones`, datos migrados
+- [ ] Migracion: tabla `promocion_sucursales` con RLS
+- [ ] Migracion: columna `promocion_id` en `ordenes`
+- [ ] Tipos TypeScript actualizados (database.ts)
+
+**Backend:**
+- [ ] Constantes `TIPO_PROMOCION`, `TIPO_PROMOCION_LABELS`, `DIAS_SEMANA_LABELS` en `lib/constants.ts`
+- [ ] Reescribir `lib/promociones-utils.ts`: logica de calculo por tipo, vigencia con dia/hora, aplicabilidad
+- [ ] Reescribir `lib/validations/promociones.ts`: schema con tipo_promocion, campos condicionales, sucursales_ids
+- [ ] Actualizar `lib/services/promociones.ts`: CRUD con sucursales, `getPromocionesActivas(sucursalId)` filtrado
+- [ ] Fix: persistir `promocion_id` en `crearOrden()`, `crearOrdenAction()` y `cobrarOrdenAction()`
+- [ ] Actualizar `actions/promociones.ts` con campos nuevos
+
+**UI Admin (/promociones):**
+- [ ] Formulario reorganizado en secciones: tipo, vigencia, dias, horario, sucursales, productos
+- [ ] Campos condicionales segun tipo (valor_descuento, precio_combo, pedido_minimo)
+- [ ] Selector de dias de la semana (7 toggle-pills)
+- [ ] Switch "Restringir por horario" + inputs hora
+- [ ] Multi-select de sucursales con badges
+- [ ] Selector de productos con label contextual por tipo
+- [ ] Cards de lista actualizadas con badges de tipo, dias, horario, sucursales
+- [ ] Cargar sucursales en `promociones/page.tsx`
+
+**UI POS:**
+- [ ] `getPromocionesActivas(sucursalId)` filtrado por sucursal en `pos/page.tsx`
+- [ ] Selector de promos mejorado: lista de cards con nombre, descripcion, descuento calculado
+- [ ] Precio antes/despues visible en resumen de totales
+- [ ] Promos no aplicables en gris
+- [ ] Delivery gratis aplica al fee, no al subtotal
+
+### Logica de calculo por tipo:
+
+**2x1:** Items elegibles ordenados por precio DESC. Cada 2, el segundo es gratis.
+```
+Carrito: Pizza Hawaiana (S/.34.90) + Pizza Americana (S/.32.50)
+Descuento: S/.32.50 (la mas barata)
+```
+
+**Combo precio fijo:** Si el carrito contiene todos los productos requeridos:
+```
+Carrito: 3 pizzas (S/.90) + 3 bebidas (S/.30) = S/.120
+Precio combo: S/.89.90
+Descuento: S/.120 - S/.89.90 = S/.30.10
+```
+
+**Delivery gratis:** Si subtotal >= pedido_minimo, el delivery_fee se anula.
+
+### Archivos nuevos:
+- Ninguno (se modifican archivos existentes)
+
+### Archivos a modificar:
+- `types/database.ts` — regenerar
+- `lib/constants.ts` — agregar constantes de tipos de promocion
+- `lib/promociones-utils.ts` — reescribir logica completa
+- `lib/validations/promociones.ts` — reescribir schema
+- `lib/services/promociones.ts` — CRUD con sucursales + filtro por sucursal/dia/hora
+- `lib/services/ordenes.ts` — agregar promocion_id en crearOrden
+- `actions/ordenes.ts` — pasar promocion_id
+- `actions/promociones.ts` — campos nuevos
+- `app/(dashboard)/ordenes/actions.ts` — pasar promocion_id en cobrarOrden
+- `app/(dashboard)/pos/page.tsx` — pasar sucursalId a getPromocionesActivas
+- `app/(dashboard)/promociones/page.tsx` — cargar sucursales
+- `components/promociones/formulario-promocion-dialog.tsx` — UI extendida
+- `components/promociones/lista-promociones.tsx` — cards con nuevos badges
+- `components/pos/formulario-pedido-dialog.tsx` — selector mejorado + precio antes/despues
+
+### Criterio de exito:
+- Crear promo "descuento_porcentaje" 40% → descuento visible en POS
+- Crear promo "2x1" en pizzas → 2 pizzas en carrito → la mas barata se descuenta
+- Crear promo "combo_precio_fijo" → carrito con todos los productos → precio combo aplicado
+- Crear promo "delivery_gratis" con minimo S/. 50 → delivery fee = 0 si subtotal >= 50
+- Promo restringida a 1 sucursal no aparece en otra
+- Promo "solo martes" aparece/desaparece segun el dia
+- Promo con happy hour solo aparece en el rango de horas
+- `promocion_id` se guarda en ordenes y ventas al cobrar
+- Precio antes/despues visible en POS cuando hay promo
+- Build pasa sin errores
+
+---
+
+## Release 18: Promociones por Membresia y Nivel (pendiente)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 17 (Promociones Mejoradas) + Release 8 (Membresias)
+**Objetivo:** Agregar filtro de membresia/nivel a las promociones, permitiendo crear promos exclusivas para miembros (ej: 50% off para nivel Oro, delivery gratis permanente para VIP). Reutiliza toda la infraestructura de tipos de promo de R17.
+
+### Funcionalidades esperadas:
+- Agregar campo opcional `nivel_membresia_id` (FK nullable) o `niveles_membresia_ids` (array) a promociones
+- Opcion "Solo para miembros" en formulario de promocion con selector de nivel(es)
+- En POS: si el cliente tiene membresia, mostrar promos exclusivas de su nivel ademas de las publicas
+- Promos de membresia pueden ser permanentes (sin fecha fin) o con vigencia limitada
+- Promo tipo "Cumpleanos del miembro": descuento especial solo en el mes de cumpleanos del cliente
+- Mostrar badge "Exclusivo miembros" o "Nivel Oro" en la card de la promo
+- Si el cajero selecciona un cliente con membresia, las promos de su nivel se habilitan automaticamente
+
+### Consideraciones:
+- R17 ya tiene la infraestructura de tipos de promo (%, fijo, 2x1, combo, delivery gratis)
+- R18 solo agrega el filtro de QUIEN puede usar la promo, no cambia COMO funciona
+- La tabla `membresias_niveles` ya existe (R8) con: nombre, puntos_requeridos, descuento_porcentaje
+- La tabla `clientes` tiene `fecha_nacimiento` para la promo de cumpleanos
+- Se necesita nueva tabla `promocion_niveles` o columna `niveles_membresia_ids` en promociones
 
 ---
 

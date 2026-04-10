@@ -134,6 +134,7 @@ export async function cobrarOrdenAction(
       delivery_fee: orden.delivery_fee,
       total: totalFinal,
       notas: orden.notas,
+      promocion_id: orden.promocion_id,
       mesa_referencia: orden.mesa_referencia,
       delivery_method: orden.delivery_method,
       delivery_address: orden.delivery_address,

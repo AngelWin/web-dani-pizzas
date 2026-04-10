@@ -45,7 +45,12 @@ import type { useCarrito } from "@/hooks/use-carrito";
 import type { Profile } from "@/lib/services/ventas";
 import type { ClienteConMembresia } from "@/lib/services/clientes";
 import type { PromocionActivaPOS } from "@/lib/services/promociones";
-import { calcularDescuento } from "@/lib/promociones-utils";
+import {
+  calcularDescuento,
+  esPromocionAplicableAlCarrito,
+  getDescripcionPromocion,
+  type ItemCarrito,
+} from "@/lib/promociones-utils";
 import { useCurrency } from "@/hooks/use-currency";
 
 type Repartidor = Pick<Profile, "id" | "nombre" | "apellido_paterno">;
@@ -110,6 +115,8 @@ export function FormularioPedidoDialog({
   const deliveryMethod = form.watch("delivery_method");
   const deliveryAddress = form.watch("delivery_address");
   const thirdPartyName = form.watch("third_party_name");
+  const deliveryFee =
+    tipoPedido === TIPO_PEDIDO.DELIVERY ? (form.watch("delivery_fee") ?? 0) : 0;
 
   const confirmarDeshabilitado =
     isSubmitting ||
@@ -210,6 +217,14 @@ export function FormularioPedidoDialog({
   }, [tipoPedido, deliveryMethod, deliveryServicios, form]);
 
   // Sincronizar promoción seleccionada → form (descuento)
+  // Items del carrito en formato para cálculo de descuento
+  const itemsParaDescuento: ItemCarrito[] = carrito.items.map((i) => ({
+    producto_id: i.producto_id,
+    precio_unitario: i.producto_precio,
+    cantidad: i.cantidad,
+    subtotal: i.subtotal,
+  }));
+
   useEffect(() => {
     if (!promocionSeleccionada) {
       form.setValue("promocion_id", null);
@@ -218,11 +233,14 @@ export function FormularioPedidoDialog({
     }
     const montoDescuento = calcularDescuento(
       promocionSeleccionada,
+      itemsParaDescuento,
       carrito.subtotal,
+      deliveryFee,
     );
     form.setValue("promocion_id", promocionSeleccionada.id);
     form.setValue("descuento", montoDescuento);
-  }, [promocionSeleccionada, carrito.subtotal, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [promocionSeleccionada, carrito.subtotal, deliveryFee, form]);
 
   // Limpiar al cerrar
   function handleClose() {
@@ -243,12 +261,19 @@ export function FormularioPedidoDialog({
     });
   }
 
-  const deliveryFee =
-    tipoPedido === TIPO_PEDIDO.DELIVERY ? (form.watch("delivery_fee") ?? 0) : 0;
   const descuento = promocionSeleccionada
-    ? calcularDescuento(promocionSeleccionada, carrito.subtotal)
+    ? calcularDescuento(
+        promocionSeleccionada,
+        itemsParaDescuento,
+        carrito.subtotal,
+        deliveryFee,
+      )
     : 0;
-  const total = Math.max(0, carrito.subtotal - descuento + deliveryFee);
+  const esDeliveryGratis =
+    promocionSeleccionada?.tipo_promocion === "delivery_gratis";
+  const total = esDeliveryGratis
+    ? Math.max(0, carrito.subtotal + Math.max(0, deliveryFee - descuento))
+    : Math.max(0, carrito.subtotal - descuento + deliveryFee);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -605,10 +630,16 @@ export function FormularioPedidoDialog({
                           {promocionSeleccionada.nombre}
                         </p>
                         <p className="text-xs text-green-600/80 dark:text-green-500">
-                          {promocionSeleccionada.tipo_descuento === "porcentaje"
-                            ? `${promocionSeleccionada.valor_descuento}% de descuento`
-                            : `${simbolo} ${promocionSeleccionada.valor_descuento} de descuento`}
+                          {getDescripcionPromocion(
+                            promocionSeleccionada,
+                            formatCurrency,
+                          )}
                         </p>
+                        {descuento > 0 && (
+                          <p className="text-xs font-semibold text-green-700 dark:text-green-400 mt-0.5">
+                            Ahorras {formatCurrency(descuento)}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <button
@@ -620,27 +651,66 @@ export function FormularioPedidoDialog({
                     </button>
                   </div>
                 ) : (
-                  <Select
-                    onValueChange={(id) => {
-                      const promo = promociones.find((p) => p.id === id);
-                      setPromocionSeleccionada(promo ?? null);
-                    }}
-                    value=""
-                  >
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Seleccionar promoción..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {promociones.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.nombre}
-                          {p.tipo_descuento === "porcentaje"
-                            ? ` — ${p.valor_descuento}%`
-                            : ` — ${simbolo} ${p.valor_descuento}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {promociones.map((p) => {
+                      const aplicable = esPromocionAplicableAlCarrito(
+                        p,
+                        itemsParaDescuento,
+                        carrito.subtotal,
+                        deliveryFee,
+                      );
+                      const desc = getDescripcionPromocion(p, formatCurrency);
+                      const ahorro = aplicable
+                        ? calcularDescuento(
+                            p,
+                            itemsParaDescuento,
+                            carrito.subtotal,
+                            deliveryFee,
+                          )
+                        : 0;
+
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          disabled={!aplicable}
+                          onClick={() => setPromocionSeleccionada(p)}
+                          className={`w-full text-left rounded-xl border p-2.5 transition-colors ${
+                            aplicable
+                              ? "border-border hover:border-primary hover:bg-primary/5 cursor-pointer"
+                              : "border-border/50 opacity-50 cursor-not-allowed"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {p.nombre}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {desc}
+                              </p>
+                            </div>
+                            {aplicable && ahorro > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="shrink-0 border-green-300 text-green-700 dark:border-green-800 dark:text-green-400 text-[10px]"
+                              >
+                                -{formatCurrency(ahorro)}
+                              </Badge>
+                            )}
+                            {!aplicable && (
+                              <Badge
+                                variant="outline"
+                                className="shrink-0 text-[10px]"
+                              >
+                                No aplica
+                              </Badge>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             )}
@@ -651,16 +721,25 @@ export function FormularioPedidoDialog({
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatCurrency(carrito.subtotal)}</span>
               </div>
-              {descuento > 0 && (
+              {descuento > 0 && !esDeliveryGratis && (
                 <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
-                  <span>Descuento promo</span>
+                  <span>Descuento ({promocionSeleccionada?.nombre})</span>
                   <span>- {formatCurrency(descuento)}</span>
                 </div>
               )}
               {deliveryFee > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Delivery</span>
-                  <span>{formatCurrency(deliveryFee)}</span>
+                  {esDeliveryGratis ? (
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      <span className="line-through text-muted-foreground mr-1.5">
+                        {formatCurrency(deliveryFee)}
+                      </span>
+                      Gratis
+                    </span>
+                  ) : (
+                    <span>{formatCurrency(deliveryFee)}</span>
+                  )}
                 </div>
               )}
               <div className="flex justify-between border-t pt-1 mt-1 font-bold text-base">

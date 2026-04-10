@@ -194,6 +194,7 @@ export type CrearOrdenData = {
   repartidor_id?: string | null;
   third_party_name?: string | null;
   // Promoción
+  promocion_id?: string | null;
   descuento?: number;
   // Items
   items: {
@@ -246,6 +247,7 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
       delivery_fee: deliveryFee,
       total,
       notas: ordenData.notas ?? null,
+      promocion_id: ordenData.promocion_id ?? null,
       mesa_id: ordenData.mesa_id ?? null,
       mesa_referencia: ordenData.mesa_referencia ?? null,
       delivery_method: ordenData.delivery_method ?? null,

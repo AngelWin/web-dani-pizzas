@@ -16,14 +16,25 @@ async function getProductosBasico() {
   return (data ?? []) as { id: string; nombre: string }[];
 }
 
+async function getSucursalesBasico() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sucursales")
+    .select("id, nombre")
+    .eq("activa", true)
+    .order("nombre");
+  return (data ?? []) as { id: string; nombre: string }[];
+}
+
 export default async function PromocionesPage() {
   const supabase = await createClient();
   const { data: rolData } = await supabase.rpc("get_user_role");
   if (rolData !== "administrador") redirect("/dashboard");
 
-  const [promociones, productos] = await Promise.all([
+  const [promociones, productos, sucursales] = await Promise.all([
     getPromociones(),
     getProductosBasico(),
+    getSucursalesBasico(),
   ]);
 
   return (
@@ -32,7 +43,11 @@ export default async function PromocionesPage() {
         title="Promociones"
         description="Gestiona promociones y descuentos para el POS"
       />
-      <ListaPromociones promociones={promociones} productos={productos} />
+      <ListaPromociones
+        promociones={promociones}
+        productos={productos}
+        sucursales={sucursales}
+      />
     </div>
   );
 }

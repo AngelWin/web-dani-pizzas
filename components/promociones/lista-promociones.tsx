@@ -12,8 +12,11 @@ import {
   XCircle,
   Clock,
   Percent,
-  DollarSign,
+  Banknote,
+  Copy,
   Package,
+  Truck,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,14 +44,17 @@ import {
   deletePromocionAction,
   togglePromocionActivaAction,
 } from "@/actions/promociones";
+import { TIPO_PROMOCION_LABELS, DIAS_SEMANA_LABELS } from "@/lib/constants";
 import { useCurrency } from "@/hooks/use-currency";
 import type { PromocionConProductos } from "@/lib/services/promociones";
 
 type ProductoBasico = { id: string; nombre: string };
+type SucursalBasica = { id: string; nombre: string };
 
 type Props = {
   promociones: PromocionConProductos[];
   productos: ProductoBasico[];
+  sucursales: SucursalBasica[];
 };
 
 function formatFecha(iso: string): string {
@@ -60,6 +66,14 @@ function formatFecha(iso: string): string {
     minute: "2-digit",
   });
 }
+
+const TIPO_ICONO: Record<string, typeof Percent> = {
+  descuento_porcentaje: Percent,
+  descuento_fijo: Banknote,
+  "2x1": Copy,
+  combo_precio_fijo: Package,
+  delivery_gratis: Truck,
+};
 
 function BadgeEstado({ promocion }: { promocion: PromocionConProductos }) {
   if (!promocion.activa) {
@@ -110,7 +124,11 @@ function BadgeEstado({ promocion }: { promocion: PromocionConProductos }) {
   );
 }
 
-export function ListaPromociones({ promociones: inicial, productos }: Props) {
+export function ListaPromociones({
+  promociones: inicial,
+  productos,
+  sucursales,
+}: Props) {
   const { formatCurrency } = useCurrency();
   const [promociones, setPromociones] =
     useState<PromocionConProductos[]>(inicial);
@@ -165,6 +183,23 @@ export function ListaPromociones({ promociones: inicial, productos }: Props) {
     });
   }
 
+  function getDescripcionTipo(promo: PromocionConProductos): string {
+    switch (promo.tipo_promocion) {
+      case "descuento_porcentaje":
+        return `${promo.valor_descuento}% de descuento`;
+      case "descuento_fijo":
+        return `${formatCurrency(promo.valor_descuento)} de descuento`;
+      case "2x1":
+        return "Lleva 2, paga 1";
+      case "combo_precio_fijo":
+        return `Combo por ${formatCurrency(promo.precio_combo ?? 0)}`;
+      case "delivery_gratis":
+        return `Delivery gratis${promo.pedido_minimo ? ` (mín. ${formatCurrency(promo.pedido_minimo)})` : ""}`;
+      default:
+        return "";
+    }
+  }
+
   return (
     <>
       {/* Toolbar */}
@@ -197,108 +232,139 @@ export function ListaPromociones({ promociones: inicial, productos }: Props) {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {promociones.map((promo) => (
-            <div
-              key={promo.id}
-              className="rounded-xl border border-border bg-card p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] space-y-4"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                    <Tag className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-foreground truncate">
-                      {promo.nombre}
-                    </p>
-                    <div className="mt-0.5">
-                      <BadgeEstado promocion={promo} />
+          {promociones.map((promo) => {
+            const TipoIcon = TIPO_ICONO[promo.tipo_promocion] ?? Tag;
+
+            return (
+              <div
+                key={promo.id}
+                className="rounded-xl border border-border bg-card p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] space-y-3"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <TipoIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground truncate">
+                        {promo.nombre}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <BadgeEstado promocion={promo} />
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0"
+                        >
+                          {TIPO_PROMOCION_LABELS[promo.tipo_promocion] ??
+                            promo.tipo_promocion}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
+                  <Switch
+                    checked={promo.activa ?? false}
+                    onCheckedChange={(v) => handleToggleActiva(promo, v)}
+                    disabled={isPending}
+                    className="shrink-0 mt-1"
+                  />
                 </div>
-                <Switch
-                  checked={promo.activa ?? false}
-                  onCheckedChange={(v) => handleToggleActiva(promo, v)}
-                  disabled={isPending}
-                  className="shrink-0 mt-1"
-                />
-              </div>
 
-              {/* Descripción */}
-              {promo.descripcion && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {promo.descripcion}
-                </p>
-              )}
-
-              {/* Descuento */}
-              <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2">
-                {promo.tipo_descuento === "porcentaje" ? (
-                  <Percent className="h-4 w-4 text-primary" />
-                ) : (
-                  <DollarSign className="h-4 w-4 text-primary" />
+                {/* Descripción */}
+                {promo.descripcion && (
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {promo.descripcion}
+                  </p>
                 )}
-                <span className="text-sm font-semibold text-primary">
-                  {promo.tipo_descuento === "porcentaje"
-                    ? `${promo.valor_descuento}% de descuento`
-                    : `${formatCurrency(promo.valor_descuento)} de descuento`}
-                </span>
-              </div>
 
-              {/* Fechas */}
-              <div className="space-y-1 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 shrink-0" />
-                  <span>Inicio: {formatFecha(promo.fecha_inicio)}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 shrink-0" />
-                  <span>Fin: {formatFecha(promo.fecha_fin)}</span>
-                </div>
-              </div>
-
-              {/* Productos vinculados */}
-              {promo.productos_ids.length > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Package className="h-3.5 w-3.5 shrink-0" />
-                  <span>
-                    {promo.productos_ids.length} producto
-                    {promo.productos_ids.length !== 1 ? "s" : ""} específico
-                    {promo.productos_ids.length !== 1 ? "s" : ""}
+                {/* Descuento / Tipo */}
+                <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2">
+                  <TipoIcon className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-primary">
+                    {getDescripcionTipo(promo)}
                   </span>
                 </div>
-              )}
-              {promo.productos_ids.length === 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Package className="h-3.5 w-3.5 shrink-0" />
-                  <span>Aplica a todos los productos</span>
-                </div>
-              )}
 
-              {/* Acciones */}
-              <div className="flex gap-2 pt-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 flex-1 gap-1.5 rounded-xl text-xs"
-                  onClick={() => handleEditar(promo)}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Editar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1.5 rounded-xl text-xs text-destructive hover:text-destructive"
-                  onClick={() => setEliminando(promo)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Eliminar
-                </Button>
+                {/* Fechas */}
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {formatFecha(promo.fecha_inicio)} —{" "}
+                      {formatFecha(promo.fecha_fin)}
+                    </span>
+                  </div>
+
+                  {/* Días de la semana */}
+                  {promo.dias_semana && promo.dias_semana.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        {promo.dias_semana
+                          .sort((a, b) => a - b)
+                          .map((d) => DIAS_SEMANA_LABELS[d])
+                          .join(", ")}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Horario */}
+                  {promo.hora_inicio && promo.hora_fin && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        {promo.hora_inicio.slice(0, 5)} —{" "}
+                        {promo.hora_fin.slice(0, 5)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Sucursales */}
+                  {promo.sucursales_ids.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        {promo.sucursales_ids.length} sucursal
+                        {promo.sucursales_ids.length !== 1 ? "es" : ""}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Productos */}
+                  <div className="flex items-center gap-1.5">
+                    <Package className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {promo.productos_ids.length > 0
+                        ? `${promo.productos_ids.length} producto${promo.productos_ids.length !== 1 ? "s" : ""}`
+                        : "Todos los productos"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Acciones */}
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 flex-1 gap-1.5 rounded-xl text-xs"
+                    onClick={() => handleEditar(promo)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 rounded-xl text-xs text-destructive hover:text-destructive"
+                    onClick={() => setEliminando(promo)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Eliminar
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -308,6 +374,7 @@ export function ListaPromociones({ promociones: inicial, productos }: Props) {
         onClose={handleCerrarDialog}
         promocion={editando}
         productos={productos}
+        sucursales={sucursales}
       />
 
       {/* Confirm eliminar */}

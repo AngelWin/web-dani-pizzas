@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { X } from "lucide-react";
 import {
   promocionSchema,
@@ -40,28 +41,49 @@ import {
   createPromocionAction,
   updatePromocionAction,
 } from "@/actions/promociones";
+import {
+  TIPO_PROMOCION,
+  TIPO_PROMOCION_LABELS,
+  DIAS_SEMANA_LABELS,
+} from "@/lib/constants";
 import type { PromocionConProductos } from "@/lib/services/promociones";
 import { useCurrency } from "@/hooks/use-currency";
 
 type ProductoBasico = { id: string; nombre: string };
+type SucursalBasica = { id: string; nombre: string };
 
 type Props = {
   open: boolean;
   onClose: () => void;
   promocion?: PromocionConProductos | null;
   productos: ProductoBasico[];
+  sucursales: SucursalBasica[];
 };
 
 function toDatetimeLocal(iso: string): string {
-  // Convierte ISO string a formato "YYYY-MM-DDTHH:mm" para input datetime-local
   return iso.slice(0, 16);
 }
+
+function toTimeInput(time: string | null): string {
+  if (!time) return "";
+  return time.slice(0, 5);
+}
+
+const TIPOS_CON_VALOR = [
+  TIPO_PROMOCION.DESCUENTO_PORCENTAJE,
+  TIPO_PROMOCION.DESCUENTO_FIJO,
+];
+const TIPOS_CON_PRODUCTOS_REQUERIDOS = [
+  TIPO_PROMOCION.DOS_POR_UNO,
+  TIPO_PROMOCION.COMBO_PRECIO_FIJO,
+];
 
 export function FormularioPromocionDialog({
   open,
   onClose,
   promocion,
   productos,
+  sucursales,
 }: Props) {
   const esEdicion = !!promocion;
   const { simbolo } = useCurrency();
@@ -69,56 +91,84 @@ export function FormularioPromocionDialog({
   const [productosSeleccionados, setProductosSeleccionados] = useState<
     ProductoBasico[]
   >([]);
+  const [sucursalesSeleccionadas, setSucursalesSeleccionadas] = useState<
+    SucursalBasica[]
+  >([]);
   const [busquedaProducto, setBusquedaProducto] = useState("");
+  const [mostrarHorario, setMostrarHorario] = useState(false);
 
   const form = useForm<PromocionFormValues>({
     resolver: zodResolver(promocionSchema),
     defaultValues: {
       nombre: "",
       descripcion: "",
-      tipo_descuento: "porcentaje",
+      tipo_promocion: TIPO_PROMOCION.DESCUENTO_PORCENTAJE,
       valor_descuento: 10,
       fecha_inicio: "",
       fecha_fin: "",
       activa: true,
+      dias_semana: null,
+      hora_inicio: null,
+      hora_fin: null,
+      pedido_minimo: null,
+      precio_combo: null,
       productos_ids: [],
+      sucursales_ids: [],
     },
   });
 
-  // Cargar datos al editar
+  // Cargar datos al abrir
   useEffect(() => {
     if (open && promocion) {
       form.reset({
         nombre: promocion.nombre,
         descripcion: promocion.descripcion ?? "",
-        tipo_descuento: promocion.tipo_descuento as "porcentaje" | "fijo",
+        tipo_promocion: promocion.tipo_promocion,
         valor_descuento: promocion.valor_descuento,
         fecha_inicio: toDatetimeLocal(promocion.fecha_inicio),
         fecha_fin: toDatetimeLocal(promocion.fecha_fin),
         activa: promocion.activa ?? true,
+        dias_semana: promocion.dias_semana,
+        hora_inicio: toTimeInput(promocion.hora_inicio),
+        hora_fin: toTimeInput(promocion.hora_fin),
+        pedido_minimo: promocion.pedido_minimo,
+        precio_combo: promocion.precio_combo,
         productos_ids: promocion.productos_ids,
+        sucursales_ids: promocion.sucursales_ids,
       });
-      const seleccionados = productos.filter((p) =>
-        promocion.productos_ids.includes(p.id),
+      setProductosSeleccionados(
+        productos.filter((p) => promocion.productos_ids.includes(p.id)),
       );
-      setProductosSeleccionados(seleccionados);
-    } else if (open && !promocion) {
+      setSucursalesSeleccionadas(
+        sucursales.filter((s) => promocion.sucursales_ids.includes(s.id)),
+      );
+      setMostrarHorario(!!promocion.hora_inicio);
+    } else if (open) {
       form.reset({
         nombre: "",
         descripcion: "",
-        tipo_descuento: "porcentaje",
+        tipo_promocion: TIPO_PROMOCION.DESCUENTO_PORCENTAJE,
         valor_descuento: 10,
         fecha_inicio: "",
         fecha_fin: "",
         activa: true,
+        dias_semana: null,
+        hora_inicio: null,
+        hora_fin: null,
+        pedido_minimo: null,
+        precio_combo: null,
         productos_ids: [],
+        sucursales_ids: [],
       });
       setProductosSeleccionados([]);
+      setSucursalesSeleccionadas([]);
+      setMostrarHorario(false);
     }
     setBusquedaProducto("");
-  }, [open, promocion, productos, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, promocion]);
 
-  // Sincronizar productos seleccionados → form
+  // Sincronizar selecciones → form
   useEffect(() => {
     form.setValue(
       "productos_ids",
@@ -126,27 +176,51 @@ export function FormularioPromocionDialog({
     );
   }, [productosSeleccionados, form]);
 
-  function agregarProducto(producto: ProductoBasico) {
-    if (productosSeleccionados.some((p) => p.id === producto.id)) return;
-    setProductosSeleccionados((prev) => [...prev, producto]);
-    setBusquedaProducto("");
+  useEffect(() => {
+    form.setValue(
+      "sucursales_ids",
+      sucursalesSeleccionadas.map((s) => s.id),
+    );
+  }, [sucursalesSeleccionadas, form]);
+
+  const tipoPromocion = form.watch("tipo_promocion");
+  const diasSemana = form.watch("dias_semana") ?? [];
+
+  function toggleDia(dia: number) {
+    const actual = diasSemana;
+    const nuevo = actual.includes(dia)
+      ? actual.filter((d) => d !== dia)
+      : [...actual, dia];
+    form.setValue("dias_semana", nuevo.length > 0 ? nuevo : null);
   }
 
-  function quitarProducto(id: string) {
-    setProductosSeleccionados((prev) => prev.filter((p) => p.id !== id));
+  function toggleSucursal(sucursal: SucursalBasica) {
+    setSucursalesSeleccionadas((prev) =>
+      prev.some((s) => s.id === sucursal.id)
+        ? prev.filter((s) => s.id !== sucursal.id)
+        : [...prev, sucursal],
+    );
   }
+
+  const productosFiltrados = useMemo(
+    () =>
+      productos.filter(
+        (p) =>
+          !productosSeleccionados.some((s) => s.id === p.id) &&
+          p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()),
+      ),
+    [productos, productosSeleccionados, busquedaProducto],
+  );
 
   async function onSubmit(data: PromocionFormValues) {
     setIsSubmitting(true);
     try {
-      // Convertir datetime-local a ISO con zona horaria Lima (UTC-5)
-      const fechaInicioISO = new Date(data.fecha_inicio).toISOString();
-      const fechaFinISO = new Date(data.fecha_fin).toISOString();
-
       const payload = {
         ...data,
-        fecha_inicio: fechaInicioISO,
-        fecha_fin: fechaFinISO,
+        fecha_inicio: new Date(data.fecha_inicio).toISOString(),
+        fecha_fin: new Date(data.fecha_fin).toISOString(),
+        hora_inicio: mostrarHorario ? data.hora_inicio : null,
+        hora_fin: mostrarHorario ? data.hora_fin : null,
       };
 
       const result = esEdicion
@@ -165,16 +239,22 @@ export function FormularioPromocionDialog({
     }
   }
 
-  const tipoDescuento = form.watch("tipo_descuento");
-  const productosFiltrados = useMemo(
-    () =>
-      productos.filter(
-        (p) =>
-          !productosSeleccionados.some((s) => s.id === p.id) &&
-          p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()),
-      ),
-    [productos, productosSeleccionados, busquedaProducto],
-  );
+  // Labels contextuales para productos
+  const productosLabel = TIPOS_CON_PRODUCTOS_REQUERIDOS.includes(
+    tipoPromocion as (typeof TIPOS_CON_PRODUCTOS_REQUERIDOS)[number],
+  )
+    ? tipoPromocion === TIPO_PROMOCION.DOS_POR_UNO
+      ? "Productos elegibles para el 2x1"
+      : "Productos del combo"
+    : "Productos incluidos (opcional)";
+
+  const productosHint = TIPOS_CON_PRODUCTOS_REQUERIDOS.includes(
+    tipoPromocion as (typeof TIPOS_CON_PRODUCTOS_REQUERIDOS)[number],
+  )
+    ? tipoPromocion === TIPO_PROMOCION.DOS_POR_UNO
+      ? "Selecciona los productos que participan en el 2x1"
+      : "Selecciona todos los productos que forman el combo"
+    : "Si no seleccionas, el descuento aplica al subtotal completo";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -186,8 +266,16 @@ export function FormularioPromocionDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Nombre */}
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              const first = Object.values(errors)[0];
+              toast.error(
+                String(first?.message ?? "Revisa los campos del formulario"),
+              );
+            })}
+            className="space-y-4"
+          >
+            {/* ── Sección 1: Básico ── */}
             <FormField
               control={form.control}
               name="nombre"
@@ -206,7 +294,6 @@ export function FormularioPromocionDialog({
               )}
             />
 
-            {/* Descripción */}
             <FormField
               control={form.control}
               name="descripcion"
@@ -215,7 +302,7 @@ export function FormularioPromocionDialog({
                   <FormLabel>Descripción (opcional)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Detalles adicionales de la promoción..."
+                      placeholder="Detalles adicionales..."
                       className="resize-none"
                       rows={2}
                       {...field}
@@ -227,61 +314,165 @@ export function FormularioPromocionDialog({
               )}
             />
 
-            {/* Tipo y valor de descuento */}
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
-                name="tipo_descuento"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de descuento</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-12">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="porcentaje">
-                          Porcentaje (%)
-                        </SelectItem>
-                        <SelectItem value="fijo">
-                          Monto fijo ({simbolo})
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <Separator />
 
+            {/* ── Sección 2: Tipo de promoción ── */}
+            <FormField
+              control={form.control}
+              name="tipo_promocion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de promoción</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(TIPO_PROMOCION_LABELS).map(
+                        ([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campos condicionales por tipo */}
+            {TIPOS_CON_VALOR.includes(
+              tipoPromocion as (typeof TIPOS_CON_VALOR)[number],
+            ) && (
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="valor_descuento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {tipoPromocion === TIPO_PROMOCION.DESCUENTO_PORCENTAJE
+                          ? "Porcentaje (%)"
+                          : `Monto (${simbolo})`}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0.01}
+                          step={
+                            tipoPromocion ===
+                            TIPO_PROMOCION.DESCUENTO_PORCENTAJE
+                              ? 1
+                              : 0.5
+                          }
+                          max={
+                            tipoPromocion ===
+                            TIPO_PROMOCION.DESCUENTO_PORCENTAJE
+                              ? 100
+                              : undefined
+                          }
+                          className="h-12"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {tipoPromocion === TIPO_PROMOCION.DESCUENTO_FIJO && (
+                  <FormField
+                    control={form.control}
+                    name="pedido_minimo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pedido mínimo ({simbolo})</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.5}
+                            placeholder="Opcional"
+                            className="h-12"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value ? Number(e.target.value) : null,
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            )}
+
+            {tipoPromocion === TIPO_PROMOCION.COMBO_PRECIO_FIJO && (
               <FormField
                 control={form.control}
-                name="valor_descuento"
+                name="precio_combo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      {tipoDescuento === "porcentaje"
-                        ? "Porcentaje (%)"
-                        : `Monto (${simbolo})`}
-                    </FormLabel>
+                    <FormLabel>Precio del combo ({simbolo})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min={0.01}
-                        step={tipoDescuento === "porcentaje" ? 1 : 0.5}
-                        max={tipoDescuento === "porcentaje" ? 100 : undefined}
+                        step={0.5}
                         className="h-12"
                         {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
+            )}
 
-            {/* Fechas */}
+            {tipoPromocion === TIPO_PROMOCION.DELIVERY_GRATIS && (
+              <FormField
+                control={form.control}
+                name="pedido_minimo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pedido mínimo ({simbolo})</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0.01}
+                        step={0.5}
+                        className="h-12"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <Separator />
+
+            {/* ── Sección 3: Vigencia ── */}
             <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
@@ -300,7 +491,6 @@ export function FormularioPromocionDialog({
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="fecha_fin"
@@ -320,6 +510,199 @@ export function FormularioPromocionDialog({
               />
             </div>
 
+            {/* ── Sección 4: Días de la semana ── */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Días de la semana</p>
+              <p className="text-xs text-muted-foreground">
+                {diasSemana.length === 0
+                  ? "Aplica todos los días"
+                  : "Solo los días seleccionados"}
+              </p>
+              <div className="flex gap-1.5 flex-wrap">
+                {DIAS_SEMANA_LABELS.map((label, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleDia(i)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      diasSemana.includes(i)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Sección 5: Horario ── */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between rounded-xl border p-3">
+                <div>
+                  <p className="text-sm font-medium">Restringir por horario</p>
+                  <p className="text-xs text-muted-foreground">
+                    Happy hour u horario especial
+                  </p>
+                </div>
+                <Switch
+                  checked={mostrarHorario}
+                  onCheckedChange={(v) => {
+                    setMostrarHorario(v);
+                    if (!v) {
+                      form.setValue("hora_inicio", null);
+                      form.setValue("hora_fin", null);
+                    }
+                  }}
+                />
+              </div>
+              {mostrarHorario && (
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="hora_inicio"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hora inicio</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            className="h-12"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="hora_fin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hora fin</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            className="h-12"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* ── Sección 6: Sucursales ── */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Sucursales</p>
+              <p className="text-xs text-muted-foreground">
+                {sucursalesSeleccionadas.length === 0
+                  ? "Aplica a todas las sucursales"
+                  : `Aplica solo a ${sucursalesSeleccionadas.length} sucursal${sucursalesSeleccionadas.length !== 1 ? "es" : ""}`}
+              </p>
+              <div className="flex gap-1.5 flex-wrap">
+                {sucursales.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => toggleSucursal(s)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      sucursalesSeleccionadas.some((sel) => sel.id === s.id)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                    }`}
+                  >
+                    {s.nombre}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Sección 7: Productos ── */}
+            {tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS && (
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-medium">{productosLabel}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {productosHint}
+                  </p>
+                </div>
+
+                {productosSeleccionados.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {productosSeleccionados.map((p) => (
+                      <Badge
+                        key={p.id}
+                        variant="secondary"
+                        className="gap-1 pr-1"
+                      >
+                        {p.nombre}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProductosSeleccionados((prev) =>
+                              prev.filter((x) => x.id !== p.id),
+                            )
+                          }
+                          className="rounded-full hover:bg-muted-foreground/20 p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                <Input
+                  placeholder="Buscar producto para agregar..."
+                  className="h-10"
+                  value={busquedaProducto}
+                  onChange={(e) => setBusquedaProducto(e.target.value)}
+                />
+
+                {busquedaProducto && productosFiltrados.length > 0 && (
+                  <div className="rounded-xl border bg-popover shadow-md max-h-40 overflow-y-auto">
+                    {productosFiltrados.slice(0, 8).map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                        onClick={() => {
+                          setProductosSeleccionados((prev) => [...prev, p]);
+                          setBusquedaProducto("");
+                        }}
+                      >
+                        {p.nombre}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {busquedaProducto && productosFiltrados.length === 0 && (
+                  <p className="text-xs text-muted-foreground px-1">
+                    Sin resultados para &quot;{busquedaProducto}&quot;
+                  </p>
+                )}
+                <FormMessage />
+              </div>
+            )}
+
+            <Separator />
+
             {/* Activa */}
             <FormField
               control={form.control}
@@ -331,8 +714,7 @@ export function FormularioPromocionDialog({
                       Activa
                     </FormLabel>
                     <p className="text-xs text-muted-foreground">
-                      La promoción será visible en el POS si las fechas son
-                      vigentes
+                      Visible en el POS si las fechas son vigentes
                     </p>
                   </div>
                   <FormControl>
@@ -344,68 +726,6 @@ export function FormularioPromocionDialog({
                 </FormItem>
               )}
             />
-
-            {/* Productos vinculados */}
-            <div className="space-y-2">
-              <div>
-                <p className="text-sm font-medium">
-                  Productos incluidos (opcional)
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Si no seleccionas productos, el descuento aplica al subtotal
-                  completo
-                </p>
-              </div>
-
-              {productosSeleccionados.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {productosSeleccionados.map((p) => (
-                    <Badge
-                      key={p.id}
-                      variant="secondary"
-                      className="gap-1 pr-1"
-                    >
-                      {p.nombre}
-                      <button
-                        type="button"
-                        onClick={() => quitarProducto(p.id)}
-                        className="rounded-full hover:bg-muted-foreground/20 p-0.5"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              <Input
-                placeholder="Buscar producto para agregar..."
-                className="h-10"
-                value={busquedaProducto}
-                onChange={(e) => setBusquedaProducto(e.target.value)}
-              />
-
-              {busquedaProducto && productosFiltrados.length > 0 && (
-                <div className="rounded-xl border bg-popover shadow-md max-h-40 overflow-y-auto">
-                  {productosFiltrados.slice(0, 8).map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
-                      onClick={() => agregarProducto(p)}
-                    >
-                      {p.nombre}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {busquedaProducto && productosFiltrados.length === 0 && (
-                <p className="text-xs text-muted-foreground px-1">
-                  Sin resultados para &quot;{busquedaProducto}&quot;
-                </p>
-              )}
-            </div>
 
             <DialogFooter className="gap-2">
               <Button

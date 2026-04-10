@@ -275,6 +275,7 @@ export type CobrarOrdenData = {
   delivery_fee: number;
   total: number;
   notas?: string | null;
+  promocion_id?: string | null;
   mesa_referencia?: string | null;
   delivery_method?: string | null;
   delivery_address?: string | null;
@@ -315,6 +316,7 @@ export async function cobrarOrden(data: CobrarOrdenData): Promise<Venta> {
       third_party_name: ventaData.third_party_name ?? null,
       total: ventaData.total,
       notas: ventaData.notas ?? null,
+      promocion_id: ventaData.promocion_id ?? null,
       mesa_referencia: ventaData.mesa_referencia ?? null,
       estado_pago_v2: "pagado",
     })

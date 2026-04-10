@@ -58,6 +58,7 @@ export async function crearOrdenAction(
       delivery_referencia: resto.delivery_referencia ?? null,
       repartidor_id: resto.repartidor_id ?? null,
       third_party_name: resto.third_party_name ?? null,
+      promocion_id: resto.promocion_id ?? null,
       descuento: resto.descuento ?? 0,
       items: items.map((i) => ({
         producto_id: i.producto_id,

@@ -11,6 +11,38 @@ import { promocionSchema } from "@/lib/validations/promociones";
 import type { ActionResult } from "@/types";
 import type { Promocion } from "@/lib/services/promociones";
 
+function buildPromoData(parsed: ReturnType<typeof promocionSchema.safeParse>) {
+  if (!parsed.success) throw new Error("Invalid data");
+  const d = parsed.data;
+
+  // Derivar tipo_descuento para backward compatibility
+  const tipo_descuento =
+    d.tipo_promocion === "descuento_porcentaje"
+      ? "porcentaje"
+      : d.tipo_promocion === "descuento_fijo"
+        ? "fijo"
+        : d.tipo_promocion;
+
+  return {
+    nombre: d.nombre,
+    descripcion: d.descripcion ?? null,
+    tipo_promocion: d.tipo_promocion,
+    tipo_descuento,
+    valor_descuento: d.valor_descuento ?? 0,
+    fecha_inicio: d.fecha_inicio,
+    fecha_fin: d.fecha_fin,
+    activa: d.activa,
+    dias_semana:
+      d.dias_semana && d.dias_semana.length > 0 ? d.dias_semana : null,
+    hora_inicio: d.hora_inicio || null,
+    hora_fin: d.hora_fin || null,
+    pedido_minimo: d.pedido_minimo || null,
+    precio_combo: d.precio_combo || null,
+    productos_ids: d.productos_ids ?? [],
+    sucursales_ids: d.sucursales_ids ?? [],
+  };
+}
+
 export async function createPromocionAction(
   formData: unknown,
 ): Promise<ActionResult<Promocion>> {
@@ -20,16 +52,7 @@ export async function createPromocionAction(
   }
 
   try {
-    const promo = await createPromocion({
-      nombre: parsed.data.nombre,
-      descripcion: parsed.data.descripcion ?? null,
-      tipo_descuento: parsed.data.tipo_descuento,
-      valor_descuento: parsed.data.valor_descuento,
-      fecha_inicio: parsed.data.fecha_inicio,
-      fecha_fin: parsed.data.fecha_fin,
-      activa: parsed.data.activa,
-      productos_ids: parsed.data.productos_ids ?? [],
-    });
+    const promo = await createPromocion(buildPromoData(parsed));
     revalidatePath("/promociones");
     return { data: promo, error: null };
   } catch (e) {
@@ -50,16 +73,7 @@ export async function updatePromocionAction(
   }
 
   try {
-    await updatePromocion(id, {
-      nombre: parsed.data.nombre,
-      descripcion: parsed.data.descripcion ?? null,
-      tipo_descuento: parsed.data.tipo_descuento,
-      valor_descuento: parsed.data.valor_descuento,
-      fecha_inicio: parsed.data.fecha_inicio,
-      fecha_fin: parsed.data.fecha_fin,
-      activa: parsed.data.activa,
-      productos_ids: parsed.data.productos_ids ?? [],
-    });
+    await updatePromocion(id, buildPromoData(parsed));
     revalidatePath("/promociones");
     return { data: null, error: null };
   } catch (e) {

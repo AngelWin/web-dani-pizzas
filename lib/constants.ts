@@ -69,3 +69,34 @@ export const SUCURSALES = {
   CASMA: "Casma Av. Reina",
   VILLA_HERMOSA: "Villa Hermosa Calle Uno",
 } as const;
+
+// ─── Promociones ─────────────────────────────────────────────────────────────
+
+export const TIPO_PROMOCION = {
+  DESCUENTO_PORCENTAJE: "descuento_porcentaje",
+  DESCUENTO_FIJO: "descuento_fijo",
+  DOS_POR_UNO: "2x1",
+  COMBO_PRECIO_FIJO: "combo_precio_fijo",
+  DELIVERY_GRATIS: "delivery_gratis",
+} as const;
+
+export type TipoPromocion =
+  (typeof TIPO_PROMOCION)[keyof typeof TIPO_PROMOCION];
+
+export const TIPO_PROMOCION_LABELS: Record<TipoPromocion, string> = {
+  descuento_porcentaje: "Descuento %",
+  descuento_fijo: "Descuento fijo",
+  "2x1": "2 por 1",
+  combo_precio_fijo: "Combo precio fijo",
+  delivery_gratis: "Delivery gratis",
+};
+
+export const DIAS_SEMANA_LABELS = [
+  "Dom",
+  "Lun",
+  "Mar",
+  "Mié",
+  "Jue",
+  "Vie",
+  "Sáb",
+] as const;

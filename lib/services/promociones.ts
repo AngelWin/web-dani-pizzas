@@ -1,16 +1,72 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
-export { esPromocionVigente, calcularDescuento } from "@/lib/promociones-utils";
+import { esPromocionVigente } from "@/lib/promociones-utils";
+export {
+  esPromocionVigente,
+  calcularDescuento,
+  esPromocionAplicableAlCarrito,
+  getDescripcionPromocion,
+} from "@/lib/promociones-utils";
 
 export type Promocion = Database["public"]["Tables"]["promociones"]["Row"];
 
 export type PromocionConProductos = Promocion & {
   productos_ids: string[];
+  sucursales_ids: string[];
 };
 
-export type PromocionActivaPOS = Promocion & {
-  productos_ids: string[];
-};
+export type PromocionActivaPOS = PromocionConProductos;
+
+// ─── Helpers internos ─────────────────────────────────────────────────────
+
+async function cargarRelaciones(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  promocionIds: string[],
+): Promise<{
+  productosPorPromo: Record<string, string[]>;
+  sucursalesPorPromo: Record<string, string[]>;
+}> {
+  const [{ data: relProductos }, { data: relSucursales }] = await Promise.all([
+    supabase
+      .from("promociones_productos")
+      .select("promocion_id, producto_id")
+      .in("promocion_id", promocionIds),
+    supabase
+      .from("promocion_sucursales")
+      .select("promocion_id, sucursal_id")
+      .in("promocion_id", promocionIds),
+  ]);
+
+  const productosPorPromo: Record<string, string[]> = {};
+  const sucursalesPorPromo: Record<string, string[]> = {};
+
+  for (const r of relProductos ?? []) {
+    if (r.promocion_id && r.producto_id) {
+      (productosPorPromo[r.promocion_id] ??= []).push(r.producto_id);
+    }
+  }
+  for (const r of relSucursales ?? []) {
+    if (r.promocion_id && r.sucursal_id) {
+      (sucursalesPorPromo[r.promocion_id] ??= []).push(r.sucursal_id);
+    }
+  }
+
+  return { productosPorPromo, sucursalesPorPromo };
+}
+
+function enriquecerPromociones(
+  promociones: Promocion[],
+  productosPorPromo: Record<string, string[]>,
+  sucursalesPorPromo: Record<string, string[]>,
+): PromocionConProductos[] {
+  return promociones.map((p) => ({
+    ...p,
+    productos_ids: productosPorPromo[p.id] ?? [],
+    sucursales_ids: sucursalesPorPromo[p.id] ?? [],
+  }));
+}
+
+// ─── Consultas ────────────────────────────────────────────────────────────
 
 export async function getPromociones(): Promise<PromocionConProductos[]> {
   const supabase = await createClient();
@@ -23,21 +79,16 @@ export async function getPromociones(): Promise<PromocionConProductos[]> {
   if (error) throw new Error(error.message);
   if (!promociones || promociones.length === 0) return [];
 
-  const { data: relaciones } = await supabase
-    .from("promociones_productos")
-    .select("promocion_id, producto_id")
-    .in(
-      "promocion_id",
-      promociones.map((p) => p.id),
-    );
+  const { productosPorPromo, sucursalesPorPromo } = await cargarRelaciones(
+    supabase,
+    promociones.map((p) => p.id),
+  );
 
-  return promociones.map((p) => ({
-    ...p,
-    productos_ids: (relaciones ?? [])
-      .filter((r) => r.promocion_id === p.id)
-      .map((r) => r.producto_id!)
-      .filter(Boolean),
-  }));
+  return enriquecerPromociones(
+    promociones,
+    productosPorPromo,
+    sucursalesPorPromo,
+  );
 }
 
 export async function getPromocionById(
@@ -53,21 +104,22 @@ export async function getPromocionById(
 
   if (error) return null;
 
-  const { data: relaciones } = await supabase
-    .from("promociones_productos")
-    .select("producto_id")
-    .eq("promocion_id", id);
+  const { productosPorPromo, sucursalesPorPromo } = await cargarRelaciones(
+    supabase,
+    [id],
+  );
 
   return {
     ...data,
-    productos_ids: (relaciones ?? [])
-      .map((r) => r.producto_id!)
-      .filter(Boolean),
+    productos_ids: productosPorPromo[id] ?? [],
+    sucursales_ids: sucursalesPorPromo[id] ?? [],
   };
 }
 
-/** Retorna promociones activas y vigentes para el POS */
-export async function getPromocionesActivas(): Promise<PromocionActivaPOS[]> {
+/** Retorna promociones activas, vigentes y aplicables a la sucursal dada */
+export async function getPromocionesActivas(
+  sucursalId: string,
+): Promise<PromocionActivaPOS[]> {
   const supabase = await createClient();
   const now = new Date().toISOString();
 
@@ -82,35 +134,54 @@ export async function getPromocionesActivas(): Promise<PromocionActivaPOS[]> {
   if (error) throw new Error(error.message);
   if (!promociones || promociones.length === 0) return [];
 
-  const { data: relaciones } = await supabase
-    .from("promociones_productos")
-    .select("promocion_id, producto_id")
-    .in(
-      "promocion_id",
-      promociones.map((p) => p.id),
-    );
+  const { productosPorPromo, sucursalesPorPromo } = await cargarRelaciones(
+    supabase,
+    promociones.map((p) => p.id),
+  );
 
-  return promociones.map((p) => ({
-    ...p,
-    productos_ids: (relaciones ?? [])
-      .filter((r) => r.promocion_id === p.id)
-      .map((r) => r.producto_id!)
-      .filter(Boolean),
-  }));
+  const enriquecidas = enriquecerPromociones(
+    promociones,
+    productosPorPromo,
+    sucursalesPorPromo,
+  );
+
+  // Filtrar por sucursal: si tiene sucursales asignadas, solo incluir si la sucursal actual está
+  // Si no tiene sucursales (vacío), aplica a todas
+  return enriquecidas.filter((p) => {
+    // Filtro por sucursal
+    if (p.sucursales_ids.length > 0 && !p.sucursales_ids.includes(sucursalId)) {
+      return false;
+    }
+    // Filtro por día de la semana y hora (en memoria)
+    return esPromocionVigente(p);
+  });
 }
 
-export async function createPromocion(data: {
+// ─── Mutations ────────────────────────────────────────────────────────────
+
+type CreatePromocionData = {
   nombre: string;
   descripcion?: string | null;
+  tipo_promocion: Database["public"]["Enums"]["tipo_promocion"];
   tipo_descuento: string;
   valor_descuento: number;
   fecha_inicio: string;
   fecha_fin: string;
   activa: boolean;
+  dias_semana?: number[] | null;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
+  pedido_minimo?: number | null;
+  precio_combo?: number | null;
   productos_ids?: string[];
-}): Promise<Promocion> {
+  sucursales_ids?: string[];
+};
+
+export async function createPromocion(
+  data: CreatePromocionData,
+): Promise<Promocion> {
   const supabase = await createClient();
-  const { productos_ids, ...promoData } = data;
+  const { productos_ids, sucursales_ids, ...promoData } = data;
 
   const { data: promo, error } = await supabase
     .from("promociones")
@@ -123,6 +194,7 @@ export async function createPromocion(data: {
 
   if (error) throw new Error(error.message);
 
+  // Insertar relaciones
   if (productos_ids && productos_ids.length > 0) {
     const { error: relError } = await supabase
       .from("promociones_productos")
@@ -135,24 +207,26 @@ export async function createPromocion(data: {
     if (relError) throw new Error(relError.message);
   }
 
+  if (sucursales_ids && sucursales_ids.length > 0) {
+    const { error: relError } = await supabase
+      .from("promocion_sucursales")
+      .insert(
+        sucursales_ids.map((sid) => ({
+          promocion_id: promo.id,
+          sucursal_id: sid,
+        })),
+      );
+    if (relError) throw new Error(relError.message);
+  }
   return promo;
 }
 
 export async function updatePromocion(
   id: string,
-  data: {
-    nombre: string;
-    descripcion?: string | null;
-    tipo_descuento: string;
-    valor_descuento: number;
-    fecha_inicio: string;
-    fecha_fin: string;
-    activa: boolean;
-    productos_ids?: string[];
-  },
+  data: CreatePromocionData,
 ): Promise<void> {
   const supabase = await createClient();
-  const { productos_ids, ...promoData } = data;
+  const { productos_ids, sucursales_ids, ...promoData } = data;
 
   const { error } = await supabase
     .from("promociones")
@@ -161,17 +235,24 @@ export async function updatePromocion(
 
   if (error) throw new Error(error.message);
 
-  // Reemplazar relaciones de productos
+  // Reemplazar relaciones (delete + insert)
   await supabase.from("promociones_productos").delete().eq("promocion_id", id);
+  await supabase.from("promocion_sucursales").delete().eq("promocion_id", id);
 
   if (productos_ids && productos_ids.length > 0) {
     const { error: relError } = await supabase
       .from("promociones_productos")
       .insert(
-        productos_ids.map((pid) => ({
-          promocion_id: id,
-          producto_id: pid,
-        })),
+        productos_ids.map((pid) => ({ promocion_id: id, producto_id: pid })),
+      );
+    if (relError) throw new Error(relError.message);
+  }
+
+  if (sucursales_ids && sucursales_ids.length > 0) {
+    const { error: relError } = await supabase
+      .from("promocion_sucursales")
+      .insert(
+        sucursales_ids.map((sid) => ({ promocion_id: id, sucursal_id: sid })),
       );
     if (relError) throw new Error(relError.message);
   }
@@ -181,9 +262,9 @@ export async function deletePromocion(id: string): Promise<void> {
   const supabase = await createClient();
 
   await supabase.from("promociones_productos").delete().eq("promocion_id", id);
+  await supabase.from("promocion_sucursales").delete().eq("promocion_id", id);
 
   const { error } = await supabase.from("promociones").delete().eq("id", id);
-
   if (error) throw new Error(error.message);
 }
 

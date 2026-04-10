@@ -75,7 +75,7 @@ export default async function PosPage({
     getProductosPOS(sucursalId),
     getRepartidoresSucursal(sucursalId),
     getConfiguracionNegocio(),
-    getPromocionesActivas(),
+    getPromocionesActivas(sucursalId),
     getAllPizzaSabores(),
     getAllProductoExtras(),
     getDeliveryServiciosPorSucursal(sucursalId),
