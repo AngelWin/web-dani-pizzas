@@ -1148,6 +1148,36 @@ Descuento: S/.120 - S/.89.90 = S/.30.10
 - `components/promociones/lista-promociones.tsx` — cards con nuevos badges
 - `components/pos/formulario-pedido-dialog.tsx` — selector mejorado + precio antes/despues
 
+### Filtro por medida/tamaño (R17.1):
+
+Las promociones pueden filtrarse por medida/tamaño específico (ej: solo "Personal", solo "Familiar").
+
+**Nueva tabla:** `promocion_medidas`
+```
+promocion_id  uuid FK → promociones ON DELETE CASCADE
+medida_id     uuid FK → categoria_medidas ON DELETE CASCADE
+PRIMARY KEY (promocion_id, medida_id)
+```
+Si vacia = aplica a todos los tamaños.
+
+**Ejemplo:** "50% off en Pizza Personal todos los viernes y sábado"
+- tipo_promocion: descuento_porcentaje
+- valor_descuento: 50
+- dias_semana: [5, 6] (viernes y sábado)
+- medidas_ids: [id de "Personal"]
+- productos_ids: [ids de pizzas] (o vacío para todas)
+
+**Logica de coincidencia (itemCoincideConPromo):**
+- Si tiene productos_ids Y medidas_ids → item debe coincidir en ambos
+- Si solo tiene medidas_ids → item debe tener esa medida (cualquier producto)
+- Si solo tiene productos_ids → item debe ser ese producto (cualquier tamaño)
+- Si no tiene ninguno → aplica a todo
+
+**Cambios adicionales:**
+- `medida_id` agregado al item del carrito (`hooks/use-carrito.ts`)
+- Selector de medidas (toggle-pills) en formulario de promociones admin
+- Carga de medidas en `app/(dashboard)/promociones/page.tsx`
+
 ### Criterio de exito:
 - Crear promo "descuento_porcentaje" 40% → descuento visible en POS
 - Crear promo "2x1" en pizzas → 2 pizzas en carrito → la mas barata se descuenta
@@ -1156,6 +1186,7 @@ Descuento: S/.120 - S/.89.90 = S/.30.10
 - Promo restringida a 1 sucursal no aparece en otra
 - Promo "solo martes" aparece/desaparece segun el dia
 - Promo con happy hour solo aparece en el rango de horas
+- Promo restringida a tamaño "Personal" solo aplica a items con esa medida
 - `promocion_id` se guarda en ordenes y ventas al cobrar
 - Precio antes/despues visible en POS cuando hay promo
 - Build pasa sin errores

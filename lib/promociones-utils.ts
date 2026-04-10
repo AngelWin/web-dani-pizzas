@@ -14,12 +14,15 @@ export type PromocionBase = {
   pedido_minimo: number | null;
   precio_combo: number | null;
   productos_ids: string[];
+  medidas_ids: string[];
   // Backward compat
   tipo_descuento: string;
 };
 
 export type ItemCarrito = {
   producto_id: string;
+  variante_id?: string | null;
+  medida_id?: string | null;
   precio_unitario: number;
   cantidad: number;
   subtotal: number;
@@ -55,6 +58,32 @@ export function esPromocionVigente(promo: PromocionBase): boolean {
   return true;
 }
 
+/**
+ * Verifica si un item del carrito coincide con los filtros de la promo.
+ * - Si la promo tiene productos_ids: el item debe estar en la lista
+ * - Si la promo tiene medidas_ids: el item debe tener esa medida
+ * - Si tiene ambos: debe cumplir ambos
+ * - Si no tiene ninguno: coincide con todo
+ */
+function itemCoincideConPromo(
+  promo: PromocionBase,
+  item: ItemCarrito,
+): boolean {
+  const tieneProductos = promo.productos_ids.length > 0;
+  const tieneMedidas = promo.medidas_ids.length > 0;
+
+  if (!tieneProductos && !tieneMedidas) return true;
+
+  const coincideProducto = tieneProductos
+    ? promo.productos_ids.includes(item.producto_id)
+    : true;
+  const coincideMedida = tieneMedidas
+    ? !!item.medida_id && promo.medidas_ids.includes(item.medida_id)
+    : true;
+
+  return coincideProducto && coincideMedida;
+}
+
 /** Verifica si la promoción es aplicable al carrito actual */
 export function esPromocionAplicableAlCarrito(
   promo: PromocionBase,
@@ -65,26 +94,24 @@ export function esPromocionAplicableAlCarrito(
   switch (promo.tipo_promocion) {
     case "descuento_porcentaje":
     case "descuento_fijo": {
-      // Si tiene pedido mínimo, verificar
       if (promo.pedido_minimo && subtotal < promo.pedido_minimo) return false;
-      // Si tiene productos, verificar que al menos uno esté en el carrito
-      if (promo.productos_ids.length > 0) {
-        return items.some((i) => promo.productos_ids.includes(i.producto_id));
+      const tieneFilteros =
+        promo.productos_ids.length > 0 || promo.medidas_ids.length > 0;
+      if (tieneFilteros) {
+        return items.some((i) => itemCoincideConPromo(promo, i));
       }
       return true;
     }
     case "2x1": {
-      // Necesita al menos 2 items de productos elegibles
-      const elegibles = items.filter((i) =>
-        promo.productos_ids.includes(i.producto_id),
-      );
+      const elegibles = items.filter((i) => itemCoincideConPromo(promo, i));
       const totalCantidad = elegibles.reduce((acc, i) => acc + i.cantidad, 0);
       return totalCantidad >= 2;
     }
     case "combo_precio_fijo": {
-      // Todos los productos del combo deben estar en el carrito
       return promo.productos_ids.every((pid) =>
-        items.some((i) => i.producto_id === pid),
+        items.some(
+          (i) => i.producto_id === pid && itemCoincideConPromo(promo, i),
+        ),
       );
     }
     case "delivery_gratis": {
@@ -107,17 +134,17 @@ export function calcularDescuento(
 ): number {
   switch (promo.tipo_promocion) {
     case "descuento_porcentaje": {
-      if (promo.productos_ids.length > 0) {
-        // Solo sobre productos elegibles
+      const tieneFiltros =
+        promo.productos_ids.length > 0 || promo.medidas_ids.length > 0;
+      if (tieneFiltros) {
         const subtotalElegible = items
-          .filter((i) => promo.productos_ids.includes(i.producto_id))
+          .filter((i) => itemCoincideConPromo(promo, i))
           .reduce((acc, i) => acc + i.subtotal, 0);
         return (
           Math.round(((subtotalElegible * promo.valor_descuento) / 100) * 100) /
           100
         );
       }
-      // Sobre todo el subtotal
       return Math.round(((subtotal * promo.valor_descuento) / 100) * 100) / 100;
     }
 
@@ -127,10 +154,9 @@ export function calcularDescuento(
     }
 
     case "2x1": {
-      // Expandir items por cantidad y ordenar por precio DESC
       const elegibles: number[] = [];
       for (const item of items) {
-        if (promo.productos_ids.includes(item.producto_id)) {
+        if (itemCoincideConPromo(promo, item)) {
           for (let q = 0; q < item.cantidad; q++) {
             elegibles.push(item.precio_unitario);
           }
@@ -138,7 +164,6 @@ export function calcularDescuento(
       }
       elegibles.sort((a, b) => b - a);
 
-      // Cada 2 items, el segundo (más barato) es gratis
       let descuento = 0;
       for (let i = 1; i < elegibles.length; i += 2) {
         descuento += elegibles[i];
@@ -148,15 +173,15 @@ export function calcularDescuento(
 
     case "combo_precio_fijo": {
       if (!promo.precio_combo) return 0;
-      // Verificar que todos los productos del combo están
       const todosPresentes = promo.productos_ids.every((pid) =>
-        items.some((i) => i.producto_id === pid),
+        items.some(
+          (i) => i.producto_id === pid && itemCoincideConPromo(promo, i),
+        ),
       );
       if (!todosPresentes) return 0;
 
-      // Subtotal de los productos del combo
       const subtotalCombo = items
-        .filter((i) => promo.productos_ids.includes(i.producto_id))
+        .filter((i) => itemCoincideConPromo(promo, i))
         .reduce((acc, i) => acc + i.subtotal, 0);
 
       return Math.max(

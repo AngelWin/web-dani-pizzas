@@ -220,6 +220,8 @@ export function FormularioPedidoDialog({
   // Items del carrito en formato para cálculo de descuento
   const itemsParaDescuento: ItemCarrito[] = carrito.items.map((i) => ({
     producto_id: i.producto_id,
+    variante_id: i.variante_id,
+    medida_id: i.medida_id,
     precio_unitario: i.producto_precio,
     cantidad: i.cantidad,
     subtotal: i.subtotal,

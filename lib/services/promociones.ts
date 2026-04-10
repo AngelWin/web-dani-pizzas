@@ -13,6 +13,7 @@ export type Promocion = Database["public"]["Tables"]["promociones"]["Row"];
 export type PromocionConProductos = Promocion & {
   productos_ids: string[];
   sucursales_ids: string[];
+  medidas_ids: string[];
 };
 
 export type PromocionActivaPOS = PromocionConProductos;
@@ -25,8 +26,13 @@ async function cargarRelaciones(
 ): Promise<{
   productosPorPromo: Record<string, string[]>;
   sucursalesPorPromo: Record<string, string[]>;
+  medidasPorPromo: Record<string, string[]>;
 }> {
-  const [{ data: relProductos }, { data: relSucursales }] = await Promise.all([
+  const [
+    { data: relProductos },
+    { data: relSucursales },
+    { data: relMedidas },
+  ] = await Promise.all([
     supabase
       .from("promociones_productos")
       .select("promocion_id, producto_id")
@@ -35,10 +41,15 @@ async function cargarRelaciones(
       .from("promocion_sucursales")
       .select("promocion_id, sucursal_id")
       .in("promocion_id", promocionIds),
+    supabase
+      .from("promocion_medidas")
+      .select("promocion_id, medida_id")
+      .in("promocion_id", promocionIds),
   ]);
 
   const productosPorPromo: Record<string, string[]> = {};
   const sucursalesPorPromo: Record<string, string[]> = {};
+  const medidasPorPromo: Record<string, string[]> = {};
 
   for (const r of relProductos ?? []) {
     if (r.promocion_id && r.producto_id) {
@@ -50,19 +61,26 @@ async function cargarRelaciones(
       (sucursalesPorPromo[r.promocion_id] ??= []).push(r.sucursal_id);
     }
   }
+  for (const r of relMedidas ?? []) {
+    if (r.promocion_id && r.medida_id) {
+      (medidasPorPromo[r.promocion_id] ??= []).push(r.medida_id);
+    }
+  }
 
-  return { productosPorPromo, sucursalesPorPromo };
+  return { productosPorPromo, sucursalesPorPromo, medidasPorPromo };
 }
 
 function enriquecerPromociones(
   promociones: Promocion[],
   productosPorPromo: Record<string, string[]>,
   sucursalesPorPromo: Record<string, string[]>,
+  medidasPorPromo: Record<string, string[]>,
 ): PromocionConProductos[] {
   return promociones.map((p) => ({
     ...p,
     productos_ids: productosPorPromo[p.id] ?? [],
     sucursales_ids: sucursalesPorPromo[p.id] ?? [],
+    medidas_ids: medidasPorPromo[p.id] ?? [],
   }));
 }
 
@@ -79,15 +97,17 @@ export async function getPromociones(): Promise<PromocionConProductos[]> {
   if (error) throw new Error(error.message);
   if (!promociones || promociones.length === 0) return [];
 
-  const { productosPorPromo, sucursalesPorPromo } = await cargarRelaciones(
-    supabase,
-    promociones.map((p) => p.id),
-  );
+  const { productosPorPromo, sucursalesPorPromo, medidasPorPromo } =
+    await cargarRelaciones(
+      supabase,
+      promociones.map((p) => p.id),
+    );
 
   return enriquecerPromociones(
     promociones,
     productosPorPromo,
     sucursalesPorPromo,
+    medidasPorPromo,
   );
 }
 
@@ -104,15 +124,14 @@ export async function getPromocionById(
 
   if (error) return null;
 
-  const { productosPorPromo, sucursalesPorPromo } = await cargarRelaciones(
-    supabase,
-    [id],
-  );
+  const { productosPorPromo, sucursalesPorPromo, medidasPorPromo } =
+    await cargarRelaciones(supabase, [id]);
 
   return {
     ...data,
     productos_ids: productosPorPromo[id] ?? [],
     sucursales_ids: sucursalesPorPromo[id] ?? [],
+    medidas_ids: medidasPorPromo[id] ?? [],
   };
 }
 
@@ -134,15 +153,17 @@ export async function getPromocionesActivas(
   if (error) throw new Error(error.message);
   if (!promociones || promociones.length === 0) return [];
 
-  const { productosPorPromo, sucursalesPorPromo } = await cargarRelaciones(
-    supabase,
-    promociones.map((p) => p.id),
-  );
+  const { productosPorPromo, sucursalesPorPromo, medidasPorPromo } =
+    await cargarRelaciones(
+      supabase,
+      promociones.map((p) => p.id),
+    );
 
   const enriquecidas = enriquecerPromociones(
     promociones,
     productosPorPromo,
     sucursalesPorPromo,
+    medidasPorPromo,
   );
 
   // Filtrar por sucursal: si tiene sucursales asignadas, solo incluir si la sucursal actual está
@@ -175,13 +196,14 @@ type CreatePromocionData = {
   precio_combo?: number | null;
   productos_ids?: string[];
   sucursales_ids?: string[];
+  medidas_ids?: string[];
 };
 
 export async function createPromocion(
   data: CreatePromocionData,
 ): Promise<Promocion> {
   const supabase = await createClient();
-  const { productos_ids, sucursales_ids, ...promoData } = data;
+  const { productos_ids, sucursales_ids, medidas_ids, ...promoData } = data;
 
   const { data: promo, error } = await supabase
     .from("promociones")
@@ -218,6 +240,16 @@ export async function createPromocion(
       );
     if (relError) throw new Error(relError.message);
   }
+
+  if (medidas_ids && medidas_ids.length > 0) {
+    const { error: relError } = await supabase.from("promocion_medidas").insert(
+      medidas_ids.map((mid) => ({
+        promocion_id: promo.id,
+        medida_id: mid,
+      })),
+    );
+    if (relError) throw new Error(relError.message);
+  }
   return promo;
 }
 
@@ -226,7 +258,7 @@ export async function updatePromocion(
   data: CreatePromocionData,
 ): Promise<void> {
   const supabase = await createClient();
-  const { productos_ids, sucursales_ids, ...promoData } = data;
+  const { productos_ids, sucursales_ids, medidas_ids, ...promoData } = data;
 
   const { error } = await supabase
     .from("promociones")
@@ -238,6 +270,7 @@ export async function updatePromocion(
   // Reemplazar relaciones (delete + insert)
   await supabase.from("promociones_productos").delete().eq("promocion_id", id);
   await supabase.from("promocion_sucursales").delete().eq("promocion_id", id);
+  await supabase.from("promocion_medidas").delete().eq("promocion_id", id);
 
   if (productos_ids && productos_ids.length > 0) {
     const { error: relError } = await supabase
@@ -256,6 +289,13 @@ export async function updatePromocion(
       );
     if (relError) throw new Error(relError.message);
   }
+
+  if (medidas_ids && medidas_ids.length > 0) {
+    const { error: relError } = await supabase
+      .from("promocion_medidas")
+      .insert(medidas_ids.map((mid) => ({ promocion_id: id, medida_id: mid })));
+    if (relError) throw new Error(relError.message);
+  }
 }
 
 export async function deletePromocion(id: string): Promise<void> {
@@ -263,6 +303,7 @@ export async function deletePromocion(id: string): Promise<void> {
 
   await supabase.from("promociones_productos").delete().eq("promocion_id", id);
   await supabase.from("promocion_sucursales").delete().eq("promocion_id", id);
+  await supabase.from("promocion_medidas").delete().eq("promocion_id", id);
 
   const { error } = await supabase.from("promociones").delete().eq("id", id);
   if (error) throw new Error(error.message);

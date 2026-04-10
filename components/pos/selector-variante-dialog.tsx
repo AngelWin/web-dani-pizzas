@@ -16,7 +16,12 @@ type Props = {
   onClose: () => void;
   onSelect: (
     producto: ProductoPOS,
-    variante: { id: string; nombre: string; precio: number },
+    variante: {
+      id: string;
+      nombre: string;
+      precio: number;
+      medida_id?: string;
+    },
   ) => void;
 };
 
@@ -49,6 +54,7 @@ export function SelectorVarianteDialog({
                   id: v.id,
                   nombre: v.categoria_medidas?.nombre ?? "",
                   precio: v.precio,
+                  medida_id: v.medida_id,
                 });
                 onClose();
               }}

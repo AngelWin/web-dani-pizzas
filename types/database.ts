@@ -960,6 +960,36 @@ export type Database = {
           },
         ]
       }
+      promocion_medidas: {
+        Row: {
+          medida_id: string
+          promocion_id: string
+        }
+        Insert: {
+          medida_id: string
+          promocion_id: string
+        }
+        Update: {
+          medida_id?: string
+          promocion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promocion_medidas_medida_id_fkey"
+            columns: ["medida_id"]
+            isOneToOne: false
+            referencedRelation: "categoria_medidas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promocion_medidas_promocion_id_fkey"
+            columns: ["promocion_id"]
+            isOneToOne: false
+            referencedRelation: "promociones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promocion_sucursales: {
         Row: {
           promocion_id: string

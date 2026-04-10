@@ -51,6 +51,7 @@ import { useCurrency } from "@/hooks/use-currency";
 
 type ProductoBasico = { id: string; nombre: string };
 type SucursalBasica = { id: string; nombre: string };
+type MedidaBasica = { id: string; nombre: string };
 
 type Props = {
   open: boolean;
@@ -58,6 +59,7 @@ type Props = {
   promocion?: PromocionConProductos | null;
   productos: ProductoBasico[];
   sucursales: SucursalBasica[];
+  medidas: MedidaBasica[];
 };
 
 function toDatetimeLocal(iso: string): string {
@@ -84,6 +86,7 @@ export function FormularioPromocionDialog({
   promocion,
   productos,
   sucursales,
+  medidas,
 }: Props) {
   const esEdicion = !!promocion;
   const { simbolo } = useCurrency();
@@ -93,6 +96,9 @@ export function FormularioPromocionDialog({
   >([]);
   const [sucursalesSeleccionadas, setSucursalesSeleccionadas] = useState<
     SucursalBasica[]
+  >([]);
+  const [medidasSeleccionadas, setMedidasSeleccionadas] = useState<
+    MedidaBasica[]
   >([]);
   const [busquedaProducto, setBusquedaProducto] = useState("");
   const [mostrarHorario, setMostrarHorario] = useState(false);
@@ -114,6 +120,7 @@ export function FormularioPromocionDialog({
       precio_combo: null,
       productos_ids: [],
       sucursales_ids: [],
+      medidas_ids: [],
     },
   });
 
@@ -135,12 +142,16 @@ export function FormularioPromocionDialog({
         precio_combo: promocion.precio_combo,
         productos_ids: promocion.productos_ids,
         sucursales_ids: promocion.sucursales_ids,
+        medidas_ids: promocion.medidas_ids,
       });
       setProductosSeleccionados(
         productos.filter((p) => promocion.productos_ids.includes(p.id)),
       );
       setSucursalesSeleccionadas(
         sucursales.filter((s) => promocion.sucursales_ids.includes(s.id)),
+      );
+      setMedidasSeleccionadas(
+        medidas.filter((m) => promocion.medidas_ids.includes(m.id)),
       );
       setMostrarHorario(!!promocion.hora_inicio);
     } else if (open) {
@@ -162,6 +173,7 @@ export function FormularioPromocionDialog({
       });
       setProductosSeleccionados([]);
       setSucursalesSeleccionadas([]);
+      setMedidasSeleccionadas([]);
       setMostrarHorario(false);
     }
     setBusquedaProducto("");
@@ -183,6 +195,13 @@ export function FormularioPromocionDialog({
     );
   }, [sucursalesSeleccionadas, form]);
 
+  useEffect(() => {
+    form.setValue(
+      "medidas_ids",
+      medidasSeleccionadas.map((m) => m.id),
+    );
+  }, [medidasSeleccionadas, form]);
+
   const tipoPromocion = form.watch("tipo_promocion");
   const diasSemana = form.watch("dias_semana") ?? [];
 
@@ -192,6 +211,14 @@ export function FormularioPromocionDialog({
       ? actual.filter((d) => d !== dia)
       : [...actual, dia];
     form.setValue("dias_semana", nuevo.length > 0 ? nuevo : null);
+  }
+
+  function toggleMedida(medida: MedidaBasica) {
+    setMedidasSeleccionadas((prev) =>
+      prev.some((m) => m.id === medida.id)
+        ? prev.filter((m) => m.id !== medida.id)
+        : [...prev, medida],
+    );
   }
 
   function toggleSucursal(sucursal: SucursalBasica) {
@@ -632,7 +659,38 @@ export function FormularioPromocionDialog({
               </div>
             </div>
 
-            {/* ── Sección 7: Productos ── */}
+            {/* ── Sección 7: Medidas/Tamaños ── */}
+            {tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS &&
+              medidas.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">
+                    Tamaños/Medidas (opcional)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {medidasSeleccionadas.length === 0
+                      ? "Aplica a todos los tamaños"
+                      : `Solo para: ${medidasSeleccionadas.map((m) => m.nombre).join(", ")}`}
+                  </p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {medidas.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => toggleMedida(m)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          medidasSeleccionadas.some((sel) => sel.id === m.id)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {m.nombre}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            {/* ── Sección 8: Productos ── */}
             {tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS && (
               <div className="space-y-2">
                 <div>

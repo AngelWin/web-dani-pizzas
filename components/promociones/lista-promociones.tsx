@@ -50,11 +50,13 @@ import type { PromocionConProductos } from "@/lib/services/promociones";
 
 type ProductoBasico = { id: string; nombre: string };
 type SucursalBasica = { id: string; nombre: string };
+type MedidaBasica = { id: string; nombre: string };
 
 type Props = {
   promociones: PromocionConProductos[];
   productos: ProductoBasico[];
   sucursales: SucursalBasica[];
+  medidas: MedidaBasica[];
 };
 
 function formatFecha(iso: string): string {
@@ -128,6 +130,7 @@ export function ListaPromociones({
   promociones: inicial,
   productos,
   sucursales,
+  medidas,
 }: Props) {
   const { formatCurrency } = useCurrency();
   const [promociones, setPromociones] =
@@ -375,6 +378,7 @@ export function ListaPromociones({
         promocion={editando}
         productos={productos}
         sucursales={sucursales}
+        medidas={medidas}
       />
 
       {/* Confirm eliminar */}

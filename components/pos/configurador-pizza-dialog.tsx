@@ -37,7 +37,12 @@ type Props = {
   onClose: () => void;
   onConfirmar: (data: {
     producto: ProductoPOS;
-    variante: { id: string; nombre: string; precio: number };
+    variante: {
+      id: string;
+      nombre: string;
+      precio: number;
+      medida_id?: string;
+    };
     sabores: {
       sabor_id: string;
       sabor_nombre: string;
@@ -177,6 +182,7 @@ export function ConfiguradorPizzaDialog({
         id: varianteSeleccionada.id,
         nombre: varianteSeleccionada.categoria_medidas?.nombre ?? "",
         precio: varianteSeleccionada.precio,
+        medida_id: varianteSeleccionada.medida_id,
       },
       sabores: saboresSeleccionados.map((s) => ({
         sabor_id: s.sabor.id,

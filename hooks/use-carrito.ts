@@ -27,6 +27,7 @@ export type ItemCarrito = {
   key: string; // único por configuración
   producto_id: string;
   variante_id: string | null;
+  medida_id: string | null;
   producto_nombre: string;
   variante_nombre: string | null;
   precio_base: number; // precio variante sin extras
@@ -77,11 +78,13 @@ export function useCarrito() {
         id: string;
         nombre: string;
         precio: number;
+        medida_id?: string;
       } | null,
     ) => {
       const precioBase = variante?.precio ?? producto.precio ?? 0;
       const varianteId = variante?.id ?? null;
       const varianteNombre = variante?.nombre ?? null;
+      const medidaId = variante?.medida_id ?? null;
       const key = buildKey(producto.id, varianteId, false);
 
       setItems((prev) => {
@@ -103,6 +106,7 @@ export function useCarrito() {
             key,
             producto_id: producto.id,
             variante_id: varianteId,
+            medida_id: medidaId,
             producto_nombre: producto.nombre,
             variante_nombre: varianteNombre,
             precio_base: precioBase,
@@ -120,7 +124,12 @@ export function useCarrito() {
   const agregarPizza = useCallback(
     (data: {
       producto: ProductoPOS;
-      variante: { id: string; nombre: string; precio: number };
+      variante: {
+        id: string;
+        nombre: string;
+        precio: number;
+        medida_id?: string;
+      };
       sabores: {
         sabor_id: string;
         sabor_nombre: string;
@@ -145,6 +154,7 @@ export function useCarrito() {
           key,
           producto_id: producto.id,
           variante_id: variante.id,
+          medida_id: variante.medida_id ?? null,
           producto_nombre: producto.nombre,
           variante_nombre: variante.nombre,
           precio_base: precioBase,

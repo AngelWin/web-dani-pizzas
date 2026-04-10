@@ -40,6 +40,7 @@ function buildPromoData(parsed: ReturnType<typeof promocionSchema.safeParse>) {
     precio_combo: d.precio_combo || null,
     productos_ids: d.productos_ids ?? [],
     sucursales_ids: d.sucursales_ids ?? [],
+    medidas_ids: d.medidas_ids ?? [],
   };
 }
 

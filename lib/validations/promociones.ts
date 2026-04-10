@@ -46,6 +46,7 @@ export const promocionSchema = z
     // Relaciones
     productos_ids: z.array(z.string().uuid()).optional().default([]),
     sucursales_ids: z.array(z.string().uuid()).optional().default([]),
+    medidas_ids: z.array(z.string().uuid()).optional().default([]),
   })
   .superRefine((data, ctx) => {
     // Fecha fin >= fecha inicio

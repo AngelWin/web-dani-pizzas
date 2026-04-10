@@ -16,6 +16,16 @@ async function getProductosBasico() {
   return (data ?? []) as { id: string; nombre: string }[];
 }
 
+async function getMedidasBasico() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("categoria_medidas")
+    .select("id, nombre")
+    .eq("activa", true)
+    .order("orden");
+  return (data ?? []) as { id: string; nombre: string }[];
+}
+
 async function getSucursalesBasico() {
   const supabase = await createClient();
   const { data } = await supabase
@@ -31,10 +41,11 @@ export default async function PromocionesPage() {
   const { data: rolData } = await supabase.rpc("get_user_role");
   if (rolData !== "administrador") redirect("/dashboard");
 
-  const [promociones, productos, sucursales] = await Promise.all([
+  const [promociones, productos, sucursales, medidas] = await Promise.all([
     getPromociones(),
     getProductosBasico(),
     getSucursalesBasico(),
+    getMedidasBasico(),
   ]);
 
   return (
@@ -47,6 +58,7 @@ export default async function PromocionesPage() {
         promociones={promociones}
         productos={productos}
         sucursales={sucursales}
+        medidas={medidas}
       />
     </div>
   );

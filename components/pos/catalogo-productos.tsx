@@ -75,6 +75,7 @@ export function CatalogoProductos({
           id: v.id,
           nombre: v.categoria_medidas?.nombre ?? "",
           precio: v.precio,
+          medida_id: v.medida_id,
         });
       } else {
         setProductoParaVariante(producto);
