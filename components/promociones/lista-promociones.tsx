@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { toast } from "sonner";
 import {
   Plus,
@@ -139,6 +139,12 @@ export function ListaPromociones({
   const { formatCurrency } = useCurrency();
   const [promociones, setPromociones] =
     useState<PromocionConProductos[]>(inicial);
+
+  // Sincronizar cuando el Server Component refresca los datos
+  useEffect(() => {
+    setPromociones(inicial);
+  }, [inicial]);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<PromocionConProductos | null>(null);
   const [eliminando, setEliminando] = useState<PromocionConProductos | null>(

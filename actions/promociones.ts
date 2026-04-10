@@ -15,13 +15,9 @@ function buildPromoData(parsed: ReturnType<typeof promocionSchema.safeParse>) {
   if (!parsed.success) throw new Error("Invalid data");
   const d = parsed.data;
 
-  // Derivar tipo_descuento para backward compatibility
+  // Derivar tipo_descuento para backward compatibility (solo 'porcentaje' o 'fijo')
   const tipo_descuento =
-    d.tipo_promocion === "descuento_porcentaje"
-      ? "porcentaje"
-      : d.tipo_promocion === "descuento_fijo"
-        ? "fijo"
-        : d.tipo_promocion;
+    d.tipo_promocion === "descuento_porcentaje" ? "porcentaje" : "fijo";
 
   return {
     nombre: d.nombre,
