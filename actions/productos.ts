@@ -11,6 +11,7 @@ import {
   type ProductoFormValues,
 } from "@/lib/validations/productos";
 import { getProductoCompleto } from "@/lib/services/productos";
+import sharp from "sharp";
 import type { ActionResult } from "@/types";
 import type { ProductoCompleto } from "@/lib/services/productos";
 
@@ -32,20 +33,26 @@ export async function uploadProductoImageAction(
 
   const supabase = await createClient();
 
-  const ext = file.name.split(".").pop() ?? "jpg";
   const uuid = crypto.randomUUID();
   const folder =
     typeof categoriaId === "string" && categoriaId
       ? categoriaId
       : "sin-categoria";
-  const path = `${folder}/${uuid}.${ext}`;
+  const path = `${folder}/${uuid}.webp`;
 
   const arrayBuffer = await file.arrayBuffer();
-  const buffer = new Uint8Array(arrayBuffer);
+  const compressed = await sharp(Buffer.from(arrayBuffer))
+    .resize({ width: 800, withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toBuffer();
 
   const { error: uploadErr } = await supabase.storage
     .from("productos")
-    .upload(path, buffer, { contentType: file.type, upsert: false });
+    .upload(path, compressed, {
+      contentType: "image/webp",
+      upsert: false,
+      cacheControl: "31536000",
+    });
 
   if (uploadErr) return { data: null, error: uploadErr.message };
 
@@ -354,13 +361,21 @@ export async function updateProductoAction(
       }
     });
 
-    for (const v of toUpdate) {
-      const { error } = await supabase
-        .from("producto_variantes")
-        .update({ precio: v.precio, disponible: v.disponible, orden: v.orden })
-        .eq("id", v.id);
-      if (error) return { data: null, error: error.message };
-    }
+    const updateResults = await Promise.all(
+      toUpdate.map((v) =>
+        supabase
+          .from("producto_variantes")
+          .update({
+            precio: v.precio,
+            disponible: v.disponible,
+            orden: v.orden,
+          })
+          .eq("id", v.id),
+      ),
+    );
+    const updateError = updateResults.find((r) => r.error);
+    if (updateError?.error)
+      return { data: null, error: updateError.error.message };
 
     if (toInsert.length > 0) {
       const { error } = await supabase

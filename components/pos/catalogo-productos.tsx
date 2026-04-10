@@ -161,7 +161,6 @@ export function CatalogoProductos({
                         fill
                         sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
                         className="object-contain p-2"
-                        unoptimized
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground/40">

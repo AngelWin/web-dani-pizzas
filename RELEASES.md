@@ -19,6 +19,7 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
                                             -> actualiza comportamiento visual de R5b y R5c
                           R1 -> R11 (Usuarios)
                                     -> R12 (campos repartidor en formulario usuarios)
+R14 (Optimizaciones Rendimiento) [transversal, sin dependencias]
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -850,6 +851,50 @@ updated_at    timestamptz DEFAULT now()
 - Todos los precios en POS, ordenes, reportes, productos, dashboard muestran el simbolo correcto
 - `formatCurrency` sigue funcionando sin parametro (backward compatible con S/.)
 - Build pasa sin errores
+
+---
+
+## Release 14: Optimizaciones de Rendimiento (Fase 1)
+
+**Estado:** [x] Completado
+**Dependencia:** Ninguna (transversal)
+**Objetivo:** Optimizar rendimiento y resiliencia del proyecto en plan gratuito de Supabase + Vercel. Reducir consumo de Storage/bandwidth y prevenir pausa de la base de datos.
+
+### Contexto del negocio:
+- Supabase Free pausa la DB tras 7 dias sin actividad (feriados, vacaciones)
+- Storage gratuito limitado a 1GB — fotos de celular sin comprimir lo llenan rapido
+- Las imagenes del POS se servian sin optimizar (sin WebP, sin resize, sin cache CDN)
+- Las variantes de producto se actualizaban con queries secuenciales (N round-trips)
+
+### Cambios realizados:
+
+**Infraestructura:**
+- [x] Cron keep-alive: `app/api/keep-alive/route.ts` — query minima a Supabase diaria
+- [x] `vercel.json` — configura cron a las 8 AM UTC (3 AM Peru)
+- [x] Requiere variable de entorno `CRON_SECRET` en Vercel Dashboard
+
+**Optimizacion de imagenes:**
+- [x] Quitar `unoptimized` de `<Image>` en `components/pos/catalogo-productos.tsx` — Next.js ahora convierte a WebP, redimensiona y cachea en CDN
+- [x] Instalar `sharp` como dependencia explicita para compresion server-side
+- [x] Comprimir imagenes al subir en `actions/productos.ts`: conversion a WebP (quality 82), resize max 800px
+- [x] Agregar `cacheControl: "31536000"` (1 año) en uploads a Storage — URLs con UUID son inmutables
+
+**Rendimiento de queries:**
+- [x] Batch update de variantes en `actions/productos.ts`: reemplazar loop `for...of` secuencial por `Promise.all` paralelo
+
+### Archivos modificados:
+- `actions/productos.ts` — compresion Sharp + cacheControl + batch update
+- `components/pos/catalogo-productos.tsx` — quitar unoptimized
+- `package.json` — agregar sharp como dependencia
+- `app/api/keep-alive/route.ts` (nuevo)
+- `vercel.json` (nuevo)
+
+### Criterio de exito:
+- Build pasa sin errores
+- Imagenes del POS cargan como WebP via `/_next/image` (verificar en DevTools > Network)
+- Imagenes nuevas se suben como `.webp` y pesan menos de 200KB
+- Cron aparece en Vercel Dashboard > Cron Jobs tras deploy
+- Editar producto con multiples variantes guarda correctamente
 
 ---
 
