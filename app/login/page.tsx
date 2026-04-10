@@ -10,8 +10,8 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md flex-1 flex flex-col justify-center">
         <div className="mb-8 flex flex-col items-center text-center">
           <Image
             src="/images/logo-dani-pizzas.png"
@@ -29,6 +29,14 @@ export default async function LoginPage({
         <LoginAlerts expired={params.expired} message={params.message} />
         <LoginForm />
       </div>
+
+      <footer className="py-4 text-center text-xs text-muted-foreground/60">
+        <p>
+          &copy; {new Date().getFullYear()} DANI PIZZAS. Todos los derechos
+          reservados.
+        </p>
+        <p className="mt-0.5">Desarrollado por Angel Abad</p>
+      </footer>
     </div>
   );
 }
