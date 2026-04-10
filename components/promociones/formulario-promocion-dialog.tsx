@@ -208,6 +208,37 @@ export function FormularioPromocionDialog({
 
   const tipoPromocion = form.watch("tipo_promocion");
   const diasSemana = form.watch("dias_semana") ?? [];
+  const nombreWatch = form.watch("nombre");
+  const fechaInicioWatch = form.watch("fecha_inicio");
+  const fechaFinWatch = form.watch("fecha_fin");
+  const valorDescuentoWatch = form.watch("valor_descuento");
+  const precioComboWatch = form.watch("precio_combo");
+  const pedidoMinimoWatch = form.watch("pedido_minimo");
+
+  // Botón crear deshabilitado hasta que los campos requeridos estén llenos
+  const crearDeshabilitado = (() => {
+    if (isSubmitting) return true;
+    if (!nombreWatch?.trim()) return true;
+    if (!fechaInicioWatch || !fechaFinWatch) return true;
+
+    switch (tipoPromocion) {
+      case "descuento_porcentaje":
+      case "descuento_fijo":
+        if (!valorDescuentoWatch || valorDescuentoWatch <= 0) return true;
+        break;
+      case "2x1":
+        if (productosSeleccionados.length === 0) return true;
+        break;
+      case "combo_precio_fijo":
+        if (!precioComboWatch || precioComboWatch <= 0) return true;
+        if (productosSeleccionados.length < 2) return true;
+        break;
+      case "delivery_gratis":
+        if (!pedidoMinimoWatch || pedidoMinimoWatch <= 0) return true;
+        break;
+    }
+    return false;
+  })();
 
   function toggleDia(dia: number) {
     const actual = diasSemana;
@@ -828,7 +859,7 @@ export function FormularioPromocionDialog({
               <Button
                 type="submit"
                 className="h-12 flex-1"
-                disabled={isSubmitting}
+                disabled={crearDeshabilitado}
               >
                 {isSubmitting
                   ? "Guardando..."
