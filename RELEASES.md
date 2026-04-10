@@ -20,6 +20,7 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
                           R1 -> R11 (Usuarios)
                                     -> R12 (campos repartidor en formulario usuarios)
 R14 (Optimizaciones Rendimiento) [transversal, sin dependencias]
+R9 (Sucursales) + R5a (POS) + R5b/R5c (Ordenes) -> R15 (Gestion de Mesas)
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -895,6 +896,115 @@ updated_at    timestamptz DEFAULT now()
 - Imagenes nuevas se suben como `.webp` y pesan menos de 200KB
 - Cron aparece en Vercel Dashboard > Cron Jobs tras deploy
 - Editar producto con multiples variantes guarda correctamente
+
+---
+
+## Release 15: Gestion de Mesas por Sucursal
+
+**Estado:** [x] Completado
+**Dependencia:** Release 9 (Sucursales) + Release 5a (POS) + Release 5b/5c (Ordenes)
+**Objetivo:** Permitir al admin configurar mesas con numero y sillas por sucursal, y al cajero/mesero seleccionar mesa desde una cuadricula visual en el POS al tomar pedidos "En local". Las mesas se ocupan automaticamente al crear la orden y se liberan al cobrar o cancelar.
+
+### Contexto del negocio:
+- El campo `mesa_referencia` era texto libre ("Mesa 3") — sin validacion ni control de estado
+- Una pizzeria con local necesita saber que mesas estan ocupadas, libres o reservadas
+- Cada sucursal tiene diferente cantidad de mesas
+- Los comensales pueden pagar antes o despues de consumir — la mesa se libera al cobrar
+
+### Decisiones de diseno:
+- **Mesa se ocupa** al crear orden tipo "local" con mesa asignada
+- **Mesa se libera** al cobrar (`cobrarOrdenAction`) o cancelar (`cancelarOrdenConMotivo`)
+- **Multiples ordenes por mesa:** la mesa solo se libera cuando la ULTIMA orden activa es cobrada/cancelada
+- **Reservaciones:** No en V1, el enum incluye `reservada` para futuro (solo admin puede marcar manualmente)
+- **Backward compatible:** `mesa_referencia` se rellena automaticamente como "Mesa {numero}" al seleccionar
+- **Gestion integrada en /sucursales** — no requiere nueva ruta ni cambios al middleware
+
+### Nueva tabla DB: `mesas`
+
+```
+id          uuid PK DEFAULT gen_random_uuid()
+sucursal_id uuid NOT NULL REFERENCES sucursales(id) ON DELETE CASCADE
+numero      integer NOT NULL
+sillas      integer NOT NULL DEFAULT 4
+estado      estado_mesa NOT NULL DEFAULT 'libre'  -- enum: libre|ocupada|reservada
+activa      boolean NOT NULL DEFAULT TRUE
+created_at  timestamptz DEFAULT now()
+updated_at  timestamptz DEFAULT now()
+CONSTRAINT  mesas_numero_sucursal_unique UNIQUE (sucursal_id, numero)
+```
+
+### Cambios en tablas existentes:
+- `ordenes` → agregar `mesa_id uuid REFERENCES mesas(id) ON DELETE SET NULL`
+
+### Nuevo enum: `estado_mesa`
+- `libre` | `ocupada` | `reservada`
+
+### RLS:
+- SELECT: todos los usuarios autenticados
+- INSERT/UPDATE/DELETE: solo administrador
+
+### Commits esperados:
+
+**DB:**
+- [x] Migracion: enum `estado_mesa`, tabla `mesas`, columna `mesa_id` en ordenes
+- [x] Indice en `mesas(sucursal_id)`, constraint UNIQUE `(sucursal_id, numero)`
+- [x] RLS: authenticated SELECT, admin ALL
+- [x] Trigger `set_updated_at` en mesas
+- [x] Tipos TypeScript actualizados (database.ts)
+
+**Backend:**
+- [x] Servicio `lib/services/mesas.ts`: getMesasPorSucursal, getTodasLasMesas, createMesa, updateMesa, deleteMesa, updateEstadoMesa, liberarMesaSiCorresponde
+- [x] Validaciones Zod `lib/validations/mesas.ts`: mesaSchema (numero, sillas, activa)
+- [x] Server Actions `actions/mesas.ts`: CRUD + cambiarEstadoMesaAction (verificacion rol admin)
+- [x] Agregar `mesa_id` a `crearOrdenSchema` en `lib/validations/ordenes.ts`
+- [x] Modificar `crearOrden` en `lib/services/ordenes.ts`: incluir mesa_id en insert + marcar mesa como ocupada
+- [x] Modificar `cancelarOrdenConMotivo` en `lib/services/ordenes.ts`: liberar mesa si corresponde
+- [x] Modificar `cobrarOrdenAction` en `app/(dashboard)/ordenes/actions.ts`: liberar mesa si corresponde
+- [x] Modificar `crearOrdenAction` en `actions/ordenes.ts`: pasar mesa_id
+
+**UI — Gestion de mesas (admin en /sucursales):**
+- [x] Componente `components/mesas/mesa-form.tsx` (react-hook-form + zod: numero, sillas, activa)
+- [x] Componente `components/mesas/mesa-admin-dialog.tsx` (cuadricula de mesas + crear/editar/eliminar)
+- [x] Boton "Gestionar mesas" con contador en cada tarjeta de sucursal
+- [x] Cargar mesas agrupadas por sucursal en `app/(dashboard)/sucursales/page.tsx`
+
+**UI — Selector de mesas en POS:**
+- [x] Componente `components/pos/selector-mesa.tsx` (cuadricula touch-friendly: verde=libre, rojo=ocupada, amarillo=reservada)
+- [x] Reemplazar input de texto por SelectorMesa en `formulario-pedido-dialog.tsx` (fallback a input si no hay mesas)
+- [x] Agregar prop `mesas` a PosClient y FormularioPedidoDialog
+- [x] Cargar mesas en `app/(dashboard)/pos/page.tsx` via Promise.all
+- [x] Limpiar mesa_id al cambiar tipo de pedido
+
+### Archivos nuevos:
+- `lib/services/mesas.ts`
+- `lib/validations/mesas.ts`
+- `actions/mesas.ts`
+- `components/mesas/mesa-form.tsx`
+- `components/mesas/mesa-admin-dialog.tsx`
+- `components/pos/selector-mesa.tsx`
+
+### Archivos modificados:
+- `types/database.ts` — nuevos tipos para tabla mesas + enum estado_mesa + mesa_id en ordenes
+- `lib/validations/ordenes.ts` — agregar mesa_id al schema
+- `lib/services/ordenes.ts` — ocupar mesa al crear, liberar al cancelar
+- `actions/ordenes.ts` — pasar mesa_id a crearOrden
+- `app/(dashboard)/ordenes/actions.ts` — liberar mesa al cobrar
+- `components/pos/formulario-pedido-dialog.tsx` — SelectorMesa con fallback
+- `components/pos/pos-client.tsx` — prop mesas
+- `app/(dashboard)/pos/page.tsx` — cargar mesas
+- `components/sucursales/sucursales-cliente.tsx` — boton gestionar mesas + dialog
+- `app/(dashboard)/sucursales/page.tsx` — cargar mesas por sucursal
+
+### Criterio de exito:
+- Admin puede crear/editar/eliminar mesas desde /sucursales → "Gestionar mesas"
+- En POS, al elegir "En local" aparece cuadricula de mesas con colores por estado
+- Al confirmar pedido con mesa, la mesa cambia a "ocupada"
+- Al cobrar la orden, la mesa vuelve a "libre"
+- Al cancelar la orden, la mesa vuelve a "libre"
+- Si hay 2 ordenes en la misma mesa, solo se libera al cobrar/cancelar ambas
+- Si no hay mesas configuradas, aparece input de texto como antes (backward compatible)
+- Cambiar de sucursal en POS muestra las mesas de esa sucursal
+- Build pasa sin errores
 
 ---
 
