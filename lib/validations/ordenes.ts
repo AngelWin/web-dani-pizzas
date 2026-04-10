@@ -43,6 +43,7 @@ export const crearOrdenSchema = z
       [TIPO_PEDIDO.EN_LOCAL, TIPO_PEDIDO.PARA_LLEVAR, TIPO_PEDIDO.DELIVERY],
       { required_error: "Selecciona un tipo de pedido" },
     ),
+    mesa_id: z.string().uuid().nullable().optional(),
     mesa_referencia: z.string().max(50).optional(),
     notas: z.string().max(300).optional(),
     // Delivery

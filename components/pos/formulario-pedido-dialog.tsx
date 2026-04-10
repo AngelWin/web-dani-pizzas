@@ -38,6 +38,8 @@ import {
 import { Tag, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BuscadorCliente } from "./buscador-cliente";
+import { SelectorMesa } from "./selector-mesa";
+import type { Mesa } from "@/lib/services/mesas";
 import type { useCarrito } from "@/hooks/use-carrito";
 import type { Profile } from "@/lib/services/ventas";
 import type { ClienteConMembresia } from "@/lib/services/clientes";
@@ -58,6 +60,7 @@ type Props = {
   onSubmit: (data: CrearOrdenFormValues) => Promise<void>;
   isSubmitting: boolean;
   promociones: PromocionActivaPOS[];
+  mesas: Mesa[];
 };
 
 export function FormularioPedidoDialog({
@@ -71,6 +74,7 @@ export function FormularioPedidoDialog({
   onSubmit,
   isSubmitting,
   promociones,
+  mesas,
 }: Props) {
   const esMesero = rol === "mesero";
   const { simbolo, formatCurrency } = useCurrency();
@@ -85,6 +89,7 @@ export function FormularioPedidoDialog({
       sucursal_id: sucursalId,
       cliente_id: null,
       tipo_pedido: TIPO_PEDIDO.EN_LOCAL,
+      mesa_id: null,
       mesa_referencia: "",
       notas: "",
       delivery_method: DELIVERY_METHOD.PROPIO,
@@ -132,6 +137,14 @@ export function FormularioPedidoDialog({
       })),
     );
   }, [carrito.items, form]);
+
+  // Limpiar mesa al cambiar tipo de pedido
+  useEffect(() => {
+    if (tipoPedido !== TIPO_PEDIDO.EN_LOCAL) {
+      form.setValue("mesa_id", null);
+      form.setValue("mesa_referencia", "");
+    }
+  }, [tipoPedido, form]);
 
   // Limpiar servicio y tarifa al cambiar método de delivery
   useEffect(() => {
@@ -273,23 +286,39 @@ export function FormularioPedidoDialog({
 
             {/* ── Mesa / referencia ── */}
             {tipoPedido === TIPO_PEDIDO.EN_LOCAL && (
-              <FormField
-                control={form.control}
-                name="mesa_referencia"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mesa / referencia (opcional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ej: Mesa 3"
-                        className="h-12"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Mesa</p>
+                {mesas.length > 0 ? (
+                  <SelectorMesa
+                    mesas={mesas}
+                    mesaSeleccionadaId={form.watch("mesa_id") ?? null}
+                    onSeleccionar={(mesa) => {
+                      form.setValue("mesa_id", mesa?.id ?? null);
+                      form.setValue(
+                        "mesa_referencia",
+                        mesa ? `Mesa ${mesa.numero}` : "",
+                      );
+                    }}
+                  />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="mesa_referencia"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            placeholder="Ej: Mesa 3"
+                            className="h-12"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+              </div>
             )}
 
             {/* ── Datos de delivery ── */}

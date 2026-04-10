@@ -11,6 +11,7 @@ import {
 } from "@/lib/services/ordenes";
 import { cobrarOrden } from "@/lib/services/ventas";
 import { getConfiguracionNegocio } from "@/lib/services/configuracion";
+import { liberarMesaSiCorresponde } from "@/lib/services/mesas";
 import { cobrarOrdenSchema } from "@/lib/validations/ventas";
 import type { Venta } from "@/lib/services/ventas";
 import type { ActionResult } from "@/types";
@@ -151,6 +152,12 @@ export async function cobrarOrdenAction(
     });
 
     await actualizarEstadoOrden(ordenId, "entregada");
+
+    // Liberar mesa si no tiene más órdenes activas
+    if (orden.mesa_id) {
+      await liberarMesaSiCorresponde(orden.mesa_id);
+    }
+
     revalidatePath("/ordenes");
     return { data: venta, error: null };
   } catch (err) {

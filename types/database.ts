@@ -334,32 +334,73 @@ export type Database = {
         };
         Relationships: [];
       };
-      monedas: {
+      mesas: {
         Row: {
-          id: string;
-          codigo: string;
-          simbolo: string;
-          nombre: string;
-          es_predefinida: boolean;
+          activa: boolean;
           created_at: string | null;
+          estado: Database["public"]["Enums"]["estado_mesa"];
+          id: string;
+          numero: number;
+          sillas: number;
+          sucursal_id: string;
           updated_at: string | null;
         };
         Insert: {
-          id?: string;
-          codigo: string;
-          simbolo: string;
-          nombre: string;
-          es_predefinida?: boolean;
+          activa?: boolean;
           created_at?: string | null;
+          estado?: Database["public"]["Enums"]["estado_mesa"];
+          id?: string;
+          numero: number;
+          sillas?: number;
+          sucursal_id: string;
           updated_at?: string | null;
         };
         Update: {
-          id?: string;
-          codigo?: string;
-          simbolo?: string;
-          nombre?: string;
-          es_predefinida?: boolean;
+          activa?: boolean;
           created_at?: string | null;
+          estado?: Database["public"]["Enums"]["estado_mesa"];
+          id?: string;
+          numero?: number;
+          sillas?: number;
+          sucursal_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mesas_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      monedas: {
+        Row: {
+          codigo: string;
+          created_at: string | null;
+          es_predefinida: boolean;
+          id: string;
+          nombre: string;
+          simbolo: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          codigo: string;
+          created_at?: string | null;
+          es_predefinida?: boolean;
+          id?: string;
+          nombre: string;
+          simbolo: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          codigo?: string;
+          created_at?: string | null;
+          es_predefinida?: boolean;
+          id?: string;
+          nombre?: string;
+          simbolo?: string;
           updated_at?: string | null;
         };
         Relationships: [];
@@ -500,6 +541,7 @@ export type Database = {
           descuento: number;
           estado: Database["public"]["Enums"]["estado_orden"];
           id: string;
+          mesa_id: string | null;
           mesa_referencia: string | null;
           notas: string | null;
           numero_orden: number;
@@ -528,6 +570,7 @@ export type Database = {
           descuento?: number;
           estado?: Database["public"]["Enums"]["estado_orden"];
           id?: string;
+          mesa_id?: string | null;
           mesa_referencia?: string | null;
           notas?: string | null;
           numero_orden?: never;
@@ -556,6 +599,7 @@ export type Database = {
           descuento?: number;
           estado?: Database["public"]["Enums"]["estado_orden"];
           id?: string;
+          mesa_id?: string | null;
           mesa_referencia?: string | null;
           notas?: string | null;
           numero_orden?: never;
@@ -580,6 +624,13 @@ export type Database = {
             columns: ["cliente_id"];
             isOneToOne: false;
             referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ordenes_mesa_id_fkey";
+            columns: ["mesa_id"];
+            isOneToOne: false;
+            referencedRelation: "mesas";
             referencedColumns: ["id"];
           },
           {
@@ -1333,6 +1384,7 @@ export type Database = {
     Enums: {
       delivery_method_tipo: "propio" | "tercero";
       estado_delivery: "pendiente" | "en_camino" | "entregado";
+      estado_mesa: "libre" | "ocupada" | "reservada";
       estado_orden:
         | "borrador"
         | "confirmada"
@@ -1484,6 +1536,7 @@ export const Constants = {
     Enums: {
       delivery_method_tipo: ["propio", "tercero"],
       estado_delivery: ["pendiente", "en_camino", "entregado"],
+      estado_mesa: ["libre", "ocupada", "reservada"],
       estado_orden: [
         "borrador",
         "confirmada",

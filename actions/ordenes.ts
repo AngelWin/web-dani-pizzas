@@ -50,6 +50,7 @@ export async function crearOrdenAction(
       cliente_id: resto.cliente_id ?? null,
       tipo_pedido: resto.tipo_pedido,
       notas: resto.notas ?? null,
+      mesa_id: resto.mesa_id ?? null,
       mesa_referencia: resto.mesa_referencia ?? null,
       delivery_method: (resto.delivery_method as DeliveryMethod) ?? null,
       delivery_fee: resto.delivery_fee ?? 0,

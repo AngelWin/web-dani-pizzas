@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   Plus,
+  Armchair,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,15 +25,24 @@ const SucursalForm = dynamic(
   () => import("./sucursal-form").then((mod) => mod.SucursalForm),
   { ssr: false },
 );
+import { MesaAdminDialog } from "@/components/mesas/mesa-admin-dialog";
 import type { Sucursal } from "@/lib/services/sucursales";
+import type { Mesa } from "@/lib/services/mesas";
 
 type Props = {
   sucursales: Sucursal[];
+  mesasPorSucursal: Record<string, Mesa[]>;
 };
 
-export function SucursalesCliente({ sucursales: inicial }: Props) {
+export function SucursalesCliente({
+  sucursales: inicial,
+  mesasPorSucursal,
+}: Props) {
   const [editando, setEditando] = useState<Sucursal | null>(null);
   const [creando, setCreando] = useState(false);
+  const [gestionandoMesas, setGestionandoMesas] = useState<Sucursal | null>(
+    null,
+  );
 
   return (
     <>
@@ -105,7 +115,27 @@ export function SucursalesCliente({ sucursales: inicial }: Props) {
                   <span>{s.telefono}</span>
                 </div>
               )}
+              <div className="flex items-center gap-2">
+                <Armchair className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+                <span>
+                  {(mesasPorSucursal[s.id] ?? []).length}{" "}
+                  {(mesasPorSucursal[s.id] ?? []).length === 1
+                    ? "mesa"
+                    : "mesas"}
+                </span>
+              </div>
             </div>
+
+            {/* Botón gestionar mesas */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 w-full gap-1.5 rounded-xl text-xs"
+              onClick={() => setGestionandoMesas(s)}
+            >
+              <Armchair className="h-3.5 w-3.5" />
+              Gestionar mesas
+            </Button>
           </div>
         ))}
       </div>
@@ -140,6 +170,16 @@ export function SucursalesCliente({ sucursales: inicial }: Props) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de gestión de mesas */}
+      {gestionandoMesas && (
+        <MesaAdminDialog
+          open={!!gestionandoMesas}
+          onOpenChange={(open) => !open && setGestionandoMesas(null)}
+          sucursal={gestionandoMesas}
+          mesas={mesasPorSucursal[gestionandoMesas.id] ?? []}
+        />
+      )}
     </>
   );
 }

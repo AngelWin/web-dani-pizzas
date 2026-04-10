@@ -1,4 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  updateEstadoMesa,
+  liberarMesaSiCorresponde,
+} from "@/lib/services/mesas";
 import type { Database } from "@/types/database";
 
 export type Orden = Database["public"]["Tables"]["ordenes"]["Row"];
@@ -116,6 +120,13 @@ export async function cancelarOrdenConMotivo(
 ): Promise<void> {
   const supabase = await createClient();
 
+  // Obtener mesa_id antes de cancelar para poder liberarla después
+  const { data: ordenPrevia } = await supabase
+    .from("ordenes")
+    .select("mesa_id")
+    .eq("id", ordenId)
+    .single();
+
   // 1. Actualizar estado → el trigger creará la entrada del historial
   const { error: updateError } = await supabase
     .from("ordenes")
@@ -139,6 +150,11 @@ export async function cancelarOrdenConMotivo(
       "No se pudo guardar el motivo de cancelación:",
       historialError.message,
     );
+  }
+
+  // 3. Liberar mesa si no tiene más órdenes activas
+  if (ordenPrevia?.mesa_id) {
+    await liberarMesaSiCorresponde(ordenPrevia.mesa_id);
   }
 }
 
@@ -168,6 +184,7 @@ export type CrearOrdenData = {
   cliente_id?: string | null;
   tipo_pedido: TipoPedido;
   notas?: string | null;
+  mesa_id?: string | null;
   mesa_referencia?: string | null;
   // Delivery
   delivery_method?: DeliveryMethod | null;
@@ -229,6 +246,7 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
       delivery_fee: deliveryFee,
       total,
       notas: ordenData.notas ?? null,
+      mesa_id: ordenData.mesa_id ?? null,
       mesa_referencia: ordenData.mesa_referencia ?? null,
       delivery_method: ordenData.delivery_method ?? null,
       delivery_address: ordenData.delivery_address ?? null,
@@ -263,6 +281,11 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
   );
 
   if (itemsError) throw new Error(itemsError.message);
+
+  // Marcar mesa como ocupada
+  if (ordenData.mesa_id) {
+    await updateEstadoMesa(ordenData.mesa_id, "ocupada");
+  }
 
   return orden;
 }

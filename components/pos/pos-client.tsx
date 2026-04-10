@@ -50,6 +50,7 @@ import type {
   PizzaSaborConIngredientes,
   ProductoExtra,
 } from "@/lib/services/productos";
+import type { Mesa } from "@/lib/services/mesas";
 import type { Database } from "@/types/database";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -68,6 +69,7 @@ type Props = {
   saboresPorCategoria: Record<string, PizzaSaborConIngredientes[]>;
   extrasPorCategoria: Record<string, ProductoExtra[]>;
   deliveryServicios: DeliveryServicio[];
+  mesas: Mesa[];
 };
 
 export function PosClient({
@@ -82,6 +84,7 @@ export function PosClient({
   saboresPorCategoria,
   extrasPorCategoria,
   deliveryServicios,
+  mesas,
 }: Props) {
   const { formatCurrency } = useCurrency();
   const router = useRouter();
@@ -230,6 +233,7 @@ export function PosClient({
         onSubmit={handleConfirmarPedido}
         isSubmitting={isSubmitting}
         promociones={promociones}
+        mesas={mesas}
       />
 
       {/* Dialog de orden confirmada */}

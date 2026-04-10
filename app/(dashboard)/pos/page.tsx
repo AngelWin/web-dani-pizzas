@@ -11,6 +11,7 @@ import {
   getAllProductoExtras,
 } from "@/lib/services/productos";
 import { getDeliveryServiciosPorSucursal } from "@/lib/services/delivery-servicios";
+import { getMesasPorSucursal } from "@/lib/services/mesas";
 import type { Database } from "@/types/database";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -69,6 +70,7 @@ export default async function PosPage({
     saboresPorCategoria,
     extrasPorCategoria,
     deliveryServicios,
+    mesas,
   ] = await Promise.all([
     getProductosPOS(sucursalId),
     getRepartidoresSucursal(sucursalId),
@@ -77,6 +79,7 @@ export default async function PosPage({
     getAllPizzaSabores(),
     getAllProductoExtras(),
     getDeliveryServiciosPorSucursal(sucursalId),
+    getMesasPorSucursal(sucursalId),
   ]);
 
   // Extraer categorías directamente de los productos ya cargados (evita doble fetch)
@@ -102,6 +105,7 @@ export default async function PosPage({
       saboresPorCategoria={saboresPorCategoria}
       extrasPorCategoria={extrasPorCategoria}
       deliveryServicios={deliveryServicios}
+      mesas={mesas}
     />
   );
 }
