@@ -48,9 +48,13 @@ import { TIPO_PROMOCION_LABELS, DIAS_SEMANA_LABELS } from "@/lib/constants";
 import { useCurrency } from "@/hooks/use-currency";
 import type { PromocionConProductos } from "@/lib/services/promociones";
 
-type ProductoBasico = { id: string; nombre: string };
+type ProductoBasico = {
+  id: string;
+  nombre: string;
+  categoria_id: string | null;
+};
 type SucursalBasica = { id: string; nombre: string };
-type MedidaBasica = { id: string; nombre: string };
+type MedidaBasica = { id: string; nombre: string; categoria_id: string };
 
 type Props = {
   promociones: PromocionConProductos[];

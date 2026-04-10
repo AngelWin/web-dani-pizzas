@@ -10,20 +10,29 @@ async function getProductosBasico() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("productos")
-    .select("id, nombre")
+    .select("id, nombre, categoria_id")
     .eq("disponible", true)
     .order("nombre");
-  return (data ?? []) as { id: string; nombre: string }[];
+  return (data ?? []) as {
+    id: string;
+    nombre: string;
+    categoria_id: string | null;
+  }[];
 }
 
 async function getMedidasBasico() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("categoria_medidas")
-    .select("id, nombre")
+    .select("id, nombre, categoria_id")
     .eq("activa", true)
+    .eq("es_acompanante", false)
     .order("orden");
-  return (data ?? []) as { id: string; nombre: string }[];
+  return (data ?? []) as {
+    id: string;
+    nombre: string;
+    categoria_id: string;
+  }[];
 }
 
 async function getSucursalesBasico() {

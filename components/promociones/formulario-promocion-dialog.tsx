@@ -49,9 +49,13 @@ import {
 import type { PromocionConProductos } from "@/lib/services/promociones";
 import { useCurrency } from "@/hooks/use-currency";
 
-type ProductoBasico = { id: string; nombre: string };
+type ProductoBasico = {
+  id: string;
+  nombre: string;
+  categoria_id: string | null;
+};
 type SucursalBasica = { id: string; nombre: string };
-type MedidaBasica = { id: string; nombre: string };
+type MedidaBasica = { id: string; nombre: string; categoria_id: string };
 
 type Props = {
   open: boolean;
@@ -238,6 +242,32 @@ export function FormularioPromocionDialog({
       ),
     [productos, productosSeleccionados, busquedaProducto],
   );
+
+  // Medidas filtradas por las categorías de los productos seleccionados
+  const medidasFiltradas = useMemo(() => {
+    if (productosSeleccionados.length === 0) return [];
+    const categoriasIds = new Set(
+      productosSeleccionados
+        .map((p) => p.categoria_id)
+        .filter(Boolean) as string[],
+    );
+    return medidas.filter((m) => categoriasIds.has(m.categoria_id));
+  }, [productosSeleccionados, medidas]);
+
+  // Limpiar medidas que ya no corresponden a los productos seleccionados
+  useEffect(() => {
+    if (medidasFiltradas.length === 0 && medidasSeleccionadas.length > 0) {
+      setMedidasSeleccionadas([]);
+    } else if (medidasSeleccionadas.length > 0) {
+      const idsValidos = new Set(medidasFiltradas.map((m) => m.id));
+      const filtradas = medidasSeleccionadas.filter((m) =>
+        idsValidos.has(m.id),
+      );
+      if (filtradas.length !== medidasSeleccionadas.length) {
+        setMedidasSeleccionadas(filtradas);
+      }
+    }
+  }, [medidasFiltradas, medidasSeleccionadas]);
 
   async function onSubmit(data: PromocionFormValues) {
     setIsSubmitting(true);
@@ -659,38 +689,7 @@ export function FormularioPromocionDialog({
               </div>
             </div>
 
-            {/* ── Sección 7: Medidas/Tamaños ── */}
-            {tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS &&
-              medidas.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">
-                    Tamaños/Medidas (opcional)
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {medidasSeleccionadas.length === 0
-                      ? "Aplica a todos los tamaños"
-                      : `Solo para: ${medidasSeleccionadas.map((m) => m.nombre).join(", ")}`}
-                  </p>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {medidas.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => toggleMedida(m)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          medidasSeleccionadas.some((sel) => sel.id === m.id)
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-                        }`}
-                      >
-                        {m.nombre}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-            {/* ── Sección 8: Productos ── */}
+            {/* ── Sección 7: Productos ── */}
             {tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS && (
               <div className="space-y-2">
                 <div>
@@ -758,6 +757,37 @@ export function FormularioPromocionDialog({
                 <FormMessage />
               </div>
             )}
+
+            {/* ── Sección 8: Medidas/Tamaños (filtradas por productos) ── */}
+            {tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS &&
+              medidasFiltradas.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">
+                    Tamaños/Medidas (opcional)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {medidasSeleccionadas.length === 0
+                      ? "Aplica a todos los tamaños de los productos seleccionados"
+                      : `Solo para: ${medidasSeleccionadas.map((m) => m.nombre).join(", ")}`}
+                  </p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {medidasFiltradas.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => toggleMedida(m)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          medidasSeleccionadas.some((sel) => sel.id === m.id)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {m.nombre}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             <Separator />
 
