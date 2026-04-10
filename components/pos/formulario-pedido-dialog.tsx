@@ -108,6 +108,13 @@ export function FormularioPedidoDialog({
 
   const tipoPedido = form.watch("tipo_pedido");
   const deliveryMethod = form.watch("delivery_method");
+  const deliveryAddress = form.watch("delivery_address");
+  const thirdPartyName = form.watch("third_party_name");
+
+  const confirmarDeshabilitado =
+    isSubmitting ||
+    (tipoPedido === TIPO_PEDIDO.DELIVERY &&
+      (!deliveryAddress || !thirdPartyName));
 
   // Resetear form al abrir el dialog (incluyendo items del carrito)
   useEffect(() => {
@@ -682,7 +689,7 @@ export function FormularioPedidoDialog({
               <Button
                 type="submit"
                 className="h-12 flex-1"
-                disabled={isSubmitting}
+                disabled={confirmarDeshabilitado}
               >
                 {isSubmitting ? "Registrando..." : "Confirmar pedido"}
               </Button>
