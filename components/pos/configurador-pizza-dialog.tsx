@@ -405,9 +405,14 @@ export function ConfiguradorPizzaDialog({
                   {!acompanante ? (
                     <>
                       <button
-                        onClick={() =>
-                          setMostrandoSelectorAcompanante((v) => !v)
-                        }
+                        onClick={() => {
+                          const abriendo = !mostrandoSelectorAcompanante;
+                          setMostrandoSelectorAcompanante(abriendo);
+                          // Si solo hay 1 medida, auto-seleccionarla
+                          if (abriendo && variantesAcompanante.length === 1) {
+                            setAcompananteVariante(variantesAcompanante[0]);
+                          }
+                        }}
                         className={cn(
                           "flex items-center gap-2 rounded-xl border-2 border-dashed p-3 w-full text-sm transition-colors",
                           mostrandoSelectorAcompanante
