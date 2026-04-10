@@ -185,9 +185,11 @@ export function FormularioPedidoDialog({
     }
   }, [tipoPedido, form]);
 
-  // Limpiar servicio y tarifa al cambiar método de delivery
-  // Si solo hay 1 servicio para el método, auto-seleccionarlo
+  // Auto-seleccionar servicio de delivery si solo hay 1 para el método
+  // Se dispara al cambiar método O al cambiar tipo de pedido a delivery
   useEffect(() => {
+    if (tipoPedido !== TIPO_PEDIDO.DELIVERY) return;
+
     const servicios = deliveryServicios.filter(
       (s) => s.tipo === deliveryMethod,
     );
@@ -198,7 +200,7 @@ export function FormularioPedidoDialog({
       form.setValue("third_party_name", null);
       form.setValue("delivery_fee", 0);
     }
-  }, [deliveryMethod, deliveryServicios, form]);
+  }, [tipoPedido, deliveryMethod, deliveryServicios, form]);
 
   // Sincronizar promoción seleccionada → form (descuento)
   useEffect(() => {
