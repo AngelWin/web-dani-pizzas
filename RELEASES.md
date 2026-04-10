@@ -21,6 +21,7 @@ R0 (Base) -> R1 (Auth) -> R2 (Layout) -> R3 (Dashboard)
                                     -> R12 (campos repartidor en formulario usuarios)
 R14 (Optimizaciones Rendimiento) [transversal, sin dependencias]
 R9 (Sucursales) + R5a (POS) + R5b/R5c (Ordenes) -> R15 (Gestion de Mesas)
+                                                        -> R16 (Reservas de Mesas) [pendiente]
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -1005,6 +1006,28 @@ CONSTRAINT  mesas_numero_sucursal_unique UNIQUE (sucursal_id, numero)
 - Si no hay mesas configuradas, aparece input de texto como antes (backward compatible)
 - Cambiar de sucursal en POS muestra las mesas de esa sucursal
 - Build pasa sin errores
+
+---
+
+## Release 16: Reservas de Mesas (pendiente)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 15 (Gestion de Mesas)
+**Objetivo:** Permitir al cajero/admin reservar mesas con fecha, hora, cliente y duracion estimada. Las mesas reservadas se muestran en amarillo en el POS y se liberan automaticamente al vencer la reserva o al asignarlas a una orden.
+
+### Funcionalidades esperadas:
+- Crear reserva: mesa, fecha, hora, duracion estimada, nombre del cliente, telefono, cantidad de personas, notas
+- Ver reservas del dia en una vista de agenda o timeline por mesa
+- Mesa en estado `reservada` visible en POS (amarillo) — no seleccionable a menos que el cajero confirme
+- Liberacion automatica: si la reserva vence (hora + duracion) sin que llegue el cliente, la mesa vuelve a `libre`
+- Notificacion o indicador visual cuando una reserva esta proxima (ej: 15 min antes)
+- Historial de reservas por mesa y por cliente
+
+### Consideraciones:
+- El enum `estado_mesa` ya incluye `reservada` (creado en R15)
+- La action `cambiarEstadoMesaAction` ya permite marcar una mesa como reservada manualmente
+- Se necesita nueva tabla `reservas` con FK a `mesas` y opcionalmente a `clientes`
+- Evaluar si se necesita un cron job para liberar reservas vencidas automaticamente
 
 ---
 

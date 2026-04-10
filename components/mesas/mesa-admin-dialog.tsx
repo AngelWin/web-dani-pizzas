@@ -91,20 +91,19 @@ export function MesaAdminDialog({
             </DialogTitle>
           </DialogHeader>
 
-          {/* Botón nueva mesa */}
-          <div className="flex justify-end">
-            <Button
-              size="sm"
-              className="h-9 gap-1.5 rounded-xl text-xs"
-              onClick={() => {
-                setCreando(true);
-                setEditando(null);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Nueva mesa
-            </Button>
-          </div>
+          {/* Botón nueva mesa — oculto si ya está creando/editando */}
+          {!creando && !editando && (
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                className="h-9 gap-1.5 rounded-xl text-xs"
+                onClick={() => setCreando(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Nueva mesa
+              </Button>
+            </div>
+          )}
 
           {/* Formulario crear/editar */}
           {(creando || editando) && (
@@ -115,6 +114,11 @@ export function MesaAdminDialog({
               <MesaForm
                 sucursalId={sucursal.id}
                 mesa={editando ?? undefined}
+                siguienteNumero={
+                  mesas.length > 0
+                    ? Math.max(...mesas.map((m) => m.numero)) + 1
+                    : 1
+                }
                 onSuccess={() => {
                   setCreando(false);
                   setEditando(null);

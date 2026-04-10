@@ -22,17 +22,23 @@ import type { Mesa } from "@/lib/services/mesas";
 type Props = {
   sucursalId: string;
   mesa?: Mesa;
+  siguienteNumero?: number;
   onSuccess?: () => void;
 };
 
-export function MesaForm({ sucursalId, mesa, onSuccess }: Props) {
+export function MesaForm({
+  sucursalId,
+  mesa,
+  siguienteNumero = 1,
+  onSuccess,
+}: Props) {
   const [isPending, startTransition] = useTransition();
   const isEditing = !!mesa;
 
   const form = useForm<MesaFormValues>({
     resolver: zodResolver(mesaSchema),
     defaultValues: {
-      numero: mesa?.numero ?? 1,
+      numero: mesa?.numero ?? siguienteNumero,
       sillas: mesa?.sillas ?? 4,
       activa: mesa?.activa ?? true,
     },
@@ -76,6 +82,7 @@ export function MesaForm({ sucursalId, mesa, onSuccess }: Props) {
                     className="h-11 rounded-xl"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
+                    onFocus={(e) => e.target.select()}
                   />
                 </FormControl>
                 <FormMessage />
@@ -97,6 +104,7 @@ export function MesaForm({ sucursalId, mesa, onSuccess }: Props) {
                     className="h-11 rounded-xl"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
+                    onFocus={(e) => e.target.select()}
                   />
                 </FormControl>
                 <FormMessage />
