@@ -158,10 +158,19 @@ export function FormularioPedidoDialog({
   }, [tipoPedido, form]);
 
   // Limpiar servicio y tarifa al cambiar método de delivery
+  // Si solo hay 1 servicio para el método, auto-seleccionarlo
   useEffect(() => {
-    form.setValue("third_party_name", null);
-    form.setValue("delivery_fee", 0);
-  }, [deliveryMethod, form]);
+    const servicios = deliveryServicios.filter(
+      (s) => s.tipo === deliveryMethod,
+    );
+    if (servicios.length === 1) {
+      form.setValue("third_party_name", servicios[0].nombre);
+      form.setValue("delivery_fee", servicios[0].precio_base);
+    } else {
+      form.setValue("third_party_name", null);
+      form.setValue("delivery_fee", 0);
+    }
+  }, [deliveryMethod, deliveryServicios, form]);
 
   // Sincronizar promoción seleccionada → form (descuento)
   useEffect(() => {
