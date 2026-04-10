@@ -35,6 +35,7 @@ import {
   crearOrdenSchema,
   type CrearOrdenFormValues,
 } from "@/lib/validations/ordenes";
+import { toast } from "sonner";
 import { Tag, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BuscadorCliente } from "./buscador-cliente";
@@ -107,6 +108,16 @@ export function FormularioPedidoDialog({
 
   const tipoPedido = form.watch("tipo_pedido");
   const deliveryMethod = form.watch("delivery_method");
+
+  // Resetear form al abrir el dialog
+  useEffect(() => {
+    if (open) {
+      form.reset();
+      form.setValue("sucursal_id", sucursalId);
+      setClienteSeleccionado(null);
+      setPromocionSeleccionada(null);
+    }
+  }, [open, sucursalId, form]);
 
   // Sincronizar sucursal seleccionada → form
   useEffect(() => {
@@ -202,7 +213,15 @@ export function FormularioPedidoDialog({
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+              const firstError = Object.values(errors)[0];
+              const msg =
+                firstError?.message ??
+                (firstError as { root?: { message?: string } })?.root
+                  ?.message ??
+                "Revisa los campos del formulario";
+              toast.error(String(msg));
+            })}
             className="space-y-4"
           >
             {/* ── Identificación de cliente ── */}
