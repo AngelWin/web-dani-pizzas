@@ -65,11 +65,6 @@ export const TIPOS_VEHICULO_LABELS: Record<TipoVehiculo, string> = {
   moto_lineal: "Moto lineal",
 };
 
-export const SUCURSALES = {
-  CASMA: "Casma Av. Reina",
-  VILLA_HERMOSA: "Villa Hermosa Calle Uno",
-} as const;
-
 // ─── Promociones ─────────────────────────────────────────────────────────────
 
 export const TIPO_PROMOCION = {
