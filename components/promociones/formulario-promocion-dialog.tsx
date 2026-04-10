@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { InputNumerico } from "@/components/ui/input-numerico";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -448,23 +449,17 @@ export function FormularioPromocionDialog({
                           : `Monto (${simbolo})`}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
+                        <InputNumerico
+                          variante={
+                            tipoPromocion ===
+                            TIPO_PROMOCION.DESCUENTO_PORCENTAJE
+                              ? "porcentaje"
+                              : "precio"
+                          }
                           min={0.01}
-                          step={
-                            tipoPromocion ===
-                            TIPO_PROMOCION.DESCUENTO_PORCENTAJE
-                              ? 1
-                              : 0.5
-                          }
-                          max={
-                            tipoPromocion ===
-                            TIPO_PROMOCION.DESCUENTO_PORCENTAJE
-                              ? 100
-                              : undefined
-                          }
                           className="h-12"
-                          {...field}
+                          value={field.value}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                       <FormMessage />
@@ -479,19 +474,13 @@ export function FormularioPromocionDialog({
                       <FormItem>
                         <FormLabel>Pedido mínimo ({simbolo})</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={0.5}
+                          <InputNumerico
+                            variante="precio"
                             placeholder="Opcional"
                             className="h-12"
-                            {...field}
-                            value={field.value ?? ""}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value ? Number(e.target.value) : null,
-                              )
-                            }
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowNull
                           />
                         </FormControl>
                         <FormMessage />
@@ -510,18 +499,13 @@ export function FormularioPromocionDialog({
                   <FormItem>
                     <FormLabel>Precio del combo ({simbolo})</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <InputNumerico
+                        variante="precio"
                         min={0.01}
-                        step={0.5}
                         className="h-12"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value ? Number(e.target.value) : null,
-                          )
-                        }
+                        value={field.value}
+                        onChange={field.onChange}
+                        allowNull
                       />
                     </FormControl>
                     <FormMessage />
@@ -538,18 +522,13 @@ export function FormularioPromocionDialog({
                   <FormItem>
                     <FormLabel>Pedido mínimo ({simbolo})</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <InputNumerico
+                        variante="precio"
                         min={0.01}
-                        step={0.5}
                         className="h-12"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value ? Number(e.target.value) : null,
-                          )
-                        }
+                        value={field.value}
+                        onChange={field.onChange}
+                        allowNull
                       />
                     </FormControl>
                     <FormMessage />

@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { InputNumerico } from "@/components/ui/input-numerico";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Award, CheckCircle, DollarSign, Loader2, X } from "lucide-react";
@@ -296,20 +297,14 @@ export function CobroDialog({
                       <FormItem>
                         <FormLabel>Monto recibido ({simbolo})</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
+                          <InputNumerico
+                            variante="precio"
                             min={totalFinal}
-                            step={0.5}
                             placeholder={`Mínimo ${formatCurrency(totalFinal)}`}
                             className="h-12 rounded-xl"
-                            value={field.value ?? ""}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value === ""
-                                  ? undefined
-                                  : parseFloat(e.target.value),
-                              )
-                            }
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowNull
                           />
                         </FormControl>
                         <FormMessage />

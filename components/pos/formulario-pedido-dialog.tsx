@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { InputNumerico } from "@/components/ui/input-numerico";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -542,16 +543,11 @@ export function FormularioPedidoDialog({
                     <FormItem>
                       <FormLabel>Costo de delivery ({simbolo})</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          step={0.5}
+                        <InputNumerico
+                          variante="precio"
                           className="h-12"
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
+                          value={field.value}
+                          onChange={(v) => field.onChange(v ?? 0)}
                         />
                       </FormControl>
                       <FormMessage />
