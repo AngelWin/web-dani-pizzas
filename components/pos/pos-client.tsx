@@ -185,7 +185,6 @@ export function PosClient({
             carrito={carrito}
             deliveryFee={0}
             onConfirmar={handleAbrirConfirmar}
-            promociones={promociones}
           />
         </div>
       </div>
@@ -219,7 +218,6 @@ export function PosClient({
             carrito={carrito}
             deliveryFee={0}
             onConfirmar={handleAbrirConfirmar}
-            promociones={promociones}
           />
         </SheetContent>
       </Sheet>

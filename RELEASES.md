@@ -1175,40 +1175,8 @@ Si vacia = aplica a todos los tamaños.
 
 **Cambios adicionales:**
 - `medida_id` agregado al item del carrito (`hooks/use-carrito.ts`)
-- Selector de medidas (toggle-pills) en formulario de promociones admin (filtradas por categorias de productos seleccionados)
+- Selector de medidas (toggle-pills) en formulario de promociones admin
 - Carga de medidas en `app/(dashboard)/promociones/page.tsx`
-
-### Insignias de promocion en POS (R17.2):
-
-Indicadores visuales de promocion en todo el flujo de seleccion del POS:
-
-**Catalogo de productos:**
-- Badge rojo (ej: "-50%", "2x1", "COMBO") sobre la imagen del producto
-- Borde rojo sutil en el card del producto con promo
-
-**Selector de medida/variante:**
-- Badge de promo en cada medida que tiene promocion activa
-- Precio tachado + precio con descuento al lado (ej: ~~S/. 16.00~~ **S/. 8.00**)
-
-**Configurador de pizza (paso 1: tamano):**
-- Badge en la esquina de cada medida con promo
-- Precio tachado + precio promo dentro del card de medida
-
-**Footer del configurador:**
-- Si la variante seleccionada tiene promo, muestra precio total tachado + precio con descuento
-- El descuento solo aplica al precio base de la variante, NO a los extras
-
-**Carrito + Confirmar pedido:**
-- Precio con descuento visible en el carrito lateral
-- Precio con descuento en la seccion PRODUCTOS del dialog "Confirmar pedido"
-
-**Funciones utilitarias:**
-- `detectarPromoParaVariante(promos, productoId, medidaId, precio)` — detecta la mejor promo para una variante
-- `productoTienePromo(promos, productoId)` — badge informativo para catalogo
-- `itemCoincideConPromo(promo, item)` — helper interno de coincidencia
-
-**Componente reutilizable:**
-- `InputNumerico` con variantes: entero, precio, porcentaje, cantidad (usa `step="any"` para evitar error nativo del navegador)
 
 ### Criterio de exito:
 - Crear promo "descuento_porcentaje" 40% → descuento visible en POS

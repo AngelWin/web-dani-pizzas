@@ -50,7 +50,6 @@ import {
   calcularDescuento,
   esPromocionAplicableAlCarrito,
   getDescripcionPromocion,
-  detectarPromoParaVariante,
   type ItemCarrito,
 } from "@/lib/promociones-utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -312,60 +311,33 @@ export function FormularioPedidoDialog({
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
                 Productos
               </p>
-              {carrito.items.map((item) => {
-                const promoItem = detectarPromoParaVariante(
-                  promociones,
-                  item.producto_id,
-                  item.medida_id,
-                  item.precio_base,
-                );
-                const precioExtras = item.producto_precio - item.precio_base;
-                const subtotalConPromo =
-                  promoItem && promoItem.descuento > 0
-                    ? (promoItem.precioConPromo + precioExtras) * item.cantidad
-                    : null;
-
-                return (
-                  <div
-                    key={item.key}
-                    className="flex justify-between text-sm gap-2"
-                  >
-                    <span className="flex-1 min-w-0">
-                      <span>
-                        {item.cantidad}× {item.producto_nombre}
-                        {item.variante_nombre
-                          ? ` (${item.variante_nombre})`
-                          : ""}
-                      </span>
-                      {item.sabores && item.sabores.length > 0 && (
-                        <span className="block text-xs text-muted-foreground">
-                          {item.sabores.map((s) => s.sabor_nombre).join(" · ")}
-                        </span>
-                      )}
-                      {item.acompanante && (
-                        <span className="block text-xs text-amber-600 dark:text-amber-400 font-medium">
-                          + {item.acompanante.variante_nombre}:{" "}
-                          {item.acompanante.sabor_nombre}
-                        </span>
-                      )}
+              {carrito.items.map((item) => (
+                <div
+                  key={item.key}
+                  className="flex justify-between text-sm gap-2"
+                >
+                  <span className="flex-1 min-w-0">
+                    <span>
+                      {item.cantidad}× {item.producto_nombre}
+                      {item.variante_nombre ? ` (${item.variante_nombre})` : ""}
                     </span>
-                    {subtotalConPromo !== null ? (
-                      <span className="shrink-0 flex items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground line-through">
-                          {formatCurrency(item.subtotal)}
-                        </span>
-                        <span className="font-medium text-red-600">
-                          {formatCurrency(subtotalConPromo)}
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="font-medium shrink-0">
-                        {formatCurrency(item.subtotal)}
+                    {item.sabores && item.sabores.length > 0 && (
+                      <span className="block text-xs text-muted-foreground">
+                        {item.sabores.map((s) => s.sabor_nombre).join(" · ")}
                       </span>
                     )}
-                  </div>
-                );
-              })}
+                    {item.acompanante && (
+                      <span className="block text-xs text-amber-600 dark:text-amber-400 font-medium">
+                        + {item.acompanante.variante_nombre}:{" "}
+                        {item.acompanante.sabor_nombre}
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-medium shrink-0">
+                    {formatCurrency(item.subtotal)}
+                  </span>
+                </div>
+              ))}
             </div>
 
             <Separator />
