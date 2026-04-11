@@ -49,6 +49,7 @@ import type { PromocionActivaPOS } from "@/lib/services/promociones";
 import {
   calcularDescuento,
   esPromocionAplicableAlCarrito,
+  esPromocionVigente,
   getDescripcionPromocion,
   promoAplicaATipoPedido,
   type ItemCarrito,
@@ -313,6 +314,22 @@ export function FormularioPedidoDialog({
     form,
   ]);
 
+  // E1: Limpiar promo si carrito cambia y ya no aplica
+  useEffect(() => {
+    if (!promocionSeleccionada) return;
+    const sigueAplicando = esPromocionAplicableAlCarrito(
+      promocionSeleccionada,
+      itemsParaDescuento,
+      carrito.subtotal,
+      deliveryFee,
+    );
+    if (!sigueAplicando) {
+      setPromocionSeleccionada(null);
+      toast.info("La promoción ya no aplica al carrito actual");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carrito.items.length]);
+
   // Limpiar al cerrar
   function handleClose() {
     setClienteSeleccionado(null);
@@ -323,6 +340,13 @@ export function FormularioPedidoDialog({
 
   // Garantizar que delivery_fee sea 0 para pedidos no-delivery al enviar
   async function handleSubmit(data: CrearOrdenFormValues) {
+    // E3: Validar que la promo sigue vigente al momento de confirmar
+    if (promocionSeleccionada && !esPromocionVigente(promocionSeleccionada)) {
+      toast.error("La promoción ha vencido. Se ha removido del pedido.");
+      setPromocionSeleccionada(null);
+      return;
+    }
+
     await onSubmit({
       ...data,
       delivery_fee:
@@ -693,7 +717,22 @@ export function FormularioPedidoDialog({
             {/* ── Promoción ── */}
             {promosFiltradas.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Promoción (opcional)</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Promoción (opcional)</p>
+                  {!promocionSeleccionada &&
+                    promosFiltradas.some((p) =>
+                      esPromocionAplicableAlCarrito(
+                        p,
+                        itemsParaDescuento,
+                        carrito.subtotal,
+                        deliveryFee,
+                      ),
+                    ) && (
+                      <Badge className="bg-amber-500 text-white text-[9px] px-1.5 py-0 animate-pulse">
+                        Promos disponibles
+                      </Badge>
+                    )}
+                </div>
                 {promocionSeleccionada ? (
                   <div className="flex items-center justify-between rounded-xl border border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30 px-3 py-2">
                     <div className="flex items-center gap-2">
