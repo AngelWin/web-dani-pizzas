@@ -22,6 +22,11 @@ const OrdenConfirmadaDialog = dynamic(
     ),
   { ssr: false },
 );
+
+const ComboBuilderDialog = dynamic(
+  () => import("./combo-builder-dialog").then((mod) => mod.ComboBuilderDialog),
+  { ssr: false },
+);
 import { useCarrito } from "@/hooks/use-carrito";
 import type { DeliveryServicio } from "@/lib/services/delivery-servicios";
 import { crearOrdenAction } from "@/actions/ordenes";
@@ -93,6 +98,7 @@ export function PosClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ordenConfirmada, setOrdenConfirmada] = useState<Orden | null>(null);
   const [carritoMobileOpen, setCarritoMobileOpen] = useState(false);
+  const [comboPromo, setComboPromo] = useState<PromocionActivaPOS | null>(null);
 
   const esAdmin = sucursales.length > 0;
 
@@ -128,11 +134,13 @@ export function PosClient({
   const ModeloIcon = modeloNegocio === "simple" ? Zap : Utensils;
 
   function handleSeleccionarPromo(promo: PromocionActivaPOS) {
-    // TODO: Fase C2 — abrir combo-builder-dialog para combos
-    // Por ahora: para promos de descuento, abre el dialog de confirmar con la promo pre-seleccionada
-    toast.info(
-      `Promo "${promo.nombre}" seleccionada. Agrega productos al carrito y confirma el pedido.`,
-    );
+    if (promo.tipo_promocion === "combo_precio_fijo") {
+      setComboPromo(promo);
+    } else {
+      toast.info(
+        `Promo "${promo.nombre}" seleccionada. Agrega productos al carrito y confirma el pedido.`,
+      );
+    }
   }
 
   function handleAbrirConfirmar() {
@@ -252,6 +260,21 @@ export function PosClient({
         open={ordenConfirmada !== null}
         onNuevoPedido={handleNuevoPedido}
       />
+
+      {/* Dialog de combo builder */}
+      {comboPromo && (
+        <ComboBuilderDialog
+          open={!!comboPromo}
+          onClose={() => setComboPromo(null)}
+          promo={comboPromo}
+          productos={productos}
+          onAgregarAlCarrito={(item) => {
+            carrito.agregarPromo(item);
+            setComboPromo(null);
+            toast.success(`Combo "${comboPromo.nombre}" agregado al carrito`);
+          }}
+        />
+      )}
     </div>
   );
 }
