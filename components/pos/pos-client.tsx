@@ -127,6 +127,14 @@ export function PosClient({
     modeloNegocio === "simple" ? "Modo Simple" : "Cocina Independiente";
   const ModeloIcon = modeloNegocio === "simple" ? Zap : Utensils;
 
+  function handleSeleccionarPromo(promo: PromocionActivaPOS) {
+    // TODO: Fase C2 — abrir combo-builder-dialog para combos
+    // Por ahora: para promos de descuento, abre el dialog de confirmar con la promo pre-seleccionada
+    toast.info(
+      `Promo "${promo.nombre}" seleccionada. Agrega productos al carrito y confirma el pedido.`,
+    );
+  }
+
   function handleAbrirConfirmar() {
     if (carrito.isEmpty) {
       toast.warning("Agrega productos al carrito primero");
@@ -175,6 +183,8 @@ export function PosClient({
             carrito={carrito}
             saboresPorCategoria={saboresPorCategoria}
             extrasPorCategoria={extrasPorCategoria}
+            promociones={promociones}
+            onSeleccionarPromo={handleSeleccionarPromo}
           />
         </div>
 

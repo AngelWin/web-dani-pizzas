@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, ShoppingCart, Package } from "lucide-react";
+import { Search, ShoppingCart, Package, Tag } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -24,6 +24,8 @@ import type {
   ProductoExtra,
 } from "@/lib/services/productos";
 import type { useCarrito } from "@/hooks/use-carrito";
+import type { PromocionActivaPOS } from "@/lib/services/promociones";
+import { CatalogoPromos } from "./catalogo-promos";
 
 type Categoria = { id: string; nombre: string };
 
@@ -33,6 +35,8 @@ type Props = {
   carrito: ReturnType<typeof useCarrito>;
   saboresPorCategoria: Record<string, PizzaSaborConIngredientes[]>;
   extrasPorCategoria: Record<string, ProductoExtra[]>;
+  promociones: PromocionActivaPOS[];
+  onSeleccionarPromo: (promo: PromocionActivaPOS) => void;
 };
 
 export function CatalogoProductos({
@@ -41,10 +45,15 @@ export function CatalogoProductos({
   carrito,
   saboresPorCategoria,
   extrasPorCategoria,
+  promociones,
+  onSeleccionarPromo,
 }: Props) {
   const { formatCurrency } = useCurrency();
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState<string | null>(null);
+  const [vistaActiva, setVistaActiva] = useState<"productos" | "promos">(
+    "productos",
+  );
   const [productoParaVariante, setProductoParaVariante] =
     useState<ProductoPOS | null>(null);
   const [productoParaConfigurar, setProductoParaConfigurar] =
@@ -100,32 +109,65 @@ export function CatalogoProductos({
 
       {/* Filtro por categoría — scroll horizontal en mobile */}
       <div className="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-none">
-        <Button
-          variant={categoriaActiva === null ? "default" : "outline"}
-          size="sm"
-          className="h-9 shrink-0"
-          onClick={() => setCategoriaActiva(null)}
-        >
-          Todos
-        </Button>
-        {categorias.map((cat) => (
+        {/* Tab Ofertas */}
+        {promociones.length > 0 && (
           <Button
-            key={cat.id}
-            variant={categoriaActiva === cat.id ? "default" : "outline"}
+            variant={vistaActiva === "promos" ? "default" : "outline"}
             size="sm"
-            className="h-9 shrink-0"
+            className={cn(
+              "h-9 shrink-0 gap-1.5",
+              vistaActiva === "promos" &&
+                "bg-red-500 hover:bg-red-600 text-white",
+            )}
             onClick={() =>
-              setCategoriaActiva(cat.id === categoriaActiva ? null : cat.id)
+              setVistaActiva((v) => (v === "promos" ? "productos" : "promos"))
             }
           >
-            {cat.nombre}
+            <Tag className="h-3.5 w-3.5" />
+            Ofertas
+            <Badge className="ml-0.5 bg-white/20 text-white text-[9px] px-1.5 py-0">
+              {promociones.length}
+            </Badge>
           </Button>
-        ))}
+        )}
+
+        {/* Categorías (solo si estamos en vista productos) */}
+        {vistaActiva === "productos" && (
+          <>
+            <Button
+              variant={categoriaActiva === null ? "default" : "outline"}
+              size="sm"
+              className="h-9 shrink-0"
+              onClick={() => setCategoriaActiva(null)}
+            >
+              Todos
+            </Button>
+            {categorias.map((cat) => (
+              <Button
+                key={cat.id}
+                variant={categoriaActiva === cat.id ? "default" : "outline"}
+                size="sm"
+                className="h-9 shrink-0"
+                onClick={() =>
+                  setCategoriaActiva(cat.id === categoriaActiva ? null : cat.id)
+                }
+              >
+                {cat.nombre}
+              </Button>
+            ))}
+          </>
+        )}
       </div>
 
-      {/* Grid de productos */}
+      {/* Vista de promos o productos */}
       <div className="flex-1 overflow-y-auto">
-        {productosFiltrados.length === 0 ? (
+        {vistaActiva === "promos" ? (
+          <CatalogoPromos
+            promociones={promociones}
+            productos={productos}
+            onSeleccionarPromo={onSeleccionarPromo}
+          />
+        ) : productosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <ShoppingCart className="h-10 w-10 mb-2 opacity-30" />
             <p>No hay productos disponibles</p>
