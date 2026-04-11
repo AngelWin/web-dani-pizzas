@@ -1220,7 +1220,7 @@ Si vacia = aplica a todos los tamaños.
 
 ## Release 19: Promociones en POS — Venta y Visualizacion
 
-**Estado:** [ ] En desarrollo
+**Estado:** [x] Completado
 **Dependencia:** Release 17 (Promociones Mejoradas)
 **Objetivo:** Transformar las promociones de un simple descuento al confirmar pedido a una experiencia de venta completa en el POS. El cajero ve las promos, las selecciona, configura los productos incluidos, y se agregan al carrito como un item agrupado.
 
@@ -1235,33 +1235,33 @@ Si vacia = aplica a todos los tamaños.
 ### Fases de implementacion:
 
 **FASE A — Tipo de pedido + campo modificable (fundacion):**
-- [ ] Migracion DB: `tipos_pedido text[]` + `permite_modificaciones boolean` en `promociones`
-- [ ] Utils: `promoAplicaATipoPedido()` en `promociones-utils.ts`
-- [ ] Validaciones + Actions + Servicio: campos nuevos
-- [ ] Formulario admin: toggle-pills tipo pedido + switch modificable
-- [ ] POS: filtrar promos por tipo pedido, limpiar si cambia, auto-seleccionar si 1 tipo
+- [x] Migracion DB: `tipos_pedido text[]` + `permite_modificaciones boolean` en `promociones`
+- [x] Utils: `promoAplicaATipoPedido()` en `promociones-utils.ts`
+- [x] Validaciones + Actions + Servicio: campos nuevos
+- [x] Formulario admin: toggle-pills tipo pedido + switch modificable
+- [x] POS: filtrar promos por tipo pedido, limpiar si cambia, auto-seleccionar si 1 tipo
 
 **FASE B — Item de promo agrupado en carrito:**
-- [ ] Nuevo tipo `ItemPromoCarrito` en `use-carrito.ts`
-- [ ] Hook: `agregarPromo()`, `eliminarPromo()`, subtotal con promos
-- [ ] Carrito UI: card agrupada con productos, precio tachado, boton quitar combo
-- [ ] Sincronizar items promo con formulario de pedido
+- [x] Nuevo tipo `ItemPromoCarrito` en `use-carrito.ts`
+- [x] Hook: `agregarPromo()`, `eliminarPromo()`, subtotal con promos
+- [x] Carrito UI: card agrupada con productos, precio tachado, boton quitar combo
+- [x] Sincronizar items promo con formulario de pedido
 
 **FASE C — Tab "Ofertas" + Flujo de seleccion:**
-- [ ] Componente `catalogo-promos.tsx`: cards de promos con acciones por tipo
-- [ ] Componente `combo-builder-dialog.tsx`: flujo paso a paso para armar combos
-- [ ] Vista filtrada en catalogo cuando hay promo de descuento activa
-- [ ] Tab "Ofertas" en catalogo con contador
+- [x] Componente `catalogo-promos.tsx`: cards de promos con acciones por tipo
+- [x] Componente `combo-builder-dialog.tsx`: flujo paso a paso para armar combos
+- [x] Vista filtrada en catalogo cuando hay promo de descuento activa
+- [x] Tab "Ofertas" en catalogo con contador
 
 **FASE D — Visibilidad en ordenes y cobro:**
-- [ ] Orden confirmada: linea de descuento
-- [ ] Tarjeta de orden: badge/texto de descuento
-- [ ] Cobro dialog: linea "Descuento promocion"
+- [x] Orden confirmada: linea de descuento
+- [x] Tarjeta de orden: badge/texto de descuento
+- [x] Cobro dialog: linea "Descuento promocion"
 
 **FASE E — Validaciones y pulido:**
-- [ ] Limpiar promo si carrito cambia y ya no aplica
-- [ ] Auto-sugerencia "Combo disponible!" si carrito cumple condiciones
-- [ ] Validar vigencia de promo al confirmar
+- [x] Limpiar promo si carrito cambia y ya no aplica
+- [x] Auto-sugerencia badge "Promos disponibles" si carrito cumple condiciones
+- [x] Validar vigencia de promo al confirmar
 
 ### Ejemplo de promo en carrito:
 ```
