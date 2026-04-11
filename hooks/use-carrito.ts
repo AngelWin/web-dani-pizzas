@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { ProductoPOS } from "@/lib/services/ventas";
+import type { TipoPromocion } from "@/lib/constants";
 
 export interface SaborOrden {
   sabor_id: string;
@@ -41,6 +42,28 @@ export type ItemCarrito = {
   acompanante?: AcompananteOrden;
 };
 
+export type ItemPromoCarrito = {
+  key: string;
+  tipo: "promo";
+  promocion_id: string;
+  promo_nombre: string;
+  promo_tipo: TipoPromocion;
+  precio_promo: number;
+  precio_original: number;
+  descuento: number;
+  items: {
+    producto_id: string;
+    producto_nombre: string;
+    variante_id: string | null;
+    variante_nombre: string | null;
+    medida_id: string | null;
+    precio_unitario: number;
+    sabores?: SaborOrden[];
+    extras?: ExtraOrden[];
+    acompanante?: AcompananteOrden;
+  }[];
+};
+
 function buildKey(
   productoId: string,
   varianteId: string | null,
@@ -69,6 +92,7 @@ function calcularProporciones(numSabores: number): string {
 
 export function useCarrito() {
   const [items, setItems] = useState<ItemCarrito[]>([]);
+  const [promoItems, setPromoItems] = useState<ItemPromoCarrito[]>([]);
 
   // Para productos sin sabores (bebidas, postres, etc.) — flujo original
   const agregarItem = useCallback(
@@ -188,22 +212,43 @@ export function useCarrito() {
     setItems((prev) => prev.filter((i) => i.key !== key));
   }, []);
 
-  const limpiarCarrito = useCallback(() => {
-    setItems([]);
+  const agregarPromo = useCallback((data: ItemPromoCarrito) => {
+    setPromoItems((prev) => [...prev, data]);
   }, []);
 
-  const subtotal = items.reduce((acc, i) => acc + i.subtotal, 0);
-  const totalItems = items.reduce((acc, i) => acc + i.cantidad, 0);
+  const eliminarPromo = useCallback((key: string) => {
+    setPromoItems((prev) => prev.filter((p) => p.key !== key));
+  }, []);
+
+  const limpiarCarrito = useCallback(() => {
+    setItems([]);
+    setPromoItems([]);
+  }, []);
+
+  const subtotalItems = items.reduce((acc, i) => acc + i.subtotal, 0);
+  const subtotalPromos = promoItems.reduce((acc, p) => acc + p.precio_promo, 0);
+  const subtotal = subtotalItems + subtotalPromos;
+  const totalItems =
+    items.reduce((acc, i) => acc + i.cantidad, 0) +
+    promoItems.reduce((acc, p) => acc + p.items.length, 0);
+  const totalDescuentoPromos = promoItems.reduce(
+    (acc, p) => acc + p.descuento,
+    0,
+  );
 
   return {
     items,
+    promoItems,
     agregarItem,
     agregarPizza,
+    agregarPromo,
     cambiarCantidad,
     eliminarItem,
+    eliminarPromo,
     limpiarCarrito,
     subtotal,
     totalItems,
-    isEmpty: items.length === 0,
+    totalDescuentoPromos,
+    isEmpty: items.length === 0 && promoItems.length === 0,
   };
 }

@@ -142,20 +142,36 @@ export function FormularioPedidoDialog({
           deliveryServicios.find((s) => s.tipo === "propio")?.precio_base ?? 0,
         delivery_address: "",
         delivery_referencia: "",
-        items: carrito.items.map((i) => ({
-          producto_id: i.producto_id,
-          variante_id: i.variante_id,
-          cantidad: i.cantidad,
-          producto_nombre: i.producto_nombre,
-          variante_nombre: i.variante_nombre,
-          precio_unitario: i.producto_precio,
-          subtotal: i.subtotal,
-          sabores: i.sabores ?? null,
-          extras: i.extras ?? null,
-          acompanante: i.acompanante ?? null,
-        })),
+        items: [
+          ...carrito.items.map((i) => ({
+            producto_id: i.producto_id,
+            variante_id: i.variante_id,
+            cantidad: i.cantidad,
+            producto_nombre: i.producto_nombre,
+            variante_nombre: i.variante_nombre,
+            precio_unitario: i.producto_precio,
+            subtotal: i.subtotal,
+            sabores: i.sabores ?? null,
+            extras: i.extras ?? null,
+            acompanante: i.acompanante ?? null,
+          })),
+          ...carrito.promoItems.flatMap((p) =>
+            p.items.map((item) => ({
+              producto_id: item.producto_id,
+              variante_id: item.variante_id,
+              cantidad: 1,
+              producto_nombre: item.producto_nombre,
+              variante_nombre: item.variante_nombre,
+              precio_unitario: item.precio_unitario,
+              subtotal: item.precio_unitario,
+              sabores: item.sabores ?? null,
+              extras: item.extras ?? null,
+              acompanante: item.acompanante ?? null,
+            })),
+          ),
+        ],
         promocion_id: null,
-        descuento: 0,
+        descuento: carrito.totalDescuentoPromos,
       });
       setClienteSeleccionado(null);
       setPromocionSeleccionada(null);
@@ -174,23 +190,38 @@ export function FormularioPedidoDialog({
     form.setValue("cliente_id", cliente?.id ?? null);
   }
 
-  // Sincronizar items del carrito
+  // Sincronizar items del carrito (normales + items de promos aplanados)
   useEffect(() => {
-    form.setValue(
-      "items",
-      carrito.items.map((i) => ({
-        producto_id: i.producto_id,
-        variante_id: i.variante_id,
-        cantidad: i.cantidad,
-        producto_nombre: i.producto_nombre,
-        variante_nombre: i.variante_nombre,
-        precio_unitario: i.producto_precio,
-        subtotal: i.subtotal,
-        sabores: i.sabores ?? null,
-        extras: i.extras ?? null,
-        acompanante: i.acompanante ?? null,
+    const itemsNormales = carrito.items.map((i) => ({
+      producto_id: i.producto_id,
+      variante_id: i.variante_id,
+      cantidad: i.cantidad,
+      producto_nombre: i.producto_nombre,
+      variante_nombre: i.variante_nombre,
+      precio_unitario: i.producto_precio,
+      subtotal: i.subtotal,
+      sabores: i.sabores ?? null,
+      extras: i.extras ?? null,
+      acompanante: i.acompanante ?? null,
+    }));
+
+    // Items de promos aplanados como items individuales
+    const itemsPromo = carrito.promoItems.flatMap((p) =>
+      p.items.map((item) => ({
+        producto_id: item.producto_id,
+        variante_id: item.variante_id,
+        cantidad: 1,
+        producto_nombre: item.producto_nombre,
+        variante_nombre: item.variante_nombre,
+        precio_unitario: item.precio_unitario,
+        subtotal: item.precio_unitario,
+        sabores: item.sabores ?? null,
+        extras: item.extras ?? null,
+        acompanante: item.acompanante ?? null,
       })),
     );
+
+    form.setValue("items", [...itemsNormales, ...itemsPromo]);
   }, [carrito.items, form]);
 
   // Filtrar promos por tipo de pedido y limpiar si ya no aplica
@@ -259,9 +290,10 @@ export function FormularioPedidoDialog({
   }));
 
   useEffect(() => {
+    const descuentoPromoCarrito = carrito.totalDescuentoPromos;
     if (!promocionSeleccionada) {
       form.setValue("promocion_id", null);
-      form.setValue("descuento", 0);
+      form.setValue("descuento", descuentoPromoCarrito);
       return;
     }
     const montoDescuento = calcularDescuento(
@@ -271,9 +303,15 @@ export function FormularioPedidoDialog({
       deliveryFee,
     );
     form.setValue("promocion_id", promocionSeleccionada.id);
-    form.setValue("descuento", montoDescuento);
+    form.setValue("descuento", montoDescuento + descuentoPromoCarrito);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [promocionSeleccionada, carrito.subtotal, deliveryFee, form]);
+  }, [
+    promocionSeleccionada,
+    carrito.subtotal,
+    carrito.totalDescuentoPromos,
+    deliveryFee,
+    form,
+  ]);
 
   // Limpiar al cerrar
   function handleClose() {

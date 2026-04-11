@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingCart, Tag } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/hooks/use-currency";
 import type { useCarrito } from "@/hooks/use-carrito";
 
@@ -127,6 +128,72 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
             </div>
           ))
         )}
+
+        {/* Items de promo agrupados */}
+        {carrito.promoItems.map((promo) => (
+          <div
+            key={promo.key}
+            className="rounded-xl border border-green-300 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20 p-2.5 space-y-1.5"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Tag className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />
+                <p className="text-sm font-semibold text-green-700 dark:text-green-400 truncate">
+                  {promo.promo_nombre}
+                </p>
+              </div>
+              <button
+                onClick={() => carrito.eliminarPromo(promo.key)}
+                className="text-muted-foreground hover:text-destructive transition-colors p-1 shrink-0"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* Productos del combo */}
+            <div className="space-y-0.5">
+              {promo.items.map((item, idx) => (
+                <div key={idx} className="text-xs text-muted-foreground">
+                  <span>• {item.producto_nombre}</span>
+                  {item.variante_nombre && (
+                    <span className="text-foreground/60">
+                      {" "}
+                      ({item.variante_nombre})
+                    </span>
+                  )}
+                  {item.sabores && item.sabores.length > 0 && (
+                    <span className="block pl-3 text-foreground/50">
+                      {item.sabores.map((s) => s.sabor_nombre).join(" · ")}
+                    </span>
+                  )}
+                  {item.extras && item.extras.length > 0 && (
+                    <span className="block pl-3 text-primary/60">
+                      +{item.extras.map((e) => e.nombre).join(", ")}
+                    </span>
+                  )}
+                  {item.acompanante && (
+                    <span className="block pl-3 text-amber-600/70 dark:text-amber-400/70">
+                      + {item.acompanante.variante_nombre}:{" "}
+                      {item.acompanante.sabor_nombre}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Precio */}
+            <div className="flex items-center justify-end gap-2">
+              {promo.descuento > 0 && (
+                <span className="text-xs text-muted-foreground line-through">
+                  {formatCurrency(promo.precio_original)}
+                </span>
+              )}
+              <span className="text-sm font-bold text-green-700 dark:text-green-400">
+                {formatCurrency(promo.precio_promo)}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Totales */}
