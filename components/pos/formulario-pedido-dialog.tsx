@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -50,6 +50,7 @@ import {
   calcularDescuento,
   esPromocionAplicableAlCarrito,
   getDescripcionPromocion,
+  promoAplicaATipoPedido,
   type ItemCarrito,
 } from "@/lib/promociones-utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -192,6 +193,21 @@ export function FormularioPedidoDialog({
     );
   }, [carrito.items, form]);
 
+  // Filtrar promos por tipo de pedido y limpiar si ya no aplica
+  const promosFiltradas = useMemo(
+    () => promociones.filter((p) => promoAplicaATipoPedido(p, tipoPedido)),
+    [promociones, tipoPedido],
+  );
+
+  useEffect(() => {
+    if (
+      promocionSeleccionada &&
+      !promoAplicaATipoPedido(promocionSeleccionada, tipoPedido)
+    ) {
+      setPromocionSeleccionada(null);
+    }
+  }, [tipoPedido, promocionSeleccionada]);
+
   // Limpiar mesa al cambiar tipo de pedido
   useEffect(() => {
     if (tipoPedido !== TIPO_PEDIDO.EN_LOCAL) {
@@ -218,6 +234,20 @@ export function FormularioPedidoDialog({
   }, [tipoPedido, deliveryMethod, deliveryServicios, form]);
 
   // Sincronizar promoción seleccionada → form (descuento)
+  // Si la promo restringe a 1 solo tipo de pedido, auto-seleccionar
+  useEffect(() => {
+    if (!promocionSeleccionada) return;
+    const tp = promocionSeleccionada.tipos_pedido;
+    if (tp && tp.length === 1 && form.getValues("tipo_pedido") !== tp[0]) {
+      form.setValue(
+        "tipo_pedido",
+        tp[0] as "local" | "delivery" | "para_llevar",
+      );
+    }
+  }, [promocionSeleccionada, form]);
+
+  const tipoPedidoBloqueado = promocionSeleccionada?.tipos_pedido?.length === 1;
+
   // Items del carrito en formato para cálculo de descuento
   const itemsParaDescuento: ItemCarrito[] = carrito.items.map((i) => ({
     producto_id: i.producto_id,
@@ -352,6 +382,7 @@ export function FormularioPedidoDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={tipoPedidoBloqueado}
                   >
                     <FormControl>
                       <SelectTrigger className="h-12">
@@ -372,6 +403,12 @@ export function FormularioPedidoDialog({
                       )}
                     </SelectContent>
                   </Select>
+                  {tipoPedidoBloqueado && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      La promoción seleccionada solo aplica para este tipo de
+                      pedido
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -616,7 +653,7 @@ export function FormularioPedidoDialog({
             />
 
             {/* ── Promoción ── */}
-            {promociones.length > 0 && (
+            {promosFiltradas.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Promoción (opcional)</p>
                 {promocionSeleccionada ? (
@@ -650,7 +687,7 @@ export function FormularioPedidoDialog({
                   </div>
                 ) : (
                   <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                    {promociones.map((p) => {
+                    {promosFiltradas.map((p) => {
                       const aplicable = esPromocionAplicableAlCarrito(
                         p,
                         itemsParaDescuento,

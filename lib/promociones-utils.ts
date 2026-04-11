@@ -15,9 +15,20 @@ export type PromocionBase = {
   precio_combo: number | null;
   productos_ids: string[];
   medidas_ids: string[];
+  tipos_pedido?: string[] | null;
+  permite_modificaciones?: boolean;
   // Backward compat
   tipo_descuento: string;
 };
+
+/** Verifica si una promoción aplica a un tipo de pedido */
+export function promoAplicaATipoPedido(
+  promo: PromocionBase,
+  tipoPedido: string,
+): boolean {
+  if (!promo.tipos_pedido || promo.tipos_pedido.length === 0) return true;
+  return promo.tipos_pedido.includes(tipoPedido);
+}
 
 export type ItemCarrito = {
   producto_id: string;

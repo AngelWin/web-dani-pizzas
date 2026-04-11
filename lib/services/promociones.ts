@@ -197,6 +197,8 @@ type CreatePromocionData = {
   productos_ids?: string[];
   sucursales_ids?: string[];
   medidas_ids?: string[];
+  tipos_pedido?: string[] | null;
+  permite_modificaciones?: boolean;
 };
 
 export async function createPromocion(

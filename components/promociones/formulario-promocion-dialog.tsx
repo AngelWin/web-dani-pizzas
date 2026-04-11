@@ -126,6 +126,8 @@ export function FormularioPromocionDialog({
       productos_ids: [],
       sucursales_ids: [],
       medidas_ids: [],
+      tipos_pedido: null,
+      permite_modificaciones: true,
     },
   });
 
@@ -148,6 +150,10 @@ export function FormularioPromocionDialog({
         productos_ids: promocion.productos_ids,
         sucursales_ids: promocion.sucursales_ids,
         medidas_ids: promocion.medidas_ids,
+        tipos_pedido: promocion.tipos_pedido as
+          | ("local" | "delivery" | "para_llevar")[]
+          | null,
+        permite_modificaciones: promocion.permite_modificaciones ?? true,
       });
       setProductosSeleccionados(
         productos.filter((p) => promocion.productos_ids.includes(p.id)),
@@ -798,6 +804,80 @@ export function FormularioPromocionDialog({
                   </div>
                 </div>
               )}
+
+            {/* ── Tipos de pedido aplicables ── */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Tipos de pedido</p>
+              <p className="text-xs text-muted-foreground">
+                {(() => {
+                  const tp = form.watch("tipos_pedido");
+                  if (!tp || tp.length === 0)
+                    return "Aplica a todos los tipos de pedido";
+                  return `Solo para: ${tp.map((t) => (t === "local" ? "En local" : t === "delivery" ? "Delivery" : "Recojo")).join(", ")}`;
+                })()}
+              </p>
+              <div className="flex gap-1.5 flex-wrap">
+                {(
+                  [
+                    { value: "local", label: "En local" },
+                    { value: "delivery", label: "Delivery" },
+                    { value: "para_llevar", label: "Recojo" },
+                  ] as const
+                ).map((tp) => {
+                  const tiposPedido = form.watch("tipos_pedido") ?? [];
+                  const activo = tiposPedido.includes(tp.value);
+                  return (
+                    <button
+                      key={tp.value}
+                      type="button"
+                      onClick={() => {
+                        const actual = form.getValues("tipos_pedido") ?? [];
+                        const nuevo = activo
+                          ? actual.filter((v) => v !== tp.value)
+                          : [...actual, tp.value];
+                        form.setValue(
+                          "tipos_pedido",
+                          nuevo.length > 0 ? nuevo : null,
+                        );
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        activo
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {tp.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Permite modificaciones ── */}
+            <FormField
+              control={form.control}
+              name="permite_modificaciones"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-xl border p-3">
+                  <div>
+                    <FormLabel className="text-sm font-medium">
+                      Permite modificaciones
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      {field.value
+                        ? "El cajero puede elegir sabores, extras y medida"
+                        : "Productos fijos — se agregan tal cual al carrito"}
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
             <Separator />
 

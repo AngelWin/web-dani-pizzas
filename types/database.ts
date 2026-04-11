@@ -1033,9 +1033,11 @@ export type Database = {
           id: string
           nombre: string
           pedido_minimo: number | null
+          permite_modificaciones: boolean
           precio_combo: number | null
           tipo_descuento: string
           tipo_promocion: Database["public"]["Enums"]["tipo_promocion"]
+          tipos_pedido: string[] | null
           updated_at: string | null
           valor_descuento: number
         }
@@ -1051,9 +1053,11 @@ export type Database = {
           id?: string
           nombre: string
           pedido_minimo?: number | null
+          permite_modificaciones?: boolean
           precio_combo?: number | null
           tipo_descuento: string
           tipo_promocion: Database["public"]["Enums"]["tipo_promocion"]
+          tipos_pedido?: string[] | null
           updated_at?: string | null
           valor_descuento: number
         }
@@ -1069,9 +1073,11 @@ export type Database = {
           id?: string
           nombre?: string
           pedido_minimo?: number | null
+          permite_modificaciones?: boolean
           precio_combo?: number | null
           tipo_descuento?: string
           tipo_promocion?: Database["public"]["Enums"]["tipo_promocion"]
+          tipos_pedido?: string[] | null
           updated_at?: string | null
           valor_descuento?: number
         }

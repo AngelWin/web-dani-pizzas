@@ -24,6 +24,7 @@ R9 (Sucursales) + R5a (POS) + R5b/R5c (Ordenes) -> R15 (Gestion de Mesas)
                                                         -> R16 (Reservas de Mesas) [pendiente]
 R7 (Promociones) + R9 (Sucursales) + R5a (POS) -> R17 (Promociones Mejoradas)
                                                         -> R18 (Promos por Membresia) [pendiente]
+                                                        -> R19 (Promos en POS: Venta y Visualizacion)
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -1214,6 +1215,97 @@ Si vacia = aplica a todos los tamaños.
 - La tabla `membresias_niveles` ya existe (R8) con: nombre, puntos_requeridos, descuento_porcentaje
 - La tabla `clientes` tiene `fecha_nacimiento` para la promo de cumpleanos
 - Se necesita nueva tabla `promocion_niveles` o columna `niveles_membresia_ids` en promociones
+
+---
+
+## Release 19: Promociones en POS — Venta y Visualizacion
+
+**Estado:** [ ] En desarrollo
+**Dependencia:** Release 17 (Promociones Mejoradas)
+**Objetivo:** Transformar las promociones de un simple descuento al confirmar pedido a una experiencia de venta completa en el POS. El cajero ve las promos, las selecciona, configura los productos incluidos, y se agregan al carrito como un item agrupado.
+
+### Decisiones de diseno:
+- **Tab "Ofertas"** en catalogo POS — pestana separada para ver/ofrecer promos
+- **Combo como item agrupado** en carrito — no productos sueltos. Quitar = quitar todo el combo
+- **Flujo guiado** para combos — elegir variantes/sabores/extras de cada producto
+- **Promos modificables o fijas** — opcion al crear: modificable (cajero elige) o fija (predefinida)
+- **Descuento pre-filtra** catalogo — al activar promo de descuento, solo se ven productos elegibles
+- **Tipos de pedido** — cada promo puede restringirse a Local, Delivery, Recojo o Todos
+
+### Fases de implementacion:
+
+**FASE A — Tipo de pedido + campo modificable (fundacion):**
+- [ ] Migracion DB: `tipos_pedido text[]` + `permite_modificaciones boolean` en `promociones`
+- [ ] Utils: `promoAplicaATipoPedido()` en `promociones-utils.ts`
+- [ ] Validaciones + Actions + Servicio: campos nuevos
+- [ ] Formulario admin: toggle-pills tipo pedido + switch modificable
+- [ ] POS: filtrar promos por tipo pedido, limpiar si cambia, auto-seleccionar si 1 tipo
+
+**FASE B — Item de promo agrupado en carrito:**
+- [ ] Nuevo tipo `ItemPromoCarrito` en `use-carrito.ts`
+- [ ] Hook: `agregarPromo()`, `eliminarPromo()`, subtotal con promos
+- [ ] Carrito UI: card agrupada con productos, precio tachado, boton quitar combo
+- [ ] Sincronizar items promo con formulario de pedido
+
+**FASE C — Tab "Ofertas" + Flujo de seleccion:**
+- [ ] Componente `catalogo-promos.tsx`: cards de promos con acciones por tipo
+- [ ] Componente `combo-builder-dialog.tsx`: flujo paso a paso para armar combos
+- [ ] Vista filtrada en catalogo cuando hay promo de descuento activa
+- [ ] Tab "Ofertas" en catalogo con contador
+
+**FASE D — Visibilidad en ordenes y cobro:**
+- [ ] Orden confirmada: linea de descuento
+- [ ] Tarjeta de orden: badge/texto de descuento
+- [ ] Cobro dialog: linea "Descuento promocion"
+
+**FASE E — Validaciones y pulido:**
+- [ ] Limpiar promo si carrito cambia y ya no aplica
+- [ ] Auto-sugerencia "Combo disponible!" si carrito cumple condiciones
+- [ ] Validar vigencia de promo al confirmar
+
+### Ejemplo de promo en carrito:
+```
+PROMO: Combo Familiar           S/. 49.90
+  * Pizza Familiar (Suprema)
+    sin Aceitunas + Extra Queso
+    + Mini: Americana
+  * Inca Kola 1 Litro
+  [Quitar combo]
+-----
+Cerveza Corona (Personal)       S/.  5.00
+-----
+Subtotal                        S/. 54.90
+```
+
+### Archivos nuevos:
+- `components/pos/catalogo-promos.tsx`
+- `components/pos/combo-builder-dialog.tsx`
+
+### Archivos a modificar:
+- `types/database.ts` — campos nuevos en promociones
+- `lib/promociones-utils.ts` — tipo pedido + funciones promo
+- `lib/validations/promociones.ts` — campos nuevos
+- `lib/services/promociones.ts` — campos nuevos
+- `actions/promociones.ts` — pasar campos nuevos
+- `hooks/use-carrito.ts` — tipo ItemPromoCarrito + funciones
+- `components/pos/carrito.tsx` — render item agrupado
+- `components/pos/catalogo-productos.tsx` — tab Ofertas + vista filtrada
+- `components/pos/pos-client.tsx` — pasar promos a subcomponentes
+- `components/pos/formulario-pedido-dialog.tsx` — filtro tipo pedido + sync promo items
+- `components/promociones/formulario-promocion-dialog.tsx` — campos nuevos admin
+- `components/pos/orden-confirmada-dialog.tsx` — desglose descuento
+- `components/ordenes/tarjeta-orden.tsx` — badge descuento
+- `components/ordenes/cobro-dialog.tsx` — linea descuento promo
+
+### Criterio de exito:
+- Tab "Ofertas" en POS muestra promos activas con cards informativas
+- Combo se agrega como 1 item agrupado al carrito
+- Combo fijo se agrega directo; modificable pasa por flujo de seleccion
+- Promo de descuento filtra catalogo a productos elegibles con precio tachado
+- Promo restringida a tipo pedido no aparece en otro tipo
+- Descuento visible en orden confirmada, tarjeta orden y cobro
+- Quitar combo del carrito elimina todos sus productos
+- Build pasa sin errores
 
 ---
 

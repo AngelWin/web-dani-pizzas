@@ -47,6 +47,14 @@ export const promocionSchema = z
     productos_ids: z.array(z.string().uuid()).optional().default([]),
     sucursales_ids: z.array(z.string().uuid()).optional().default([]),
     medidas_ids: z.array(z.string().uuid()).optional().default([]),
+    // Tipo de pedido aplicable
+    tipos_pedido: z
+      .array(z.enum(["local", "delivery", "para_llevar"]))
+      .nullable()
+      .optional()
+      .default(null),
+    // Permite modificaciones (sabores, extras) al agregar desde POS
+    permite_modificaciones: z.boolean().optional().default(true),
   })
   .superRefine((data, ctx) => {
     // Fecha fin >= fecha inicio

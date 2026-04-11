@@ -37,6 +37,9 @@ function buildPromoData(parsed: ReturnType<typeof promocionSchema.safeParse>) {
     productos_ids: d.productos_ids ?? [],
     sucursales_ids: d.sucursales_ids ?? [],
     medidas_ids: d.medidas_ids ?? [],
+    tipos_pedido:
+      d.tipos_pedido && d.tipos_pedido.length > 0 ? d.tipos_pedido : null,
+    permite_modificaciones: d.permite_modificaciones ?? true,
   };
 }
 
