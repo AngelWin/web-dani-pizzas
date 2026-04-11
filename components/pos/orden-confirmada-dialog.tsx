@@ -90,6 +90,14 @@ export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
                 {formatCurrency(orden.subtotal)}
               </span>
             </div>
+            {orden.descuento > 0 && (
+              <div className="flex items-center justify-between text-sm text-green-600 dark:text-green-400">
+                <span>Descuento</span>
+                <span className="font-medium">
+                  - {formatCurrency(orden.descuento)}
+                </span>
+              </div>
+            )}
             {tieneDelivery && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Delivery</span>

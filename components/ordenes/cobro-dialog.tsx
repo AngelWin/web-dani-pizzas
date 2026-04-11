@@ -183,6 +183,13 @@ export function CobroDialog({
                 <span>{formatCurrency(orden.subtotal)}</span>
               </div>
 
+              {orden.descuento > 0 && (
+                <div className="flex justify-between text-green-600 dark:text-green-400">
+                  <span>Descuento promoción</span>
+                  <span>− {formatCurrency(orden.descuento)}</span>
+                </div>
+              )}
+
               {orden.delivery_fee > 0 && (
                 <div className="flex justify-between text-muted-foreground">
                   <span>Delivery</span>

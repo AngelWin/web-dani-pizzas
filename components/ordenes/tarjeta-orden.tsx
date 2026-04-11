@@ -296,6 +296,11 @@ export function TarjetaOrden({
             <span className="font-inter text-lg font-bold tabular-nums text-foreground">
               {formatCurrency(orden.total)}
             </span>
+            {orden.descuento > 0 && (
+              <span className="text-[11px] text-green-600 dark:text-green-400">
+                desc. -{formatCurrency(orden.descuento)}
+              </span>
+            )}
             {esDelivery && orden.delivery_fee > 0 && (
               <span className="text-[11px] text-muted-foreground">
                 inc. delivery {formatCurrency(orden.delivery_fee)}
