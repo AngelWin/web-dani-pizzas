@@ -276,35 +276,35 @@ export function ConfiguradorPizzaDialog({
                       key={v.id}
                       onClick={() => handleSelectVariante(v)}
                       className={cn(
-                        "relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 h-20 transition-all",
+                        "relative flex flex-col items-center justify-center gap-0.5 rounded-xl border p-3 min-h-24 transition-all",
                         "hover:border-primary hover:bg-primary/5 active:scale-95",
                         promoV && "ring-1 ring-red-400/50",
                       )}
                     >
                       {promoV && (
-                        <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] px-1.5 py-0 font-bold">
+                        <Badge className="absolute top-1 right-1 bg-red-500 text-white text-[9px] px-1.5 py-0 font-bold">
                           {promoV.etiqueta}
                         </Badge>
                       )}
-                      <span className="font-semibold">
+                      <span className="font-semibold text-sm">
                         {v.categoria_medidas?.nombre}
                       </span>
                       {promoV && promoV.descuento > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-muted-foreground line-through">
+                        <>
+                          <span className="text-[11px] text-muted-foreground line-through leading-none">
                             {formatCurrency(v.precio)}
                           </span>
-                          <span className="text-red-600 font-bold">
+                          <span className="text-red-600 font-bold text-sm">
                             {formatCurrency(promoV.precioConPromo)}
                           </span>
-                        </div>
+                        </>
                       ) : (
-                        <span className="text-primary font-bold">
+                        <span className="text-primary font-bold text-sm">
                           {formatCurrency(v.precio)}
                         </span>
                       )}
                       {v.categoria_medidas?.permite_combinacion && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground">
                           Combinable
                         </span>
                       )}
