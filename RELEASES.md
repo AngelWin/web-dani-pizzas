@@ -25,6 +25,7 @@ R9 (Sucursales) + R5a (POS) + R5b/R5c (Ordenes) -> R15 (Gestion de Mesas)
 R7 (Promociones) + R9 (Sucursales) + R5a (POS) -> R17 (Promociones Mejoradas)
                                                         -> R18 (Promos por Membresia) [pendiente]
                                                         -> R19 (Promos en POS: Venta y Visualizacion)
+R15 (Mesas) + R5b/R5c (Ordenes/Cobro) -> R20 (Cuenta de Mesa y Cobro Agrupado) [pendiente]
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -1306,6 +1307,57 @@ Subtotal                        S/. 54.90
 - Descuento visible en orden confirmada, tarjeta orden y cobro
 - Quitar combo del carrito elimina todos sus productos
 - Build pasa sin errores
+
+---
+
+## Release 20: Cuenta de Mesa y Cobro Agrupado (pendiente)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 15 (Gestion de Mesas) + Release 5b/5c (Ordenes/Cobro)
+**Objetivo:** Permitir ver todas las ordenes activas de una mesa agrupadas ("la cuenta") y cobrarlas en un solo pago. Cubre el escenario real de un grupo en una mesa que hace multiples pedidos y paga todo junto al final.
+
+### Contexto del negocio:
+- Un grupo en la Mesa 5 puede hacer varias ordenes: primero una pizza, luego otra ronda, una para llevar
+- Quien ordena puede ser distinto de quien paga (Ana Maria ordena, Juan Martin paga)
+- El cajero necesita ver "la cuenta de la Mesa 5" con el total acumulado
+- Hoy cada orden se cobra por separado — ineficiente para mesas con multiples pedidos
+
+### Arquitectura actual (ya correcta, no requiere cambio de schema):
+- `ordenes.mesa_id` nullable — multiples ordenes pueden apuntar a la misma mesa
+- `ordenes.cliente_id` nullable — independiente de la mesa
+- `liberarMesaSiCorresponde()` ya cuenta todas las ordenes activas antes de liberar
+- `cobrarOrdenAction()` cobra una sola orden — necesita version agrupada
+
+### Fases esperadas:
+
+**Fase 1 — Vista "Cuenta de la mesa":**
+- [ ] Filtro por mesa en /ordenes: "Ver cuenta de Mesa X"
+- [ ] Vista resumida con todas las ordenes de una mesa + total acumulado
+- [ ] Acceso desde el selector de mesas o desde la tarjeta de orden
+
+**Fase 2 — Cobro agrupado:**
+- [ ] Accion "Cobrar mesa completa": cobra todas las ordenes listas de una mesa
+- [ ] Genera 1 sola venta que agrupa los items de todas las ordenes
+- [ ] Todas las ordenes pasan a "entregada" + mesa se libera
+
+**Fase 3 — Mejoras futuras:**
+- [ ] Campo "pagado_por" en ventas (opcional, para registrar quien paga)
+- [ ] Dividir cuenta: cada comensal paga su parte de las ordenes
+
+### Diagrama de relaciones:
+```
+MESA 5
+├── Orden #1: Pizza Familiar (local) → sin cliente
+├── Orden #2: Pizza Mediana + Gaseosa (local) → sin cliente
+├── Orden #3: Pizza Familiar (para llevar) → cliente: Ana Maria
+└── COBRO AGRUPADO: Juan Martin paga las 3 ordenes → 1 sola venta
+```
+
+### Principio: La ORDEN es el centro
+- La mesa es solo una UBICACION (opcional)
+- El cliente es solo una REFERENCIA (opcional)
+- Quien ordena ≠ quien paga
+- La mesa se libera cuando TODAS sus ordenes estan pagadas/canceladas
 
 ---
 
