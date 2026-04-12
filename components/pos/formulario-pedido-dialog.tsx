@@ -227,7 +227,14 @@ export function FormularioPedidoDialog({
 
   // Filtrar promos por tipo de pedido y limpiar si ya no aplica
   const promosFiltradas = useMemo(
-    () => promociones.filter((p) => promoAplicaATipoPedido(p, tipoPedido)),
+    () =>
+      promociones.filter(
+        (p) =>
+          promoAplicaATipoPedido(p, tipoPedido) &&
+          // Excluir promos que ya se aplican automáticamente por item (R17.2)
+          p.tipo_promocion !== "descuento_porcentaje" &&
+          p.tipo_promocion !== "descuento_fijo",
+      ),
     [promociones, tipoPedido],
   );
 
