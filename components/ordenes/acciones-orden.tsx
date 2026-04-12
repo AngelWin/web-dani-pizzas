@@ -192,7 +192,6 @@ export function AccionesOrden({
               orden={orden}
               open={cobrarOpen}
               onOpenChange={setCobrarOpen}
-              niveles={niveles}
             />
           </>
         )}

@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { InputNumerico } from "@/components/ui/input-numerico";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Award, CheckCircle, DollarSign, Loader2, X } from "lucide-react";
+import { CheckCircle, DollarSign, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cobrarOrdenAction } from "@/app/(dashboard)/ordenes/actions";
 import {
@@ -38,8 +38,6 @@ import {
 } from "@/lib/validations/ventas";
 import type { OrdenConItems } from "@/lib/services/ordenes";
 import type { Venta } from "@/lib/services/ventas";
-import type { NivelMembresia } from "@/lib/services/membresias";
-import { calcularDescuentoNivel } from "@/lib/membresias-utils";
 import { useCurrency } from "@/hooks/use-currency";
 import { METODO_PAGO } from "@/lib/constants";
 
@@ -55,21 +53,13 @@ type Props = {
   orden: OrdenConItems;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  niveles?: NivelMembresia[];
 };
 
 type Fase = "formulario" | "confirmacion";
 
-export function CobroDialog({
-  orden,
-  open,
-  onOpenChange,
-  niveles = [],
-}: Props) {
+export function CobroDialog({ orden, open, onOpenChange }: Props) {
   const [fase, setFase] = useState<Fase>("formulario");
   const [ventaResultado, setVentaResultado] = useState<Venta | null>(null);
-  const [nivelSeleccionado, setNivelSeleccionado] =
-    useState<NivelMembresia | null>(null);
   const [isPending, startTransition] = useTransition();
   const { simbolo, formatCurrency } = useCurrency();
 
@@ -86,11 +76,8 @@ export function CobroDialog({
   const montoRecibido = form.watch("monto_recibido");
   const esEfectivo = metodoPago === METODO_PAGO.EFECTIVO;
 
-  const descuentoMembresia = calcularDescuentoNivel(
-    orden.subtotal,
-    nivelSeleccionado,
-  );
-  const totalFinal = Math.max(0, orden.total - descuentoMembresia);
+  // El descuento de membresía ya viene aplicado en orden.descuento (desde R21)
+  const totalFinal = orden.total;
   const vuelto =
     esEfectivo && montoRecibido ? montoRecibido - totalFinal : null;
 
@@ -98,22 +85,15 @@ export function CobroDialog({
     if (isPending) return;
     setFase("formulario");
     setVentaResultado(null);
-    setNivelSeleccionado(null);
     form.reset();
     onOpenChange(false);
-  }
-
-  function handleSeleccionarNivel(nivel: NivelMembresia | null) {
-    setNivelSeleccionado(nivel);
-    const descuento = calcularDescuentoNivel(orden.subtotal, nivel);
-    form.setValue("descuento_membresia", descuento);
   }
 
   function onSubmit(values: CobrarOrdenFormValues) {
     startTransition(async () => {
       const result = await cobrarOrdenAction(orden.id, {
         ...values,
-        descuento_membresia: descuentoMembresia,
+        descuento_membresia: 0,
       });
       if (result.error) {
         toast.error("Error al cobrar", { description: result.error });
@@ -197,13 +177,6 @@ export function CobroDialog({
                 </div>
               )}
 
-              {descuentoMembresia > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Descuento membresía ({nivelSeleccionado?.nombre})</span>
-                  <span>− {formatCurrency(descuentoMembresia)}</span>
-                </div>
-              )}
-
               <div className="flex justify-between font-bold">
                 <span>Total</span>
                 <span className="text-primary">
@@ -211,55 +184,6 @@ export function CobroDialog({
                 </span>
               </div>
             </div>
-
-            {/* Descuento por membresía */}
-            {niveles.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Award className="h-4 w-4 text-primary" />
-                  <span>Descuento por membresía (opcional)</span>
-                </div>
-                {nivelSeleccionado ? (
-                  <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2 dark:border-green-800 dark:bg-green-950/30">
-                    <div className="text-sm">
-                      <span className="font-medium text-green-700 dark:text-green-400">
-                        {nivelSeleccionado.nombre}
-                      </span>
-                      <span className="text-green-600 dark:text-green-500">
-                        {" "}
-                        — {nivelSeleccionado.descuento_porcentaje}% de descuento
-                        ({formatCurrency(descuentoMembresia)})
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-green-600 hover:text-green-800"
-                      onClick={() => handleSeleccionarNivel(null)}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {niveles.map((nivel) => (
-                      <Button
-                        key={nivel.id}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-full text-xs"
-                        onClick={() => handleSeleccionarNivel(nivel)}
-                      >
-                        <Award className="mr-1 h-3 w-3" />
-                        {nivel.nombre} ({nivel.descuento_porcentaje}%)
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
 
             <Form {...form}>
               <form
@@ -394,16 +318,6 @@ export function CobroDialog({
                   {formatCurrency(totalFinal)}
                 </span>
               </div>
-              {descuentoMembresia > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Descuento membresía
-                  </span>
-                  <span className="font-medium text-green-600">
-                    − {formatCurrency(descuentoMembresia)}
-                  </span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Método</span>
                 <span>

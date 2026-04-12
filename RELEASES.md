@@ -1373,9 +1373,9 @@ MESA 5
 
 ---
 
-## Release 21: Descuento Membresia Automatico al Crear Orden (pendiente)
+## Release 21: Descuento Membresia Automatico al Crear Orden
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 8 (Membresias) + Release 17 (Promociones)
 **Objetivo:** Mover el descuento de membresia del cobro al POS. Al buscar un cliente con DNI que tiene membresia activa, el descuento se aplica automaticamente al subtotal en el formulario de pedido.
 

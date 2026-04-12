@@ -111,8 +111,8 @@ export async function cobrarOrdenAction(
     return { data: null, error: mensaje };
   }
 
-  const descuentoMembresia = parsed.data.descuento_membresia ?? 0;
-  const totalFinal = Math.max(0, orden.total - descuentoMembresia);
+  // El descuento de membresía ya viene incluido en orden.descuento y orden.total (R21)
+  const totalFinal = orden.total;
 
   if (
     parsed.data.metodo_pago === "efectivo" &&
@@ -130,7 +130,7 @@ export async function cobrarOrdenAction(
       monto_recibido: parsed.data.monto_recibido ?? null,
       tipo_pedido: orden.tipo_pedido,
       subtotal: orden.subtotal,
-      descuento: orden.descuento + descuentoMembresia,
+      descuento: orden.descuento,
       delivery_fee: orden.delivery_fee,
       total: totalFinal,
       notas: orden.notas,

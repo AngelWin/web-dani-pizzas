@@ -55,6 +55,7 @@ import {
   type ItemCarrito,
 } from "@/lib/promociones-utils";
 import { useCurrency } from "@/hooks/use-currency";
+import { calcularDescuentoNivel } from "@/lib/membresias-utils";
 
 type Repartidor = Pick<Profile, "id" | "nombre" | "apellido_paterno">;
 
@@ -297,26 +298,36 @@ export function FormularioPedidoDialog({
     subtotal: i.subtotal,
   }));
 
+  // Descuento de membresía del cliente (automático)
+  const descuentoMembresia = calcularDescuentoNivel(
+    carrito.subtotal,
+    clienteSeleccionado?.membresias?.nivel ?? null,
+  );
+
   useEffect(() => {
     const descuentoPromoCarrito = carrito.totalDescuentoPromos;
+    let descuentoTotal = descuentoPromoCarrito + descuentoMembresia;
+
     if (!promocionSeleccionada) {
       form.setValue("promocion_id", null);
-      form.setValue("descuento", descuentoPromoCarrito);
-      return;
+    } else {
+      const montoDescuento = calcularDescuento(
+        promocionSeleccionada,
+        itemsParaDescuento,
+        carrito.subtotal,
+        deliveryFee,
+      );
+      form.setValue("promocion_id", promocionSeleccionada.id);
+      descuentoTotal += montoDescuento;
     }
-    const montoDescuento = calcularDescuento(
-      promocionSeleccionada,
-      itemsParaDescuento,
-      carrito.subtotal,
-      deliveryFee,
-    );
-    form.setValue("promocion_id", promocionSeleccionada.id);
-    form.setValue("descuento", montoDescuento + descuentoPromoCarrito);
+
+    form.setValue("descuento", descuentoTotal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     promocionSeleccionada,
     carrito.subtotal,
     carrito.totalDescuentoPromos,
+    descuentoMembresia,
     deliveryFee,
     form,
   ]);
@@ -872,17 +883,18 @@ export function FormularioPedidoDialog({
                   )}
                 </div>
               )}
+              {descuentoMembresia > 0 && (
+                <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                  <span>
+                    Membresía ({clienteSeleccionado?.membresias?.nivel?.nombre})
+                  </span>
+                  <span>- {formatCurrency(descuentoMembresia)}</span>
+                </div>
+              )}
               <div className="flex justify-between border-t pt-1 mt-1 font-bold text-base">
                 <span>Total del pedido</span>
                 <span className="text-primary">{formatCurrency(total)}</span>
               </div>
-              {clienteSeleccionado?.membresias?.nivel?.descuento_porcentaje && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  * Este cliente tiene{" "}
-                  {clienteSeleccionado.membresias.nivel.descuento_porcentaje}%
-                  de descuento por membresía (aplicar al momento del cobro)
-                </p>
-              )}
             </div>
 
             <DialogFooter className="gap-2">
