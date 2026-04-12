@@ -275,7 +275,7 @@ id, categoria_id, nombre, precio, disponible, orden, created_at, updated_at
 - [x] Backoffice /productos: toggle permite_combinacion en medidas
 - [x] Backoffice /productos: nueva seccion SaboresSection (CRUD sabores + ingredientes)
 - [x] Backoffice /productos: nueva seccion ExtrasSection (CRUD extras)
-- [x] POS: ConfiguradorPizzaDialog (selector multi-paso: tamaño → sabores → exclusiones/extras)
+- [x] POS: ConfiguradorProductoDialog (selector multi-paso: tamaño → sabores → exclusiones/extras)
 - [x] POS: catalogo-productos detecta categorias con sabores y abre configurador
 - [x] POS: carrito muestra desglose de sabores, exclusiones y extras
 - [x] POS: crearOrdenAction y crearOrden persisten sabores y extras en orden_items
@@ -285,7 +285,7 @@ id, categoria_id, nombre, precio, disponible, orden, created_at, updated_at
 - Admin puede definir sabores con ingredientes para categorias de pizza
 - Admin puede marcar medidas Familiar y Extra como combinables
 - Admin puede definir extras pagados por categoria
-- En POS, al tocar una pizza → se abre ConfiguradorPizzaDialog
+- En POS, al tocar una pizza → se abre ConfiguradorProductoDialog
 - Se puede seleccionar 1 sabor (Personal/Mediana) o hasta 3 sabores (Familiar/Extra)
 - Se pueden excluir ingredientes por sabor
 - Se pueden agregar extras pagados; el precio se suma al subtotal
@@ -1393,7 +1393,7 @@ MESA 5
 
 ---
 
-## Release 19.1: Combo con Configurador de Pizza Integrado (pendiente)
+## Release 19.1: Combo con Configurador de Producto Integrado (pendiente)
 
 **Estado:** [ ] Pendiente
 **Dependencia:** Release 19 (Promos en POS)
@@ -1401,7 +1401,7 @@ MESA 5
 
 ### Cambios esperados:
 - [ ] En combo-builder-dialog: detectar si el producto tiene `tiene_sabores === true`
-- [ ] Si es pizza: abrir ConfiguradorPizzaDialog como sub-paso
+- [ ] Si es pizza: abrir ConfiguradorProductoDialog como sub-paso
 - [ ] Al confirmar pizza: guardar sabores/extras/acompanante en el item del combo
 - [ ] Si NO es pizza: mantener selector de variante actual
 - [ ] Pasar saboresPorCategoria y extrasPorCategoria al combo-builder

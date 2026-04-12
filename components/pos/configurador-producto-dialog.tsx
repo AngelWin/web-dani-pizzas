@@ -62,7 +62,7 @@ function calcularProporcion(total: number): string {
   return "1/3";
 }
 
-export function ConfiguradorPizzaDialog({
+export function ConfiguradorProductoDialog({
   producto,
   sabores,
   extras,

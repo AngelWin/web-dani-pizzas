@@ -11,10 +11,10 @@ import { useCurrency } from "@/hooks/use-currency";
 import dynamic from "next/dynamic";
 import { SelectorVarianteDialog } from "./selector-variante-dialog";
 
-const ConfiguradorPizzaDialog = dynamic(
+const ConfiguradorProductoDialog = dynamic(
   () =>
-    import("./configurador-pizza-dialog").then(
-      (mod) => mod.ConfiguradorPizzaDialog,
+    import("./configurador-producto-dialog").then(
+      (mod) => mod.ConfiguradorProductoDialog,
     ),
   { ssr: false },
 );
@@ -350,7 +350,7 @@ export function CatalogoProductos({
         promociones={promociones}
       />
 
-      <ConfiguradorPizzaDialog
+      <ConfiguradorProductoDialog
         producto={productoParaConfigurar}
         sabores={
           productoParaConfigurar?.categoria_id
