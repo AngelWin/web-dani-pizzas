@@ -1366,7 +1366,7 @@ MESA 5
 
 ## Release 17.2: Descuento Automatico por Producto en Carrito
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 17 (Promociones Mejoradas) + Release 19 (Promos en POS)
 **Objetivo:** Si un producto tiene una promo de descuento (%) activa, al agregarlo al carrito el precio se ajusta automaticamente. Sin necesidad de ir a "Ofertas" ni seleccionar la promo manualmente.
 
