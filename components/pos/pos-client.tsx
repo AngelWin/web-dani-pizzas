@@ -268,6 +268,8 @@ export function PosClient({
           onClose={() => setComboPromo(null)}
           promo={comboPromo}
           productos={productos}
+          saboresPorCategoria={saboresPorCategoria}
+          extrasPorCategoria={extrasPorCategoria}
           onAgregarAlCarrito={(item) => {
             carrito.agregarPromo(item);
             setComboPromo(null);

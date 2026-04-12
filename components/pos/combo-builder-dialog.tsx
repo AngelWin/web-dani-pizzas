@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +12,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, ChevronRight, Package, ShoppingCart, Tag } from "lucide-react";
+import { Check, Package, ShoppingCart, Tag } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 import type { PromocionActivaPOS } from "@/lib/services/promociones";
 import type { ProductoPOS } from "@/lib/services/ventas";
+import type {
+  PizzaSaborConIngredientes,
+  ProductoExtra,
+} from "@/lib/services/productos";
 import type { ItemPromoCarrito } from "@/hooks/use-carrito";
 import type {
   SaborOrden,
   ExtraOrden,
   AcompananteOrden,
 } from "@/hooks/use-carrito";
+
+const ConfiguradorProductoDialog = dynamic(
+  () =>
+    import("./configurador-producto-dialog").then(
+      (mod) => mod.ConfiguradorProductoDialog,
+    ),
+  { ssr: false },
+);
 
 type ProductoConfigCombo = {
   producto_id: string;
@@ -40,6 +53,8 @@ type Props = {
   onClose: () => void;
   promo: PromocionActivaPOS;
   productos: ProductoPOS[];
+  saboresPorCategoria: Record<string, PizzaSaborConIngredientes[]>;
+  extrasPorCategoria: Record<string, ProductoExtra[]>;
   onAgregarAlCarrito: (item: ItemPromoCarrito) => void;
 };
 
@@ -48,6 +63,8 @@ export function ComboBuilderDialog({
   onClose,
   promo,
   productos,
+  saboresPorCategoria,
+  extrasPorCategoria,
   onAgregarAlCarrito,
 }: Props) {
   const { formatCurrency } = useCurrency();
@@ -55,13 +72,17 @@ export function ComboBuilderDialog({
   const [productosConfig, setProductosConfig] = useState<ProductoConfigCombo[]>(
     [],
   );
+  // Para abrir el configurador de producto cuando tiene sabores
+  const [productoParaConfigurar, setProductoParaConfigurar] = useState<{
+    producto: ProductoPOS;
+    variante: ProductoPOS["producto_variantes"][number];
+    idx: number;
+  } | null>(null);
 
-  // Inicializar productos del combo al abrir
   const productosDelCombo = promo.productos_ids
     .map((pid) => productos.find((p) => p.id === pid))
     .filter(Boolean) as ProductoPOS[];
 
-  // Para promos fijas: auto-configurar con la primera variante
   function inicializarFijo() {
     const items: ProductoConfigCombo[] = productosDelCombo.map((p) => {
       const variante = p.producto_variantes[0] ?? null;
@@ -78,14 +99,21 @@ export function ComboBuilderDialog({
     return items;
   }
 
-  // Seleccionar variante para un producto
   function seleccionarVariante(
     productoIdx: number,
     variante: ProductoPOS["producto_variantes"][number],
   ) {
+    const prod = productosDelCombo[productoIdx];
+
+    // Si el producto tiene sabores → abrir configurador
+    if (prod.categorias?.tiene_sabores) {
+      setProductoParaConfigurar({ producto: prod, variante, idx: productoIdx });
+      return;
+    }
+
+    // Si no tiene sabores → configurar directo
     setProductosConfig((prev) => {
       const nuevo = [...prev];
-      const prod = productosDelCombo[productoIdx];
       nuevo[productoIdx] = {
         producto_id: prod.id,
         producto_nombre: prod.nombre,
@@ -97,15 +125,68 @@ export function ComboBuilderDialog({
       };
       return nuevo;
     });
+    if (productoIdx < productosDelCombo.length - 1) {
+      setPasoActual(productoIdx + 1);
+    }
+  }
+
+  // Callback del ConfiguradorProductoDialog
+  function handleConfirmarProducto(data: {
+    producto: ProductoPOS;
+    variante: {
+      id: string;
+      nombre: string;
+      precio: number;
+      medida_id?: string;
+    };
+    sabores: {
+      sabor_id: string;
+      sabor_nombre: string;
+      exclusiones: string[];
+    }[];
+    extras: ExtraOrden[];
+    acompanante?: AcompananteOrden;
+  }) {
+    if (!productoParaConfigurar) return;
+    const idx = productoParaConfigurar.idx;
+    const precioExtras = data.extras.reduce((acc, e) => acc + e.precio, 0);
+
+    setProductosConfig((prev) => {
+      const nuevo = [...prev];
+      nuevo[idx] = {
+        producto_id: data.producto.id,
+        producto_nombre: data.producto.nombre,
+        variante_id: data.variante.id,
+        variante_nombre: data.variante.nombre,
+        medida_id: data.variante.medida_id ?? null,
+        precio_unitario: data.variante.precio + precioExtras,
+        configurado: true,
+        sabores: data.sabores.map((s) => ({
+          ...s,
+          proporcion:
+            data.sabores.length === 1
+              ? "1/1"
+              : data.sabores.length === 2
+                ? "1/2"
+                : "1/3",
+        })),
+        extras: data.extras.length > 0 ? data.extras : undefined,
+        acompanante: data.acompanante,
+      };
+      return nuevo;
+    });
+
+    setProductoParaConfigurar(null);
+    if (idx < productosDelCombo.length - 1) {
+      setPasoActual(idx + 1);
+    }
   }
 
   function handleAbrir() {
     if (!promo.permite_modificaciones) {
-      // Fijo: configurar todo automáticamente
       setProductosConfig(inicializarFijo());
-      setPasoActual(-1); // -1 = preview listo
+      setPasoActual(-1);
     } else {
-      // Modificable: iniciar flujo paso a paso
       setProductosConfig(
         productosDelCombo.map((p) => ({
           producto_id: p.id,
@@ -159,190 +240,242 @@ export function ComboBuilderDialog({
   const productoActual = productosDelCombo[pasoActual] ?? null;
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) onClose();
-        else handleAbrir();
-      }}
-    >
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Tag className="h-5 w-5 text-primary" />
-            {promo.nombre}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog
+        open={open && !productoParaConfigurar}
+        onOpenChange={(v) => {
+          if (!v) onClose();
+          else handleAbrir();
+        }}
+      >
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-primary" />
+              {promo.nombre}
+            </DialogTitle>
+          </DialogHeader>
 
-        {/* Promo fija o preview final */}
-        {(pasoActual === -1 || todosConfigurados) && (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {promo.permite_modificaciones
-                ? "Revisa tu combo antes de agregar"
-                : "Combo con productos predefinidos"}
-            </p>
-
-            {/* Lista de productos configurados */}
-            <div className="space-y-2">
-              {productosConfig.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between rounded-xl border p-3"
-                >
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <div>
-                      <p className="text-sm font-medium">
-                        {item.producto_nombre}
-                      </p>
-                      {item.variante_nombre && (
-                        <p className="text-xs text-muted-foreground">
-                          {item.variante_nombre}
-                        </p>
-                      )}
-                      {item.sabores && item.sabores.length > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          {item.sabores.map((s) => s.sabor_nombre).join(" · ")}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {formatCurrency(item.precio_unitario)}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <Separator />
-
-            {/* Resumen de precios */}
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Precio normal</span>
-                <span className="line-through">
-                  {formatCurrency(
-                    productosConfig.reduce(
-                      (acc, p) => acc + p.precio_unitario,
-                      0,
-                    ),
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between font-bold text-base">
-                <span>Precio combo</span>
-                <span className="text-primary">
-                  {formatCurrency(promo.precio_combo ?? 0)}
-                </span>
-              </div>
-            </div>
-
-            <Button className="w-full h-12 gap-2" onClick={handleAgregar}>
-              <ShoppingCart className="h-4 w-4" />
-              Agregar combo al carrito
-            </Button>
-          </div>
-        )}
-
-        {/* Flujo paso a paso (solo si permite modificaciones y no está completo) */}
-        {promo.permite_modificaciones &&
-          pasoActual >= 0 &&
-          !todosConfigurados &&
-          productoActual && (
+          {/* Preview final o promo fija */}
+          {(pasoActual === -1 || todosConfigurados) && (
             <div className="space-y-4">
-              {/* Indicador de pasos */}
-              <div className="flex items-center gap-2">
-                {productosDelCombo.map((_, idx) => (
+              <p className="text-sm text-muted-foreground">
+                {promo.permite_modificaciones
+                  ? "Revisa tu combo antes de agregar"
+                  : "Combo con productos predefinidos"}
+              </p>
+
+              <div className="space-y-2">
+                {productosConfig.map((item, idx) => (
                   <div
                     key={idx}
-                    className={`h-1.5 flex-1 rounded-full ${
-                      idx < pasoActual
-                        ? "bg-green-500"
-                        : idx === pasoActual
-                          ? "bg-primary"
-                          : "bg-muted"
-                    }`}
-                  />
+                    className="flex items-center justify-between rounded-xl border p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {item.producto_nombre}
+                        </p>
+                        {item.variante_nombre && (
+                          <p className="text-xs text-muted-foreground">
+                            {item.variante_nombre}
+                          </p>
+                        )}
+                        {item.sabores && item.sabores.length > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            {item.sabores
+                              .map((s) => s.sabor_nombre)
+                              .join(" · ")}
+                          </p>
+                        )}
+                        {item.extras && item.extras.length > 0 && (
+                          <p className="text-xs text-primary/70">
+                            +{item.extras.map((e) => e.nombre).join(", ")}
+                          </p>
+                        )}
+                        {item.acompanante && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            + {item.acompanante.variante_nombre}:{" "}
+                            {item.acompanante.sabor_nombre}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {formatCurrency(item.precio_unitario)}
+                    </span>
+                  </div>
                 ))}
               </div>
 
-              <p className="text-sm text-muted-foreground">
-                Paso {pasoActual + 1} de {productosDelCombo.length} — Elige{" "}
-                <strong>{productoActual.nombre}</strong>
-              </p>
+              <Separator />
 
-              {/* Selector de variante/medida */}
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Selecciona tamaño:
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {productoActual.producto_variantes
-                    .filter((v) => v.precio > 0)
-                    .map((v) => (
-                      <Button
-                        key={v.id}
-                        variant="outline"
-                        className="h-14 flex-col gap-0.5"
-                        onClick={() => {
-                          seleccionarVariante(pasoActual, v);
-                          // Avanzar al siguiente paso
-                          if (pasoActual < productosDelCombo.length - 1) {
-                            setPasoActual(pasoActual + 1);
-                          }
-                        }}
-                      >
-                        <span className="font-medium">
-                          {v.categoria_medidas?.nombre ?? "Medida"}
-                        </span>
-                        <span className="text-xs text-primary">
-                          {formatCurrency(v.precio)}
-                        </span>
-                      </Button>
-                    ))}
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Precio normal</span>
+                  <span className="line-through">
+                    {formatCurrency(
+                      productosConfig.reduce(
+                        (acc, p) => acc + p.precio_unitario,
+                        0,
+                      ),
+                    )}
+                  </span>
                 </div>
-
-                {/* Si el producto no tiene variantes, auto-configurar */}
-                {productoActual.producto_variantes.filter((v) => v.precio > 0)
-                  .length === 0 && (
-                  <Button
-                    variant="outline"
-                    className="w-full h-12"
-                    onClick={() => {
-                      setProductosConfig((prev) => {
-                        const nuevo = [...prev];
-                        nuevo[pasoActual] = {
-                          producto_id: productoActual.id,
-                          producto_nombre: productoActual.nombre,
-                          variante_id: null,
-                          variante_nombre: null,
-                          medida_id: null,
-                          precio_unitario: productoActual.precio ?? 0,
-                          configurado: true,
-                        };
-                        return nuevo;
-                      });
-                      if (pasoActual < productosDelCombo.length - 1) {
-                        setPasoActual(pasoActual + 1);
-                      }
-                    }}
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    {productoActual.nombre} —{" "}
-                    {formatCurrency(productoActual.precio ?? 0)}
-                  </Button>
-                )}
+                <div className="flex justify-between font-bold text-base">
+                  <span>Precio combo</span>
+                  <span className="text-primary">
+                    {formatCurrency(promo.precio_combo ?? 0)}
+                  </span>
+                </div>
               </div>
+
+              <Button className="w-full h-12 gap-2" onClick={handleAgregar}>
+                <ShoppingCart className="h-4 w-4" />
+                Agregar combo al carrito
+              </Button>
             </div>
           )}
 
-        <DialogFooter>
-          <Button variant="outline" className="h-10" onClick={onClose}>
-            Cancelar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          {/* Flujo paso a paso */}
+          {promo.permite_modificaciones &&
+            pasoActual >= 0 &&
+            !todosConfigurados &&
+            productoActual && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  {productosDelCombo.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-1.5 flex-1 rounded-full ${
+                        idx < pasoActual
+                          ? "bg-green-500"
+                          : idx === pasoActual
+                            ? "bg-primary"
+                            : "bg-muted"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  Paso {pasoActual + 1} de {productosDelCombo.length} — Elige{" "}
+                  <strong>{productoActual.nombre}</strong>
+                  {productoActual.categorias?.tiene_sabores && (
+                    <Badge
+                      variant="outline"
+                      className="ml-2 text-[9px] px-1.5 py-0"
+                    >
+                      Con sabores
+                    </Badge>
+                  )}
+                </p>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Selecciona tamaño:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {productoActual.producto_variantes
+                      .filter((v) => v.precio > 0)
+                      .map((v) => (
+                        <Button
+                          key={v.id}
+                          variant="outline"
+                          className="h-14 flex-col gap-0.5"
+                          onClick={() => seleccionarVariante(pasoActual, v)}
+                        >
+                          <span className="font-medium">
+                            {v.categoria_medidas?.nombre ?? "Medida"}
+                          </span>
+                          <span className="text-xs text-primary">
+                            {formatCurrency(v.precio)}
+                          </span>
+                        </Button>
+                      ))}
+                  </div>
+
+                  {productoActual.producto_variantes.filter((v) => v.precio > 0)
+                    .length === 0 && (
+                    <Button
+                      variant="outline"
+                      className="w-full h-12"
+                      onClick={() => {
+                        // Si tiene sabores → abrir configurador
+                        if (productoActual.categorias?.tiene_sabores) {
+                          setProductoParaConfigurar({
+                            producto: productoActual,
+                            variante: {
+                              id: "",
+                              medida_id: "",
+                              precio: productoActual.precio ?? 0,
+                              disponible: true,
+                              orden: 0,
+                              categoria_medidas: null,
+                            },
+                            idx: pasoActual,
+                          });
+                          return;
+                        }
+                        setProductosConfig((prev) => {
+                          const nuevo = [...prev];
+                          nuevo[pasoActual] = {
+                            producto_id: productoActual.id,
+                            producto_nombre: productoActual.nombre,
+                            variante_id: null,
+                            variante_nombre: null,
+                            medida_id: null,
+                            precio_unitario: productoActual.precio ?? 0,
+                            configurado: true,
+                          };
+                          return nuevo;
+                        });
+                        if (pasoActual < productosDelCombo.length - 1) {
+                          setPasoActual(pasoActual + 1);
+                        }
+                      }}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      {productoActual.nombre} —{" "}
+                      {formatCurrency(productoActual.precio ?? 0)}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
+          <DialogFooter>
+            <Button variant="outline" className="h-10" onClick={onClose}>
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Configurador de producto (sabores/extras) para items del combo */}
+      {productoParaConfigurar && (
+        <ConfiguradorProductoDialog
+          producto={productoParaConfigurar.producto}
+          sabores={
+            productoParaConfigurar.producto.categoria_id
+              ? (saboresPorCategoria[
+                  productoParaConfigurar.producto.categoria_id
+                ] ?? [])
+              : []
+          }
+          extras={
+            productoParaConfigurar.producto.categoria_id
+              ? (extrasPorCategoria[
+                  productoParaConfigurar.producto.categoria_id
+                ] ?? [])
+              : []
+          }
+          open={!!productoParaConfigurar}
+          onClose={() => setProductoParaConfigurar(null)}
+          onConfirmar={handleConfirmarProducto}
+        />
+      )}
+    </>
   );
 }

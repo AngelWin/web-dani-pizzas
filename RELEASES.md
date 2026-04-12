@@ -1393,9 +1393,9 @@ MESA 5
 
 ---
 
-## Release 19.1: Combo con Configurador de Producto Integrado (pendiente)
+## Release 19.1: Combo con Configurador de Producto Integrado
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 19 (Promos en POS)
 **Objetivo:** Cuando un combo incluye una pizza, el flujo guiado del combo-builder debe integrar el configurador de pizza (sabores, exclusiones, extras, acompanante).
 
