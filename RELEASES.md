@@ -765,7 +765,7 @@ id (FK profiles CASCADE), direccion, tipo_vehiculo (text[]), notas, created_at, 
 
 ## Release 13: Configuracion de Moneda (Divisa Global)
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 10 (Configuracion base)
 **Objetivo:** Permitir al admin configurar la moneda activa del negocio desde /configuracion, con soporte para monedas predefinidas (PEN, USD) y personalizadas. El simbolo se refleja en toda la app de forma centralizada.
 
@@ -1040,7 +1040,7 @@ CONSTRAINT  mesas_numero_sucursal_unique UNIQUE (sucursal_id, numero)
 
 ## Release 17: Promociones Mejoradas
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 7 (Promociones base) + Release 9 (Sucursales) + Release 5a (POS)
 **Objetivo:** Evolucionar el sistema de promociones para cubrir escenarios reales de pizzeria: 2x1, combos a precio fijo, happy hours, delivery gratis, programacion por dia de la semana, filtro por sucursal, y mostrar precio antes/despues en el POS.
 
@@ -1195,30 +1195,6 @@ Si vacia = aplica a todos los tamaños.
 - `promocion_id` se guarda en ordenes y ventas al cobrar
 - Precio antes/despues visible en POS cuando hay promo
 - Build pasa sin errores
-
----
-
-## Release 18: Promociones por Membresia y Nivel (pendiente)
-
-**Estado:** [ ] Pendiente
-**Dependencia:** Release 17 (Promociones Mejoradas) + Release 8 (Membresias)
-**Objetivo:** Agregar filtro de membresia/nivel a las promociones, permitiendo crear promos exclusivas para miembros (ej: 50% off para nivel Oro, delivery gratis permanente para VIP). Reutiliza toda la infraestructura de tipos de promo de R17.
-
-### Funcionalidades esperadas:
-- Agregar campo opcional `nivel_membresia_id` (FK nullable) o `niveles_membresia_ids` (array) a promociones
-- Opcion "Solo para miembros" en formulario de promocion con selector de nivel(es)
-- En POS: si el cliente tiene membresia, mostrar promos exclusivas de su nivel ademas de las publicas
-- Promos de membresia pueden ser permanentes (sin fecha fin) o con vigencia limitada
-- Promo tipo "Cumpleanos del miembro": descuento especial solo en el mes de cumpleanos del cliente
-- Mostrar badge "Exclusivo miembros" o "Nivel Oro" en la card de la promo
-- Si el cajero selecciona un cliente con membresia, las promos de su nivel se habilitan automaticamente
-
-### Consideraciones:
-- R17 ya tiene la infraestructura de tipos de promo (%, fijo, 2x1, combo, delivery gratis)
-- R18 solo agrega el filtro de QUIEN puede usar la promo, no cambia COMO funciona
-- La tabla `membresias_niveles` ya existe (R8) con: nombre, puntos_requeridos, descuento_porcentaje
-- La tabla `clientes` tiene `fecha_nacimiento` para la promo de cumpleanos
-- Se necesita nueva tabla `promocion_niveles` o columna `niveles_membresia_ids` en promociones
 
 ---
 
