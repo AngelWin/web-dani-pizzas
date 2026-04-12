@@ -199,6 +199,7 @@ type CreatePromocionData = {
   medidas_ids?: string[];
   tipos_pedido?: string[] | null;
   permite_modificaciones?: boolean;
+  nivel_membresia_id?: string | null;
 };
 
 export async function createPromocion(

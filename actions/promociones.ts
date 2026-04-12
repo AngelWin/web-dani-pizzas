@@ -40,6 +40,7 @@ function buildPromoData(parsed: ReturnType<typeof promocionSchema.safeParse>) {
     tipos_pedido:
       d.tipos_pedido && d.tipos_pedido.length > 0 ? d.tipos_pedido : null,
     permite_modificaciones: d.permite_modificaciones ?? true,
+    nivel_membresia_id: d.nivel_membresia_id || null,
   };
 }
 

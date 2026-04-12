@@ -18,9 +18,23 @@ export type PromocionBase = {
   medidas_ids: string[];
   tipos_pedido?: string[] | null;
   permite_modificaciones?: boolean;
+  nivel_membresia_id?: string | null;
   // Backward compat
   tipo_descuento: string;
 };
+
+/** Verifica si una promo es accesible para un cliente según su nivel de membresía */
+export function promoAccesibleParaCliente(
+  promo: PromocionBase,
+  nivelClienteId: string | null,
+): boolean {
+  // Si la promo no tiene restricción de nivel → accesible para todos
+  if (!promo.nivel_membresia_id) return true;
+  // Si la promo requiere nivel pero el cliente no tiene membresía → no accesible
+  if (!nivelClienteId) return false;
+  // El cliente debe tener el nivel exacto de la promo
+  return promo.nivel_membresia_id === nivelClienteId;
+}
 
 /** Verifica si una promoción aplica a un tipo de pedido */
 export function promoAplicaATipoPedido(
@@ -258,6 +272,8 @@ export function detectarPromoParaVariante(
   let mejor: PromoDetectada | null = null;
 
   for (const promo of promos) {
+    // Excluir promos exclusivas de membresía (se aplican en el formulario, no automáticamente)
+    if (promo.nivel_membresia_id) continue;
     const itemSimulado: ItemCarrito = {
       producto_id: productoId,
       medida_id: medidaId,
@@ -317,6 +333,8 @@ export function productoTienePromo(
   productoId: string,
 ): { tienePromo: boolean; etiqueta: string } {
   for (const promo of promos) {
+    // Excluir promos exclusivas de membresía
+    if (promo.nivel_membresia_id) continue;
     const tieneProductos = promo.productos_ids.length > 0;
     if (tieneProductos && !promo.productos_ids.includes(productoId)) continue;
     switch (promo.tipo_promocion) {

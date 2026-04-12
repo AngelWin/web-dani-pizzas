@@ -55,6 +55,8 @@ export const promocionSchema = z
       .default(null),
     // Permite modificaciones (sabores, extras) al agregar desde POS
     permite_modificaciones: z.boolean().optional().default(true),
+    // Nivel de membresía requerido (null = público para todos)
+    nivel_membresia_id: z.string().uuid().nullable().optional().default(null),
   })
   .superRefine((data, ctx) => {
     // Fecha fin >= fecha inicio

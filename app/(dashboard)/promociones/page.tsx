@@ -35,6 +35,19 @@ async function getMedidasBasico() {
   }[];
 }
 
+async function getNivelesMembresia() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("membresias_niveles")
+    .select("id, nombre, descuento_porcentaje")
+    .order("orden");
+  return (data ?? []) as {
+    id: string;
+    nombre: string;
+    descuento_porcentaje: number | null;
+  }[];
+}
+
 async function getSucursalesBasico() {
   const supabase = await createClient();
   const { data } = await supabase
@@ -50,12 +63,14 @@ export default async function PromocionesPage() {
   const { data: rolData } = await supabase.rpc("get_user_role");
   if (rolData !== "administrador") redirect("/dashboard");
 
-  const [promociones, productos, sucursales, medidas] = await Promise.all([
-    getPromociones(),
-    getProductosBasico(),
-    getSucursalesBasico(),
-    getMedidasBasico(),
-  ]);
+  const [promociones, productos, sucursales, medidas, niveles] =
+    await Promise.all([
+      getPromociones(),
+      getProductosBasico(),
+      getSucursalesBasico(),
+      getMedidasBasico(),
+      getNivelesMembresia(),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -68,6 +83,7 @@ export default async function PromocionesPage() {
         productos={productos}
         sucursales={sucursales}
         medidas={medidas}
+        niveles={niveles}
       />
     </div>
   );

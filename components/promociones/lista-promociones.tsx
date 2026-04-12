@@ -55,12 +55,18 @@ type ProductoBasico = {
 };
 type SucursalBasica = { id: string; nombre: string };
 type MedidaBasica = { id: string; nombre: string; categoria_id: string };
+type NivelBasico = {
+  id: string;
+  nombre: string;
+  descuento_porcentaje: number | null;
+};
 
 type Props = {
   promociones: PromocionConProductos[];
   productos: ProductoBasico[];
   sucursales: SucursalBasica[];
   medidas: MedidaBasica[];
+  niveles: NivelBasico[];
 };
 
 function formatFecha(iso: string): string {
@@ -135,6 +141,7 @@ export function ListaPromociones({
   productos,
   sucursales,
   medidas,
+  niveles,
 }: Props) {
   const { formatCurrency } = useCurrency();
   const [promociones, setPromociones] =
@@ -343,6 +350,17 @@ export function ListaPromociones({
                     </div>
                   )}
 
+                  {/* Nivel membresía */}
+                  {promo.nivel_membresia_id && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-amber-600 dark:text-amber-400 font-medium">
+                        Exclusivo:{" "}
+                        {niveles.find((n) => n.id === promo.nivel_membresia_id)
+                          ?.nombre ?? "Miembros"}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Productos */}
                   <div className="flex items-center gap-1.5">
                     <Package className="h-3.5 w-3.5 shrink-0" />
@@ -389,6 +407,7 @@ export function ListaPromociones({
         productos={productos}
         sucursales={sucursales}
         medidas={medidas}
+        niveles={niveles}
       />
 
       {/* Confirm eliminar */}

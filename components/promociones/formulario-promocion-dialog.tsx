@@ -57,6 +57,11 @@ type ProductoBasico = {
 };
 type SucursalBasica = { id: string; nombre: string };
 type MedidaBasica = { id: string; nombre: string; categoria_id: string };
+type NivelBasico = {
+  id: string;
+  nombre: string;
+  descuento_porcentaje: number | null;
+};
 
 type Props = {
   open: boolean;
@@ -65,6 +70,7 @@ type Props = {
   productos: ProductoBasico[];
   sucursales: SucursalBasica[];
   medidas: MedidaBasica[];
+  niveles: NivelBasico[];
 };
 
 function toDatetimeLocal(iso: string): string {
@@ -92,6 +98,7 @@ export function FormularioPromocionDialog({
   productos,
   sucursales,
   medidas,
+  niveles,
 }: Props) {
   const esEdicion = !!promocion;
   const { simbolo } = useCurrency();
@@ -128,6 +135,7 @@ export function FormularioPromocionDialog({
       medidas_ids: [],
       tipos_pedido: null,
       permite_modificaciones: true,
+      nivel_membresia_id: null,
     },
   });
 
@@ -154,6 +162,7 @@ export function FormularioPromocionDialog({
           | ("local" | "delivery" | "para_llevar")[]
           | null,
         permite_modificaciones: promocion.permite_modificaciones ?? true,
+        nivel_membresia_id: promocion.nivel_membresia_id ?? null,
       });
       setProductosSeleccionados(
         productos.filter((p) => promocion.productos_ids.includes(p.id)),
@@ -878,6 +887,45 @@ export function FormularioPromocionDialog({
                 </FormItem>
               )}
             />
+
+            {/* ── Nivel de membresía ── */}
+            {niveles.length > 0 && (
+              <FormField
+                control={form.control}
+                name="nivel_membresia_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Exclusivo para miembros (opcional)</FormLabel>
+                    <Select
+                      onValueChange={(v) =>
+                        field.onChange(v === "__todos__" ? null : v)
+                      }
+                      value={field.value ?? "__todos__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Público para todos" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__todos__">
+                          Público para todos
+                        </SelectItem>
+                        {niveles.map((n) => (
+                          <SelectItem key={n.id} value={n.id}>
+                            Exclusivo: {n.nombre}
+                            {n.descuento_porcentaje
+                              ? ` (${n.descuento_porcentaje}%)`
+                              : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <Separator />
 

@@ -4,6 +4,7 @@ import type { Database } from "@/types/database";
 export type Cliente = Database["public"]["Tables"]["clientes"]["Row"];
 
 export type NivelMembresia = {
+  id: string;
   nombre: string;
   descuento_porcentaje: number | null;
 };
@@ -31,7 +32,7 @@ export async function buscarClientePorDni(
       membresias!membresias_cliente_id_fkey (
         activa,
         puntos_acumulados,
-        nivel:membresias_niveles!membresias_nivel_id_fkey (nombre, descuento_porcentaje)
+        nivel:membresias_niveles!membresias_nivel_id_fkey (id, nombre, descuento_porcentaje)
       )
     `,
     )

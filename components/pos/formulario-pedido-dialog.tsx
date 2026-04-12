@@ -52,6 +52,7 @@ import {
   esPromocionVigente,
   getDescripcionPromocion,
   promoAplicaATipoPedido,
+  promoAccesibleParaCliente,
   type ItemCarrito,
 } from "@/lib/promociones-utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -226,17 +227,24 @@ export function FormularioPedidoDialog({
     form.setValue("items", [...itemsNormales, ...itemsPromo]);
   }, [carrito.items, form]);
 
-  // Filtrar promos por tipo de pedido y limpiar si ya no aplica
+  // Filtrar promos por tipo de pedido, nivel de membresía, y excluir auto-aplicadas
+  const nivelClienteId =
+    clienteSeleccionado?.membresias?.activa &&
+    clienteSeleccionado?.membresias?.nivel
+      ? clienteSeleccionado.membresias.nivel.id
+      : null;
+
   const promosFiltradas = useMemo(
     () =>
       promociones.filter(
         (p) =>
           promoAplicaATipoPedido(p, tipoPedido) &&
+          promoAccesibleParaCliente(p, nivelClienteId) &&
           // Excluir promos que ya se aplican automáticamente por item (R17.2)
           p.tipo_promocion !== "descuento_porcentaje" &&
           p.tipo_promocion !== "descuento_fijo",
       ),
-    [promociones, tipoPedido],
+    [promociones, tipoPedido, nivelClienteId],
   );
 
   useEffect(() => {

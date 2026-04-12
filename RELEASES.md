@@ -1410,7 +1410,7 @@ MESA 5
 
 ## Release 18: Promociones Exclusivas por Membresia y Nivel
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 17 (Promociones Mejoradas) + Release 8 (Membresias)
 **Objetivo:** Agregar filtro de membresia/nivel a las promociones, permitiendo crear promos exclusivas para miembros (ej: 50% off para nivel Oro, delivery gratis permanente para VIP). Reutiliza toda la infraestructura de tipos de promo de R17.
 

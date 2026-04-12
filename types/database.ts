@@ -1031,6 +1031,7 @@ export type Database = {
           hora_fin: string | null
           hora_inicio: string | null
           id: string
+          nivel_membresia_id: string | null
           nombre: string
           pedido_minimo: number | null
           permite_modificaciones: boolean
@@ -1051,6 +1052,7 @@ export type Database = {
           hora_fin?: string | null
           hora_inicio?: string | null
           id?: string
+          nivel_membresia_id?: string | null
           nombre: string
           pedido_minimo?: number | null
           permite_modificaciones?: boolean
@@ -1071,6 +1073,7 @@ export type Database = {
           hora_fin?: string | null
           hora_inicio?: string | null
           id?: string
+          nivel_membresia_id?: string | null
           nombre?: string
           pedido_minimo?: number | null
           permite_modificaciones?: boolean
@@ -1081,7 +1084,15 @@ export type Database = {
           updated_at?: string | null
           valor_descuento?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "promociones_nivel_membresia_id_fkey"
+            columns: ["nivel_membresia_id"]
+            isOneToOne: false
+            referencedRelation: "membresias_niveles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promociones_productos: {
         Row: {
