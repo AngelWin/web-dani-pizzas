@@ -173,7 +173,7 @@ export function useCarrito() {
   );
 
   // Para pizzas con sabores configurados
-  const agregarPizza = useCallback(
+  const agregarProductoConfigurado = useCallback(
     (
       data: {
         producto: ProductoPOS;
@@ -304,7 +304,7 @@ export function useCarrito() {
     items,
     promoItems,
     agregarItem,
-    agregarPizza,
+    agregarProductoConfigurado,
     agregarPromo,
     cambiarCantidad,
     eliminarItem,

@@ -366,7 +366,7 @@ export function CatalogoProductos({
         onClose={() => setProductoParaConfigurar(null)}
         promociones={promociones}
         onConfirmar={(data) => {
-          carrito.agregarPizza(data, promociones);
+          carrito.agregarProductoConfigurado(data, promociones);
           setProductoParaConfigurar(null);
         }}
       />
