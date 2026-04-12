@@ -3,6 +3,7 @@
 import type { TipoPromocion } from "@/lib/constants";
 
 export type PromocionBase = {
+  nombre?: string;
   activa: boolean | null;
   fecha_inicio: string;
   fecha_fin: string;
@@ -230,4 +231,106 @@ export function getDescripcionPromocion(
     default:
       return "";
   }
+}
+
+// ─── Detección de promo por producto/variante ─────────────────────────────
+
+/** Resultado de detección de promo para un producto/variante */
+export type PromoDetectada = {
+  promo: PromocionBase;
+  precioOriginal: number;
+  precioConPromo: number;
+  descuento: number;
+  etiqueta: string;
+};
+
+/**
+ * Detecta la mejor promo de descuento aplicable a un producto+medida.
+ * Solo aplica a descuento_porcentaje y descuento_fijo (auto-aplicables).
+ * 2x1, combo y delivery_gratis se muestran como badge informativo sin precio.
+ */
+export function detectarPromoParaVariante(
+  promos: PromocionBase[],
+  productoId: string,
+  medidaId: string | null,
+  precioVariante: number,
+): PromoDetectada | null {
+  let mejor: PromoDetectada | null = null;
+
+  for (const promo of promos) {
+    const itemSimulado: ItemCarrito = {
+      producto_id: productoId,
+      medida_id: medidaId,
+      precio_unitario: precioVariante,
+      cantidad: 1,
+      subtotal: precioVariante,
+    };
+
+    if (!itemCoincideConPromo(promo, itemSimulado)) continue;
+
+    let descuento = 0;
+    let etiqueta = "PROMO";
+
+    switch (promo.tipo_promocion) {
+      case "descuento_porcentaje":
+        descuento =
+          Math.round(((precioVariante * promo.valor_descuento) / 100) * 100) /
+          100;
+        etiqueta = `-${promo.valor_descuento}%`;
+        break;
+      case "descuento_fijo":
+        descuento = Math.min(promo.valor_descuento, precioVariante);
+        etiqueta = "PROMO";
+        break;
+      case "2x1":
+        etiqueta = "2x1";
+        break;
+      case "combo_precio_fijo":
+        etiqueta = "COMBO";
+        break;
+      case "delivery_gratis":
+        continue;
+    }
+
+    const precioConPromo = Math.max(0, precioVariante - descuento);
+
+    if (!mejor || descuento > mejor.descuento) {
+      mejor = {
+        promo,
+        precioOriginal: precioVariante,
+        precioConPromo,
+        descuento,
+        etiqueta,
+      };
+    }
+  }
+
+  return mejor;
+}
+
+/**
+ * Detecta si alguna promo aplica a un producto (cualquier variante).
+ * Para badge informativo en el catálogo.
+ */
+export function productoTienePromo(
+  promos: PromocionBase[],
+  productoId: string,
+): { tienePromo: boolean; etiqueta: string } {
+  for (const promo of promos) {
+    const tieneProductos = promo.productos_ids.length > 0;
+    if (tieneProductos && !promo.productos_ids.includes(productoId)) continue;
+    switch (promo.tipo_promocion) {
+      case "descuento_porcentaje":
+        return { tienePromo: true, etiqueta: `-${promo.valor_descuento}%` };
+      case "descuento_fijo":
+        return { tienePromo: true, etiqueta: "PROMO" };
+      case "2x1":
+        return { tienePromo: true, etiqueta: "2x1" };
+      case "combo_precio_fijo":
+        return { tienePromo: true, etiqueta: "COMBO" };
+      default:
+        continue;
+    }
+  }
+  return { tienePromo: false, etiqueta: "" };
 }

@@ -42,9 +42,16 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
             <div key={item.key} className="flex flex-col gap-1">
               <div className="flex items-start gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium leading-tight">
-                    {item.producto_nombre}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium leading-tight">
+                      {item.producto_nombre}
+                    </p>
+                    {item.promo_etiqueta && (
+                      <Badge className="bg-red-500 text-white text-[8px] px-1 py-0 font-bold">
+                        {item.promo_etiqueta}
+                      </Badge>
+                    )}
+                  </div>
                   {item.variante_nombre && !item.sabores && (
                     <p className="text-xs text-muted-foreground">
                       {item.variante_nombre}
@@ -120,9 +127,20 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
                     <Plus className="h-3 w-3" />
                   </Button>
                 </div>
-                <span className="text-sm font-semibold">
-                  {formatCurrency(item.subtotal)}
-                </span>
+                {item.descuento_unitario > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground line-through">
+                      {formatCurrency(item.producto_precio * item.cantidad)}
+                    </span>
+                    <span className="text-sm font-semibold text-red-600">
+                      {formatCurrency(item.subtotal)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-semibold">
+                    {formatCurrency(item.subtotal)}
+                  </span>
+                )}
               </div>
               <Separator />
             </div>

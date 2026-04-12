@@ -425,9 +425,20 @@ export function FormularioPedidoDialog({
                       </span>
                     )}
                   </span>
-                  <span className="font-medium shrink-0">
-                    {formatCurrency(item.subtotal)}
-                  </span>
+                  {item.descuento_unitario > 0 ? (
+                    <span className="shrink-0 flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground line-through">
+                        {formatCurrency(item.producto_precio * item.cantidad)}
+                      </span>
+                      <span className="font-medium text-red-600">
+                        {formatCurrency(item.subtotal)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="font-medium shrink-0">
+                      {formatCurrency(item.subtotal)}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

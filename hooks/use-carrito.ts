@@ -3,6 +3,10 @@
 import { useState, useCallback } from "react";
 import type { ProductoPOS } from "@/lib/services/ventas";
 import type { TipoPromocion } from "@/lib/constants";
+import {
+  detectarPromoParaVariante,
+  type PromocionBase,
+} from "@/lib/promociones-utils";
 
 export interface SaborOrden {
   sabor_id: string;
@@ -36,6 +40,11 @@ export type ItemCarrito = {
   cantidad: number;
   subtotal: number;
   notas_item?: string;
+  // Descuento automático por promo
+  descuento_unitario: number; // descuento por unidad (solo sobre precio_base)
+  precio_con_promo: number | null; // precio_base - descuento (null si no hay promo)
+  promo_nombre: string | null; // nombre de la promo aplicada
+  promo_etiqueta: string | null; // ej: "-10%", "PROMO"
   // Solo para pizzas con sabores:
   sabores?: SaborOrden[];
   extras?: ExtraOrden[];
@@ -94,7 +103,7 @@ export function useCarrito() {
   const [items, setItems] = useState<ItemCarrito[]>([]);
   const [promoItems, setPromoItems] = useState<ItemPromoCarrito[]>([]);
 
-  // Para productos sin sabores (bebidas, postres, etc.) — flujo original
+  // Para productos sin sabores (bebidas, postres, etc.)
   const agregarItem = useCallback(
     (
       producto: ProductoPOS,
@@ -104,12 +113,25 @@ export function useCarrito() {
         precio: number;
         medida_id?: string;
       } | null,
+      promos?: PromocionBase[],
     ) => {
       const precioBase = variante?.precio ?? producto.precio ?? 0;
       const varianteId = variante?.id ?? null;
       const varianteNombre = variante?.nombre ?? null;
       const medidaId = variante?.medida_id ?? null;
       const key = buildKey(producto.id, varianteId, false);
+
+      // Detectar promo automática
+      const promoDetectada = promos
+        ? detectarPromoParaVariante(promos, producto.id, medidaId, precioBase)
+        : null;
+      const descuentoUnitario = promoDetectada?.descuento ?? 0;
+      const precioConPromo =
+        promoDetectada && promoDetectada.descuento > 0
+          ? promoDetectada.precioConPromo
+          : null;
+      // El precio efectivo para subtotal: si hay promo, usa precio con promo
+      const precioEfectivo = precioConPromo ?? precioBase;
 
       setItems((prev) => {
         const idx = prev.findIndex((i) => i.key === key);
@@ -119,7 +141,9 @@ export function useCarrito() {
               ? {
                   ...i,
                   cantidad: i.cantidad + 1,
-                  subtotal: (i.cantidad + 1) * i.producto_precio,
+                  subtotal:
+                    (i.cantidad + 1) *
+                    (i.precio_con_promo ?? i.producto_precio),
                 }
               : i,
           );
@@ -136,7 +160,11 @@ export function useCarrito() {
             precio_base: precioBase,
             producto_precio: precioBase,
             cantidad: 1,
-            subtotal: precioBase,
+            subtotal: precioEfectivo,
+            descuento_unitario: descuentoUnitario,
+            precio_con_promo: precioConPromo,
+            promo_nombre: promoDetectada?.promo.nombre ?? null,
+            promo_etiqueta: promoDetectada?.etiqueta ?? null,
           },
         ];
       });
@@ -146,22 +174,25 @@ export function useCarrito() {
 
   // Para pizzas con sabores configurados
   const agregarPizza = useCallback(
-    (data: {
-      producto: ProductoPOS;
-      variante: {
-        id: string;
-        nombre: string;
-        precio: number;
-        medida_id?: string;
-      };
-      sabores: {
-        sabor_id: string;
-        sabor_nombre: string;
-        exclusiones: string[];
-      }[];
-      extras: ExtraOrden[];
-      acompanante?: AcompananteOrden;
-    }) => {
+    (
+      data: {
+        producto: ProductoPOS;
+        variante: {
+          id: string;
+          nombre: string;
+          precio: number;
+          medida_id?: string;
+        };
+        sabores: {
+          sabor_id: string;
+          sabor_nombre: string;
+          exclusiones: string[];
+        }[];
+        extras: ExtraOrden[];
+        acompanante?: AcompananteOrden;
+      },
+      promos?: PromocionBase[],
+    ) => {
       const { producto, variante, sabores, extras, acompanante } = data;
       const precioBase = variante.precio;
       const proporcion = calcularProporciones(sabores.length);
@@ -169,8 +200,29 @@ export function useCarrito() {
         ...s,
         proporcion,
       }));
-      const precioUnitario = calcularPrecioUnitario(precioBase, extras);
+      const precioExtras = (extras ?? []).reduce((acc, e) => acc + e.precio, 0);
+      const precioUnitario = precioBase + precioExtras;
       const key = buildKey(producto.id, variante.id, true);
+
+      // Detectar promo automática (descuento solo sobre precio_base, NO extras)
+      const promoDetectada = promos
+        ? detectarPromoParaVariante(
+            promos,
+            producto.id,
+            variante.medida_id ?? null,
+            precioBase,
+          )
+        : null;
+      const descuentoUnitario = promoDetectada?.descuento ?? 0;
+      const precioBaseConPromo =
+        promoDetectada && promoDetectada.descuento > 0
+          ? promoDetectada.precioConPromo
+          : null;
+      // Precio efectivo = precio_base_con_promo + extras (extras no se descuentan)
+      const precioEfectivo =
+        precioBaseConPromo !== null
+          ? precioBaseConPromo + precioExtras
+          : precioUnitario;
 
       setItems((prev) => [
         ...prev,
@@ -184,7 +236,11 @@ export function useCarrito() {
           precio_base: precioBase,
           producto_precio: precioUnitario,
           cantidad: 1,
-          subtotal: precioUnitario,
+          subtotal: precioEfectivo,
+          descuento_unitario: descuentoUnitario,
+          precio_con_promo: precioBaseConPromo,
+          promo_nombre: promoDetectada?.promo.nombre ?? null,
+          promo_etiqueta: promoDetectada?.etiqueta ?? null,
           sabores: saboresConProporcion,
           extras: extras.length > 0 ? extras : undefined,
           acompanante,
@@ -202,7 +258,15 @@ export function useCarrito() {
     setItems((prev) =>
       prev.map((i) =>
         i.key === key
-          ? { ...i, cantidad, subtotal: cantidad * i.producto_precio }
+          ? {
+              ...i,
+              cantidad,
+              subtotal:
+                cantidad *
+                (i.precio_con_promo !== null
+                  ? i.precio_con_promo + (i.producto_precio - i.precio_base)
+                  : i.producto_precio),
+            }
           : i,
       ),
     );
