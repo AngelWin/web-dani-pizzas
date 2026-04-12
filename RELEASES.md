@@ -23,8 +23,11 @@ R14 (Optimizaciones Rendimiento) [transversal, sin dependencias]
 R9 (Sucursales) + R5a (POS) + R5b/R5c (Ordenes) -> R15 (Gestion de Mesas)
                                                         -> R16 (Reservas de Mesas) [pendiente]
 R7 (Promociones) + R9 (Sucursales) + R5a (POS) -> R17 (Promociones Mejoradas)
+                                                        -> R17.2 (Descuento Auto por Producto)
                                                         -> R18 (Promos por Membresia) [pendiente]
                                                         -> R19 (Promos en POS: Venta y Visualizacion)
+                                                             -> R19.1 (Combo con Configurador Pizza) [pendiente]
+R8 (Membresias) + R17 -> R21 (Membresia Auto al Crear Orden) [pendiente]
 R15 (Mesas) + R5b/R5c (Ordenes/Cobro) -> R20 (Cuenta de Mesa y Cobro Agrupado) [pendiente]
 ```
 
@@ -1358,6 +1361,98 @@ MESA 5
 - El cliente es solo una REFERENCIA (opcional)
 - Quien ordena ≠ quien paga
 - La mesa se libera cuando TODAS sus ordenes estan pagadas/canceladas
+
+---
+
+## Release 17.2: Descuento Automatico por Producto en Carrito
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 17 (Promociones Mejoradas) + Release 19 (Promos en POS)
+**Objetivo:** Si un producto tiene una promo de descuento (%) activa, al agregarlo al carrito el precio se ajusta automaticamente. Sin necesidad de ir a "Ofertas" ni seleccionar la promo manualmente.
+
+### Arquitectura: Hibrido calculado en memoria
+- NO se escribe `precio_oferta` en la DB (fragil con promos por dia/hora)
+- Al cargar el POS, se calcula el precio con oferta para cada variante usando las promos activas
+- El producto se ve como si tuviera precio de oferta automaticamente
+
+### Tipos que se aplican automaticamente:
+- `descuento_porcentaje` → precio_oferta calculado automaticamente
+- `descuento_fijo` → precio_oferta calculado automaticamente
+- `2x1` → se sugiere pero NO se auto-aplica (requiere 2 items)
+- `combo_precio_fijo` → desde tab "Ofertas" (requiere seleccion)
+- `delivery_gratis` → se aplica al fee, no al producto
+
+### Reglas de acumulacion:
+- Las promos NO se acumulan entre si
+- Combos calculan sobre precios ORIGINALES, no sobre precios ya descontados
+- Si el cajero agrega un combo con un producto ya en carrito con descuento → toast de aviso
+- Extras NUNCA se descuentan (solo el precio_base de la variante)
+
+### Cambios esperados:
+- [ ] Recrear `detectarPromoParaVariante()` y `productoTienePromo()` en utils
+- [ ] Agregar campos descuento a `ItemCarrito` en use-carrito.ts
+- [ ] Badge promo + precio tachado en catalogo, selector medida, configurador pizza
+- [ ] Precio tachado por item en carrito y confirmar pedido
+- [ ] Descuento auto al agregar producto con promo al carrito
+
+---
+
+## Release 21: Descuento Membresia Automatico al Crear Orden (pendiente)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 8 (Membresias) + Release 17 (Promociones)
+**Objetivo:** Mover el descuento de membresia del cobro al POS. Al buscar un cliente con DNI que tiene membresia activa, el descuento se aplica automaticamente al subtotal en el formulario de pedido.
+
+### Problema actual:
+- En el POS solo se muestra un aviso: "Este cliente tiene X% de descuento por membresia (aplicar al momento del cobro)"
+- En el cobro, el cajero debe seleccionar manualmente el nivel de una lista global
+- No hay preseleccion automatica aunque el cliente ya fue identificado
+
+### Cambios esperados:
+- [ ] Al seleccionar cliente con membresia activa → descuento auto en formulario de pedido
+- [ ] Linea "Descuento membresia ({nivel}): -S/. X.XX" en resumen del POS
+- [ ] Sumar al campo `descuento` de la orden
+- [ ] Quitar seleccion manual de nivel en cobro dialog
+- [ ] El cobro solo muestra el descuento que ya viene aplicado (display)
+
+---
+
+## Release 19.1: Combo con Configurador de Pizza Integrado (pendiente)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 19 (Promos en POS)
+**Objetivo:** Cuando un combo incluye una pizza, el flujo guiado del combo-builder debe integrar el configurador de pizza (sabores, exclusiones, extras, acompanante).
+
+### Cambios esperados:
+- [ ] En combo-builder-dialog: detectar si el producto tiene `tiene_sabores === true`
+- [ ] Si es pizza: abrir ConfiguradorPizzaDialog como sub-paso
+- [ ] Al confirmar pizza: guardar sabores/extras/acompanante en el item del combo
+- [ ] Si NO es pizza: mantener selector de variante actual
+- [ ] Pasar saboresPorCategoria y extrasPorCategoria al combo-builder
+
+---
+
+## Release 18: Promociones Exclusivas por Membresia y Nivel
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 17 (Promociones Mejoradas) + Release 8 (Membresias)
+**Objetivo:** Agregar filtro de membresia/nivel a las promociones, permitiendo crear promos exclusivas para miembros (ej: 50% off para nivel Oro, delivery gratis permanente para VIP). Reutiliza toda la infraestructura de tipos de promo de R17.
+
+### Funcionalidades esperadas:
+- Agregar campo opcional `nivel_membresia_id` (FK nullable) a promociones
+- Opcion "Solo para miembros" en formulario de promocion con selector de nivel(es)
+- En POS: si el cliente tiene membresia, mostrar promos exclusivas de su nivel ademas de las publicas
+- Promos de membresia pueden ser permanentes (sin fecha fin) o con vigencia limitada
+- Promo tipo "Cumpleanos del miembro": descuento especial solo en el mes de cumpleanos del cliente
+- Mostrar badge "Exclusivo miembros" o "Nivel Oro" en la card de la promo
+- Si el cajero selecciona un cliente con membresia, las promos de su nivel se habilitan automaticamente
+
+### Consideraciones:
+- R17 ya tiene la infraestructura de tipos de promo (%, fijo, 2x1, combo, delivery gratis)
+- R18 solo agrega el filtro de QUIEN puede usar la promo, no cambia COMO funciona
+- La tabla `membresias_niveles` ya existe (R8) con: nombre, puntos_requeridos, descuento_porcentaje
+- La tabla `clientes` tiene `fecha_nacimiento` para la promo de cumpleanos
+- Se necesita nueva tabla `promocion_niveles` o columna `niveles_membresia_ids` en promociones
 
 ---
 
