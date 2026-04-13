@@ -92,9 +92,11 @@ export function ConfiguradorProductoDialog({
 
   if (!producto) return null;
 
-  const variantes = producto.producto_variantes.filter(
-    (v) => v.disponible && v.precio > 0,
-  );
+  // Si solo hay 1 variante (viene forzada desde combo), no filtrar por precio
+  const variantes =
+    producto.producto_variantes.length === 1
+      ? producto.producto_variantes.filter((v) => v.disponible)
+      : producto.producto_variantes.filter((v) => v.disponible && v.precio > 0);
   const saboresDisponibles = sabores.filter((s) => s.disponible);
   const extrasDisponibles = extras.filter((e) => e.disponible);
 
