@@ -242,7 +242,10 @@ export function FormularioPedidoDialog({
           promoAccesibleParaCliente(p, nivelClienteId) &&
           // Excluir promos que ya se aplican automáticamente por item (R17.2)
           p.tipo_promocion !== "descuento_porcentaje" &&
-          p.tipo_promocion !== "descuento_fijo",
+          p.tipo_promocion !== "descuento_fijo" &&
+          // Excluir combos (se agregan desde el catálogo del POS, no desde aquí)
+          p.tipo_promocion !== "combo_precio_fijo" &&
+          p.tipo_promocion !== "combo_precio_producto",
       ),
     [promociones, tipoPedido, nivelClienteId],
   );
