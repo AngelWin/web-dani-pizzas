@@ -137,6 +137,107 @@ export async function toggleReglaPuntosActiva(
   if (error) throw new Error(error.message);
 }
 
+// ─── Membresías de clientes ─────────────────────────────────────────────
+
+export type MembresiaConCliente = {
+  id: string;
+  cliente_id: string;
+  nivel_id: string;
+  activa: boolean;
+  puntos_acumulados: number;
+  tipo_plan: string | null;
+  monto_pagado: number | null;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+  fecha_ultimo_pago: string | null;
+  cliente: {
+    nombre: string;
+    apellido: string | null;
+    dni: string | null;
+  } | null;
+  nivel: { nombre: string; descuento_porcentaje: number | null } | null;
+};
+
+export async function getMembresiasConCliente(): Promise<
+  MembresiaConCliente[]
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("membresias")
+    .select(
+      `*, cliente:clientes!membresias_cliente_id_fkey(nombre, apellido, dni),
+       nivel:membresias_niveles!membresias_nivel_id_fkey(nombre, descuento_porcentaje)`,
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as MembresiaConCliente[];
+}
+
+export async function asignarMembresia(data: {
+  cliente_id: string;
+  nivel_id: string;
+  tipo_plan: string;
+  monto_pagado: number;
+}): Promise<void> {
+  const supabase = await createClient();
+  const now = new Date();
+
+  // Calcular fecha_fin según plan
+  const fechaFin = new Date(now);
+  if (data.tipo_plan === "mensual") fechaFin.setMonth(fechaFin.getMonth() + 1);
+  else if (data.tipo_plan === "trimestral")
+    fechaFin.setMonth(fechaFin.getMonth() + 3);
+  else if (data.tipo_plan === "anual")
+    fechaFin.setFullYear(fechaFin.getFullYear() + 1);
+
+  // Desactivar membresías anteriores del cliente
+  await supabase
+    .from("membresias")
+    .update({ activa: false, updated_at: now.toISOString() })
+    .eq("cliente_id", data.cliente_id);
+
+  // Crear nueva membresía
+  const { data: membresia, error } = await supabase
+    .from("membresias")
+    .insert({
+      cliente_id: data.cliente_id,
+      nivel_id: data.nivel_id,
+      activa: true,
+      puntos_acumulados: 0,
+      tipo_plan: data.tipo_plan,
+      monto_pagado: data.monto_pagado,
+      fecha_inicio: now.toISOString(),
+      fecha_fin: fechaFin.toISOString(),
+      fecha_ultimo_pago: now.toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  // Registrar pago
+  const { error: pagoError } = await supabase.from("membresia_pagos").insert({
+    membresia_id: membresia.id,
+    monto: data.monto_pagado,
+    tipo_plan: data.tipo_plan,
+    fecha_pago: now.toISOString(),
+    periodo_inicio: now.toISOString().split("T")[0],
+    periodo_fin: fechaFin.toISOString().split("T")[0],
+  });
+
+  if (pagoError) throw new Error(pagoError.message);
+}
+
+export async function desactivarMembresia(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("membresias")
+    .update({ activa: false, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 // Re-export funciones puras desde utils (sin dependencias de servidor)
 export {
   calcularPuntosVenta,

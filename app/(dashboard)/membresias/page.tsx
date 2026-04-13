@@ -5,6 +5,7 @@ import { ListaMembresias } from "@/components/membresias/lista-membresias";
 import {
   getNivelesMembresia,
   getReglasPuntos,
+  getMembresiasConCliente,
 } from "@/lib/services/membresias";
 
 export const dynamic = "force-dynamic";
@@ -14,18 +15,19 @@ export default async function MembresiasPage() {
   const { data: rolNombre } = await supabase.rpc("get_user_role");
   if (rolNombre !== "administrador") redirect("/dashboard");
 
-  const [niveles, reglas] = await Promise.all([
+  const [niveles, reglas, miembros] = await Promise.all([
     getNivelesMembresia(),
     getReglasPuntos(),
+    getMembresiasConCliente(),
   ]);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Membresías"
-        description="Niveles de membresía y reglas del programa de puntos"
+        description="Niveles de membresía, reglas de puntos y miembros"
       />
-      <ListaMembresias niveles={niveles} reglas={reglas} />
+      <ListaMembresias niveles={niveles} reglas={reglas} miembros={miembros} />
     </div>
   );
 }

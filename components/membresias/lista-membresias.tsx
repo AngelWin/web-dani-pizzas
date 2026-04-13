@@ -47,9 +47,22 @@ import {
   deleteNivelMembresiaAction,
   deleteReglaPuntosAction,
   toggleReglaPuntosActivaAction,
+  desactivarMembresiaAction,
 } from "@/actions/membresias";
-import type { NivelMembresia, ReglaPuntos } from "@/lib/services/membresias";
+import type {
+  NivelMembresia,
+  ReglaPuntos,
+  MembresiaConCliente,
+} from "@/lib/services/membresias";
 import { useCurrency } from "@/hooks/use-currency";
+
+const AsignarMembresiaDialog = dynamic(
+  () =>
+    import("./asignar-membresia-dialog").then(
+      (mod) => mod.AsignarMembresiaDialog,
+    ),
+  { ssr: false },
+);
 
 const NIVEL_COLORES = [
   "from-amber-600 to-amber-400",
@@ -62,16 +75,19 @@ const NIVEL_COLORES = [
 type Props = {
   niveles: NivelMembresia[];
   reglas: ReglaPuntos[];
+  miembros: MembresiaConCliente[];
 };
 
 export function ListaMembresias({
   niveles: inicial,
   reglas: inicialesReglas,
+  miembros: inicialesMiembros,
 }: Props) {
   const [niveles, setNiveles] = useState<NivelMembresia[]>(inicial);
   const [reglas, setReglas] = useState<ReglaPuntos[]>(inicialesReglas);
   const { simbolo } = useCurrency();
 
+  const [asignarDialogOpen, setAsignarDialogOpen] = useState(false);
   const [nivelDialogOpen, setNivelDialogOpen] = useState(false);
   const [editandoNivel, setEditandoNivel] = useState<NivelMembresia | null>(
     null,
@@ -191,6 +207,18 @@ export function ListaMembresias({
                 className="ml-1 px-1.5 py-0 text-[10px]"
               >
                 {reglas.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="miembros" className="gap-2">
+            <Star className="h-4 w-4" />
+            Miembros
+            {inicialesMiembros.length > 0 && (
+              <Badge
+                variant="secondary"
+                className="ml-1 px-1.5 py-0 text-[10px]"
+              >
+                {inicialesMiembros.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -405,6 +433,133 @@ export function ListaMembresias({
             </div>
           )}
         </TabsContent>
+
+        {/* ── Tab Miembros ──────────────────────────────────────────────── */}
+        <TabsContent value="miembros" className="mt-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {inicialesMiembros.length === 0
+                ? "Sin miembros registrados"
+                : `${inicialesMiembros.length} miembro${inicialesMiembros.length !== 1 ? "s" : ""}`}
+            </p>
+            <Button
+              className="h-10 gap-2"
+              onClick={() => setAsignarDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Asignar membresía
+            </Button>
+          </div>
+
+          {inicialesMiembros.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
+              <Star className="h-10 w-10 text-muted-foreground/40 mb-3" />
+              <p className="font-medium text-muted-foreground">
+                No hay miembros
+              </p>
+              <p className="text-sm text-muted-foreground/70 mt-1">
+                Asigna membresías a tus clientes
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {inicialesMiembros.map((m) => (
+                <div
+                  key={m.id}
+                  className="rounded-xl border bg-card p-4 shadow-[0_4px_12px_rgba(0,0,0,0.08)] space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-sm">
+                        {m.cliente?.nombre} {m.cliente?.apellido ?? ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        DNI: {m.cliente?.dni ?? "—"}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={
+                        m.activa
+                          ? "border-green-300 text-green-700 dark:border-green-800 dark:text-green-400 text-[10px]"
+                          : "border-red-300 text-red-600 dark:border-red-800 dark:text-red-400 text-[10px]"
+                      }
+                    >
+                      {m.activa ? "Activa" : "Inactiva"}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Nivel</span>
+                      <span className="font-medium text-foreground">
+                        {m.nivel?.nombre ?? "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Plan</span>
+                      <span className="font-medium text-foreground">
+                        {m.tipo_plan === "mensual"
+                          ? "Mensual"
+                          : m.tipo_plan === "trimestral"
+                            ? "Trimestral"
+                            : m.tipo_plan === "anual"
+                              ? "Anual"
+                              : (m.tipo_plan ?? "—")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Puntos</span>
+                      <span className="font-medium text-foreground">
+                        {m.puntos_acumulados}
+                      </span>
+                    </div>
+                    {m.fecha_ultimo_pago && (
+                      <div className="flex justify-between">
+                        <span>Último pago</span>
+                        <span className="font-medium text-foreground">
+                          {new Date(m.fecha_ultimo_pago).toLocaleDateString(
+                            "es-PE",
+                            { day: "2-digit", month: "short", year: "numeric" },
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    {m.fecha_fin && (
+                      <div className="flex justify-between">
+                        <span>Vence</span>
+                        <span
+                          className={`font-medium ${new Date(m.fecha_fin) < new Date() ? "text-red-600" : "text-foreground"}`}
+                        >
+                          {new Date(m.fecha_fin).toLocaleDateString("es-PE", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {m.activa && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full h-8 text-xs text-destructive hover:text-destructive"
+                      onClick={async () => {
+                        const result = await desactivarMembresiaAction(m.id);
+                        if (result.error) toast.error(result.error);
+                        else toast.success("Membresía desactivada");
+                      }}
+                    >
+                      Desactivar
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Dialogs niveles */}
@@ -472,6 +627,13 @@ export function ListaMembresias({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog asignar membresía */}
+      <AsignarMembresiaDialog
+        open={asignarDialogOpen}
+        onClose={() => setAsignarDialogOpen(false)}
+        niveles={niveles}
+      />
     </>
   );
 }

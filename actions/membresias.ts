@@ -9,10 +9,13 @@ import {
   updateReglaPuntos,
   deleteReglaPuntos,
   toggleReglaPuntosActiva,
+  asignarMembresia,
+  desactivarMembresia,
 } from "@/lib/services/membresias";
 import {
   nivelMembresiaSchema,
   reglaPuntosSchema,
+  asignarMembresiaSchema,
 } from "@/lib/validations/membresias";
 import type { ActionResult } from "@/types";
 import type { NivelMembresia, ReglaPuntos } from "@/lib/services/membresias";
@@ -165,6 +168,43 @@ export async function toggleReglaPuntosActivaAction(
     return {
       data: null,
       error: e instanceof Error ? e.message : "Error al cambiar estado",
+    };
+  }
+}
+
+// ─── Membresías de clientes ─────────────────────────────────────────────
+
+export async function asignarMembresiaAction(
+  formData: unknown,
+): Promise<ActionResult<null>> {
+  const parsed = asignarMembresiaSchema.safeParse(formData);
+  if (!parsed.success) {
+    return { data: null, error: parsed.error.errors[0].message };
+  }
+
+  try {
+    await asignarMembresia(parsed.data);
+    revalidatePath("/membresias");
+    return { data: null, error: null };
+  } catch (e) {
+    return {
+      data: null,
+      error: e instanceof Error ? e.message : "Error al asignar membresía",
+    };
+  }
+}
+
+export async function desactivarMembresiaAction(
+  id: string,
+): Promise<ActionResult<null>> {
+  try {
+    await desactivarMembresia(id);
+    revalidatePath("/membresias");
+    return { data: null, error: null };
+  } catch (e) {
+    return {
+      data: null,
+      error: e instanceof Error ? e.message : "Error al desactivar membresía",
     };
   }
 }
