@@ -42,6 +42,7 @@ type ProductoConfigCombo = {
   variante_nombre: string | null;
   medida_id: string | null;
   precio_unitario: number;
+  precio_extras: number;
   configurado: boolean;
   sabores?: SaborOrden[];
   extras?: ExtraOrden[];
@@ -133,6 +134,7 @@ function buildConfigVacia(pasos: PasoCombo[]): ProductoConfigCombo[] {
     variante_nombre: null,
     medida_id: null,
     precio_unitario: 0,
+    precio_extras: 0,
     configurado: false,
   }));
 }
@@ -148,6 +150,7 @@ function buildConfigFija(pasos: PasoCombo[]): ProductoConfigCombo[] {
       variante_nombre: variante?.categoria_medidas?.nombre ?? null,
       medida_id: variante?.medida_id ?? null,
       precio_unitario: variante?.precio ?? paso.producto.precio ?? 0,
+      precio_extras: 0,
       configurado: true,
     };
   });
@@ -227,6 +230,7 @@ export function ComboBuilderDialog({
         variante_nombre: variante.categoria_medidas?.nombre ?? null,
         medida_id: variante.medida_id,
         precio_unitario: variante.precio,
+        precio_extras: 0,
         configurado: true,
       };
       return nuevo;
@@ -268,6 +272,7 @@ export function ComboBuilderDialog({
         variante_nombre: data.variante.nombre,
         medida_id: data.variante.medida_id ?? null,
         precio_unitario: data.variante.precio + precioExtras,
+        precio_extras: precioExtras,
         configurado: true,
         sabores: data.sabores.map((s) => ({
           ...s,
@@ -295,8 +300,13 @@ export function ComboBuilderDialog({
       (acc, p) => acc + p.precio_unitario,
       0,
     );
-    // Precio dinámico: precio del combo = precio del producto ancla (★)
-    const precioPromo = promo.precio_dinamico
+    // Extras opcionales se suman al precio del combo
+    const totalExtras = productosConfig.reduce(
+      (acc, p) => acc + p.precio_extras,
+      0,
+    );
+    // Precio base del combo (sin extras)
+    const precioBase = promo.precio_dinamico
       ? (() => {
           const anclaIdx = pasosCombo.findIndex((p) => p.es_ancla);
           return (
@@ -305,6 +315,8 @@ export function ComboBuilderDialog({
           );
         })()
       : (promo.precio_combo ?? precioOriginal);
+    // Precio final = base del combo + extras adicionales
+    const precioPromo = precioBase + totalExtras;
     const descuento = Math.max(0, precioOriginal - precioPromo);
 
     const item: ItemPromoCarrito = {
@@ -427,7 +439,13 @@ export function ComboBuilderDialog({
                 <div className="flex justify-between font-bold text-base">
                   <span>Precio combo</span>
                   <span className="text-primary">
-                    {formatCurrency(promo.precio_combo ?? 0)}
+                    {formatCurrency(
+                      (promo.precio_combo ?? 0) +
+                        productosConfig.reduce(
+                          (acc, p) => acc + p.precio_extras,
+                          0,
+                        ),
+                    )}
                   </span>
                 </div>
               </div>
@@ -558,6 +576,7 @@ export function ComboBuilderDialog({
                               variante_nombre: null,
                               medida_id: null,
                               precio_unitario: productoActual.precio ?? 0,
+                              precio_extras: 0,
                               configurado: true,
                             };
                             return nuevo;
