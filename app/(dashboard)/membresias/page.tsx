@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { ListaMembresias } from "@/components/membresias/lista-membresias";
+import { PreciosMembresiaSection } from "@/components/membresias/precios-membresia-section";
 import {
   getNivelesMembresia,
   getReglasPuntos,
@@ -28,6 +29,7 @@ export default async function MembresiasPage() {
         description="Niveles de membresía, reglas de puntos y miembros"
       />
       <ListaMembresias niveles={niveles} reglas={reglas} miembros={miembros} />
+      <PreciosMembresiaSection niveles={niveles} />
     </div>
   );
 }
