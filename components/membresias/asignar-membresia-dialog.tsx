@@ -70,10 +70,35 @@ export function AsignarMembresiaDialog({ open, onClose, niveles }: Props) {
   );
   const tipoPlan = form.watch("tipo_plan");
 
-  // Auto-llenar monto según nivel y plan
+  // Verificar si hay precio de lanzamiento vigente
+  function getPrecioLanzamiento(
+    nivel: (typeof niveles)[number],
+  ): number | null {
+    if (
+      !nivel.precio_lanzamiento ||
+      !nivel.fecha_inicio_lanzamiento ||
+      !nivel.fecha_fin_lanzamiento
+    )
+      return null;
+    const hoy = new Date().toISOString().split("T")[0];
+    if (
+      hoy >= nivel.fecha_inicio_lanzamiento &&
+      hoy <= nivel.fecha_fin_lanzamiento
+    ) {
+      return nivel.precio_lanzamiento;
+    }
+    return null;
+  }
+
+  // Auto-llenar monto según nivel y plan (usa precio lanzamiento si vigente)
   function actualizarMonto(nivelId: string, plan: string) {
     const nivel = niveles.find((n) => n.id === nivelId);
     if (!nivel) return;
+    const precioLanzamiento = getPrecioLanzamiento(nivel);
+    if (precioLanzamiento !== null) {
+      form.setValue("monto_pagado", precioLanzamiento);
+      return;
+    }
     const monto =
       plan === "mensual"
         ? nivel.precio_mensual

@@ -27,6 +27,15 @@ export const nivelMembresiaSchema = z.object({
     .optional()
     .default(null),
   precio_anual: z.coerce.number().min(0).nullable().optional().default(null),
+  // Precio de lanzamiento
+  precio_lanzamiento: z.coerce
+    .number()
+    .min(0)
+    .nullable()
+    .optional()
+    .default(null),
+  fecha_inicio_lanzamiento: z.string().nullable().optional().default(null),
+  fecha_fin_lanzamiento: z.string().nullable().optional().default(null),
 });
 
 export type NivelMembresiaFormValues = z.input<typeof nivelMembresiaSchema>;

@@ -53,6 +53,9 @@ export function FormularioNivelDialog({ open, onClose, nivel }: Props) {
       precio_mensual: null,
       precio_trimestral: null,
       precio_anual: null,
+      precio_lanzamiento: null,
+      fecha_inicio_lanzamiento: null,
+      fecha_fin_lanzamiento: null,
     },
   });
 
@@ -67,6 +70,9 @@ export function FormularioNivelDialog({ open, onClose, nivel }: Props) {
         precio_mensual: nivel.precio_mensual ?? null,
         precio_trimestral: nivel.precio_trimestral ?? null,
         precio_anual: nivel.precio_anual ?? null,
+        precio_lanzamiento: nivel.precio_lanzamiento ?? null,
+        fecha_inicio_lanzamiento: nivel.fecha_inicio_lanzamiento ?? null,
+        fecha_fin_lanzamiento: nivel.fecha_fin_lanzamiento ?? null,
       });
     } else if (open && !nivel) {
       form.reset({
@@ -298,6 +304,81 @@ export function FormularioNivelDialog({ open, onClose, nivel }: Props) {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Precio de lanzamiento */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                Precio de lanzamiento (opcional)
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Precio especial temporal. Si la fecha actual está dentro del
+                rango, se usa en vez del precio normal.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <FormField
+                  control={form.control}
+                  name="precio_lanzamiento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Precio</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="any"
+                          min={0}
+                          placeholder="S/."
+                          className="h-10"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="fecha_inicio_lanzamiento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Desde</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          className="h-10"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="fecha_fin_lanzamiento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Hasta</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          className="h-10"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />

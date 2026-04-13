@@ -356,10 +356,13 @@ export type Database = {
           beneficios: string | null
           created_at: string | null
           descuento_porcentaje: number | null
+          fecha_fin_lanzamiento: string | null
+          fecha_inicio_lanzamiento: string | null
           id: string
           nombre: string
           orden: number | null
           precio_anual: number | null
+          precio_lanzamiento: number | null
           precio_mensual: number | null
           precio_trimestral: number | null
           puntos_requeridos: number
@@ -369,10 +372,13 @@ export type Database = {
           beneficios?: string | null
           created_at?: string | null
           descuento_porcentaje?: number | null
+          fecha_fin_lanzamiento?: string | null
+          fecha_inicio_lanzamiento?: string | null
           id?: string
           nombre: string
           orden?: number | null
           precio_anual?: number | null
+          precio_lanzamiento?: number | null
           precio_mensual?: number | null
           precio_trimestral?: number | null
           puntos_requeridos?: number
@@ -382,10 +388,13 @@ export type Database = {
           beneficios?: string | null
           created_at?: string | null
           descuento_porcentaje?: number | null
+          fecha_fin_lanzamiento?: string | null
+          fecha_inicio_lanzamiento?: string | null
           id?: string
           nombre?: string
           orden?: number | null
           precio_anual?: number | null
+          precio_lanzamiento?: number | null
           precio_mensual?: number | null
           precio_trimestral?: number | null
           puntos_requeridos?: number
