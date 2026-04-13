@@ -27,7 +27,8 @@ R7 (Promociones) + R9 (Sucursales) + R5a (POS) -> R17 (Promociones Mejoradas)
                                                         -> R18 (Promos por Membresia) [pendiente]
                                                         -> R19 (Promos en POS: Venta y Visualizacion)
                                                              -> R19.1 (Combo con Configurador Pizza) [pendiente]
-R8 (Membresias) + R17 -> R21 (Membresia Auto al Crear Orden) [pendiente]
+R8 (Membresias) + R17 -> R21 (Membresia Auto al Crear Orden)
+R8 (Membresias) -> R22 (Sistema de Membresias Completo)
 R15 (Mesas) + R5b/R5c (Ordenes/Cobro) -> R20 (Cuenta de Mesa y Cobro Agrupado) [pendiente]
 ```
 
@@ -1429,6 +1430,84 @@ MESA 5
 - La tabla `membresias_niveles` ya existe (R8) con: nombre, puntos_requeridos, descuento_porcentaje
 - La tabla `clientes` tiene `fecha_nacimiento` para la promo de cumpleanos
 - Se necesita nueva tabla `promocion_niveles` o columna `niveles_membresia_ids` en promociones
+
+---
+
+## Release 22: Sistema de Membresias Completo
+
+**Estado:** [ ] En desarrollo
+**Dependencia:** Release 8 (Membresias base)
+**Objetivo:** Convertir el modulo de membresias de solo configuracion (niveles y reglas) a un sistema funcional completo: asignar membresias a clientes, gestionar pagos (mensual/trimestral/anual), acumular puntos al consumir con upgrade automatico de nivel, y ver historial de pagos.
+
+### Cambios en DB:
+
+**Nuevos campos en `membresias_niveles`:**
+- `precio_mensual numeric(10,2)` — precio por mes
+- `precio_trimestral numeric(10,2)` — precio por 3 meses
+- `precio_anual numeric(10,2)` — precio por año
+
+**Nuevos campos en `membresias`:**
+- `tipo_plan text` — 'mensual', 'trimestral', 'anual'
+- `monto_pagado numeric(10,2)` — cuanto pago
+- `fecha_ultimo_pago timestamptz` — ultimo pago registrado
+
+**Nueva tabla `membresia_pagos`:**
+- id, membresia_id FK, monto, tipo_plan, fecha_pago, periodo_inicio, periodo_fin, created_at
+
+**Nuevo campo en `reglas_puntos`:**
+- `nivel_membresia_id uuid FK` — puntos por nivel (Bronce=1x, Plata=1.25x, Oro=1.5x)
+
+### Fases:
+
+**Fase 1 — DB + precios de nivel:**
+- [ ] Migraciones DB (campos en niveles, campos en membresias, tabla pagos, campo en reglas)
+- [ ] Formulario de nivel mejorado con campos de precio
+- [ ] Regenerar types
+
+**Fase 2 — Asignar membresia a cliente:**
+- [ ] Servicio: asignarMembresia(), getMembresiasConCliente()
+- [ ] Action: asignarMembresiaAction
+- [ ] Tab "Miembros" en /membresias con lista de membresias por cliente
+- [ ] Dialog "Asignar membresia" con buscador de cliente + selector nivel + plan
+- [ ] Registro de pago al asignar
+
+**Fase 3 — Acumular puntos al cobrar:**
+- [ ] En cobrarOrdenAction: calcular puntos segun regla del nivel del cliente
+- [ ] UPDATE membresias SET puntos_acumulados += puntos
+- [ ] Si supera umbral del siguiente nivel → upgrade automatico
+
+**Fase 4 — Historial de pagos y estado:**
+- [ ] Vista de historial de pagos por membresia
+- [ ] Indicador pago al dia / vencido
+- [ ] Desactivar membresia si no pago (manual)
+
+### Decisiones de diseno:
+- Puntos diferentes por nivel (Bronce gana menos, Oro gana mas)
+- Pago de membresia desde admin (no desde POS)
+- Nivel 1 (Bronce) es el nivel inicial de todos los nuevos miembros
+- El campo `orden` de niveles define la jerarquia (1=mas bajo, 4=mas alto)
+
+### Archivos nuevos:
+- `components/membresias/asignar-membresia-dialog.tsx`
+- `components/membresias/lista-miembros.tsx`
+
+### Archivos a modificar:
+- `types/database.ts` — regenerar
+- `lib/services/membresias.ts` — funciones de membresia de cliente
+- `lib/validations/membresias.ts` — schemas para asignar + pago
+- `actions/membresias.ts` — acciones de membresia de cliente
+- `components/membresias/lista-membresias.tsx` — tab "Miembros"
+- `components/membresias/formulario-nivel-dialog.tsx` — campos precio
+- `app/(dashboard)/membresias/page.tsx` — cargar datos de miembros
+- `app/(dashboard)/ordenes/actions.ts` — acumular puntos al cobrar
+
+### Criterio de exito:
+- Nivel Bronce configurado con precios mensual/trimestral/anual
+- Membresia asignada a clientes DNI 43456170 y 43456179
+- Lista de miembros visible en /membresias tab "Miembros"
+- En POS: descuento de membresia se aplica auto al buscar cliente
+- Al cobrar: puntos se acumulan en la membresia del cliente
+- Build pasa sin errores
 
 ---
 

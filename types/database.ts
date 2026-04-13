@@ -250,6 +250,47 @@ export type Database = {
           },
         ]
       }
+      membresia_pagos: {
+        Row: {
+          created_at: string | null
+          fecha_pago: string
+          id: string
+          membresia_id: string
+          monto: number
+          periodo_fin: string
+          periodo_inicio: string
+          tipo_plan: string
+        }
+        Insert: {
+          created_at?: string | null
+          fecha_pago?: string
+          id?: string
+          membresia_id: string
+          monto: number
+          periodo_fin: string
+          periodo_inicio: string
+          tipo_plan: string
+        }
+        Update: {
+          created_at?: string | null
+          fecha_pago?: string
+          id?: string
+          membresia_id?: string
+          monto?: number
+          periodo_fin?: string
+          periodo_inicio?: string
+          tipo_plan?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membresia_pagos_membresia_id_fkey"
+            columns: ["membresia_id"]
+            isOneToOne: false
+            referencedRelation: "membresias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membresias: {
         Row: {
           activa: boolean
@@ -257,9 +298,12 @@ export type Database = {
           created_at: string
           fecha_fin: string | null
           fecha_inicio: string
+          fecha_ultimo_pago: string | null
           id: string
+          monto_pagado: number | null
           nivel_id: string
           puntos_acumulados: number
+          tipo_plan: string | null
           updated_at: string
         }
         Insert: {
@@ -268,9 +312,12 @@ export type Database = {
           created_at?: string
           fecha_fin?: string | null
           fecha_inicio?: string
+          fecha_ultimo_pago?: string | null
           id?: string
+          monto_pagado?: number | null
           nivel_id: string
           puntos_acumulados?: number
+          tipo_plan?: string | null
           updated_at?: string
         }
         Update: {
@@ -279,9 +326,12 @@ export type Database = {
           created_at?: string
           fecha_fin?: string | null
           fecha_inicio?: string
+          fecha_ultimo_pago?: string | null
           id?: string
+          monto_pagado?: number | null
           nivel_id?: string
           puntos_acumulados?: number
+          tipo_plan?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -309,6 +359,9 @@ export type Database = {
           id: string
           nombre: string
           orden: number | null
+          precio_anual: number | null
+          precio_mensual: number | null
+          precio_trimestral: number | null
           puntos_requeridos: number
           updated_at: string | null
         }
@@ -319,6 +372,9 @@ export type Database = {
           id?: string
           nombre: string
           orden?: number | null
+          precio_anual?: number | null
+          precio_mensual?: number | null
+          precio_trimestral?: number | null
           puntos_requeridos?: number
           updated_at?: string | null
         }
@@ -329,6 +385,9 @@ export type Database = {
           id?: string
           nombre?: string
           orden?: number | null
+          precio_anual?: number | null
+          precio_mensual?: number | null
+          precio_trimestral?: number | null
           puntos_requeridos?: number
           updated_at?: string | null
         }
@@ -1133,6 +1192,7 @@ export type Database = {
           created_at: string | null
           descripcion: string | null
           id: string
+          nivel_membresia_id: string | null
           nombre: string
           puntos_otorgados: number
           soles_por_punto: number
@@ -1143,6 +1203,7 @@ export type Database = {
           created_at?: string | null
           descripcion?: string | null
           id?: string
+          nivel_membresia_id?: string | null
           nombre: string
           puntos_otorgados?: number
           soles_por_punto?: number
@@ -1153,12 +1214,21 @@ export type Database = {
           created_at?: string | null
           descripcion?: string | null
           id?: string
+          nivel_membresia_id?: string | null
           nombre?: string
           puntos_otorgados?: number
           soles_por_punto?: number
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reglas_puntos_nivel_membresia_id_fkey"
+            columns: ["nivel_membresia_id"]
+            isOneToOne: false
+            referencedRelation: "membresias_niveles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       repartidor_detalles: {
         Row: {

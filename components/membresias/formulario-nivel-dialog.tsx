@@ -50,6 +50,9 @@ export function FormularioNivelDialog({ open, onClose, nivel }: Props) {
       descuento_porcentaje: 0,
       puntos_requeridos: 0,
       orden: null,
+      precio_mensual: null,
+      precio_trimestral: null,
+      precio_anual: null,
     },
   });
 
@@ -61,6 +64,9 @@ export function FormularioNivelDialog({ open, onClose, nivel }: Props) {
         descuento_porcentaje: nivel.descuento_porcentaje ?? 0,
         puntos_requeridos: nivel.puntos_requeridos,
         orden: nivel.orden ?? null,
+        precio_mensual: nivel.precio_mensual ?? null,
+        precio_trimestral: nivel.precio_trimestral ?? null,
+        precio_anual: nivel.precio_anual ?? null,
       });
     } else if (open && !nivel) {
       form.reset({
@@ -69,6 +75,9 @@ export function FormularioNivelDialog({ open, onClose, nivel }: Props) {
         descuento_porcentaje: 0,
         puntos_requeridos: 0,
         orden: null,
+        precio_mensual: null,
+        precio_trimestral: null,
+        precio_anual: null,
       });
     }
   }, [open, nivel, form]);
@@ -210,6 +219,90 @@ export function FormularioNivelDialog({ open, onClose, nivel }: Props) {
                 </FormItem>
               )}
             />
+
+            {/* Precios de membresía */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                Precios de membresía (opcional)
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <FormField
+                  control={form.control}
+                  name="precio_mensual"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Mensual</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="any"
+                          min={0}
+                          placeholder="S/."
+                          className="h-10"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="precio_trimestral"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Trimestral</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="any"
+                          min={0}
+                          placeholder="S/."
+                          className="h-10"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="precio_anual"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Anual</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="any"
+                          min={0}
+                          placeholder="S/."
+                          className="h-10"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <DialogFooter className="gap-2">
               <Button
