@@ -356,6 +356,26 @@ export function productoTienePromo(
   for (const promo of promos) {
     // Excluir promos exclusivas de membresía
     if (promo.nivel_membresia_id) continue;
+
+    // Combos usan combo_items: solo matchea si el producto está en el combo
+    if (
+      promo.tipo_promocion === "combo_precio_fijo" ||
+      promo.tipo_promocion === "combo_precio_producto"
+    ) {
+      const comboItems = promo.combo_items ?? [];
+      if (comboItems.length > 0) {
+        if (!comboItems.some((ci) => ci.producto_id === productoId)) continue;
+        return { tienePromo: true, etiqueta: "COMBO" };
+      }
+      // Fallback legacy: verificar productos_ids
+      if (
+        promo.productos_ids.length > 0 &&
+        !promo.productos_ids.includes(productoId)
+      )
+        continue;
+      return { tienePromo: true, etiqueta: "COMBO" };
+    }
+
     const tieneProductos = promo.productos_ids.length > 0;
     if (tieneProductos && !promo.productos_ids.includes(productoId)) continue;
     switch (promo.tipo_promocion) {
@@ -365,8 +385,6 @@ export function productoTienePromo(
         return { tienePromo: true, etiqueta: "PROMO" };
       case "2x1":
         return { tienePromo: true, etiqueta: "2x1" };
-      case "combo_precio_fijo":
-        return { tienePromo: true, etiqueta: "COMBO" };
       default:
         continue;
     }
