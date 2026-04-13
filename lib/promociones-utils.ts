@@ -19,6 +19,8 @@ export type PromocionBase = {
   tipos_pedido?: string[] | null;
   permite_modificaciones?: boolean;
   nivel_membresia_id?: string | null;
+  precio_dinamico?: boolean;
+  sabores_ids: string[];
   // Backward compat
   tipo_descuento: string;
 };

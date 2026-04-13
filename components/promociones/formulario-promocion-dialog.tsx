@@ -71,6 +71,7 @@ type Props = {
   sucursales: SucursalBasica[];
   medidas: MedidaBasica[];
   niveles: NivelBasico[];
+  sabores: { id: string; nombre: string; categoria_id: string }[];
 };
 
 function toDatetimeLocal(iso: string): string {
@@ -99,6 +100,7 @@ export function FormularioPromocionDialog({
   sucursales,
   medidas,
   niveles,
+  sabores,
 }: Props) {
   const esEdicion = !!promocion;
   const { simbolo } = useCurrency();
@@ -111,6 +113,9 @@ export function FormularioPromocionDialog({
   >([]);
   const [medidasSeleccionadas, setMedidasSeleccionadas] = useState<
     MedidaBasica[]
+  >([]);
+  const [saboresSeleccionados, setSaboresSeleccionados] = useState<
+    { id: string; nombre: string }[]
   >([]);
   const [busquedaProducto, setBusquedaProducto] = useState("");
   const [mostrarHorario, setMostrarHorario] = useState(false);
@@ -136,6 +141,8 @@ export function FormularioPromocionDialog({
       tipos_pedido: null,
       permite_modificaciones: true,
       nivel_membresia_id: null,
+      precio_dinamico: false,
+      sabores_ids: [],
     },
   });
 
@@ -163,6 +170,8 @@ export function FormularioPromocionDialog({
           | null,
         permite_modificaciones: promocion.permite_modificaciones ?? true,
         nivel_membresia_id: promocion.nivel_membresia_id ?? null,
+        precio_dinamico: promocion.precio_dinamico ?? false,
+        sabores_ids: promocion.sabores_ids ?? [],
       });
       setProductosSeleccionados(
         productos.filter((p) => promocion.productos_ids.includes(p.id)),
@@ -172,6 +181,9 @@ export function FormularioPromocionDialog({
       );
       setMedidasSeleccionadas(
         medidas.filter((m) => promocion.medidas_ids.includes(m.id)),
+      );
+      setSaboresSeleccionados(
+        sabores.filter((s) => (promocion.sabores_ids ?? []).includes(s.id)),
       );
       setMostrarHorario(!!promocion.hora_inicio);
     } else if (open) {
@@ -194,6 +206,7 @@ export function FormularioPromocionDialog({
       setProductosSeleccionados([]);
       setSucursalesSeleccionadas([]);
       setMedidasSeleccionadas([]);
+      setSaboresSeleccionados([]);
       setMostrarHorario(false);
     }
     setBusquedaProducto("");
@@ -221,6 +234,13 @@ export function FormularioPromocionDialog({
       medidasSeleccionadas.map((m) => m.id),
     );
   }, [medidasSeleccionadas, form]);
+
+  useEffect(() => {
+    form.setValue(
+      "sabores_ids",
+      saboresSeleccionados.map((s) => s.id),
+    );
+  }, [saboresSeleccionados, form]);
 
   const tipoPromocion = form.watch("tipo_promocion");
   const diasSemana = form.watch("dias_semana") ?? [];
@@ -310,6 +330,7 @@ export function FormularioPromocionDialog({
   useEffect(() => {
     if (medidasFiltradas.length === 0 && medidasSeleccionadas.length > 0) {
       setMedidasSeleccionadas([]);
+      setSaboresSeleccionados([]);
     } else if (medidasSeleccionadas.length > 0) {
       const idsValidos = new Set(medidasFiltradas.map((m) => m.id));
       const filtradas = medidasSeleccionadas.filter((m) =>
@@ -830,6 +851,74 @@ export function FormularioPromocionDialog({
                         }`}
                       >
                         {m.nombre}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            {/* ── Precio dinámico (combo_precio_producto) ── */}
+            {(tipoPromocion === "combo_precio_fijo" ||
+              tipoPromocion === "combo_precio_producto") && (
+              <FormField
+                control={form.control}
+                name="precio_dinamico"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-xl border p-3">
+                    <div>
+                      <FormLabel className="text-sm font-medium">
+                        Precio dinámico
+                      </FormLabel>
+                      <p className="text-xs text-muted-foreground">
+                        {field.value
+                          ? "El precio del combo = precio del primer producto"
+                          : "Precio fijo definido arriba"}
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* ── Sabores permitidos (opcional) ── */}
+            {sabores.length > 0 &&
+              tipoPromocion !== "delivery_gratis" &&
+              tipoPromocion !== "descuento_porcentaje" &&
+              tipoPromocion !== "descuento_fijo" && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">
+                    Sabores permitidos (opcional)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {saboresSeleccionados.length === 0
+                      ? "Todos los sabores disponibles"
+                      : `Solo: ${saboresSeleccionados.map((s) => s.nombre).join(", ")}`}
+                  </p>
+                  <div className="flex gap-1.5 flex-wrap max-h-32 overflow-y-auto">
+                    {sabores.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() =>
+                          setSaboresSeleccionados((prev) =>
+                            prev.some((sel) => sel.id === s.id)
+                              ? prev.filter((sel) => sel.id !== s.id)
+                              : [...prev, s],
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          saboresSeleccionados.some((sel) => sel.id === s.id)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {s.nombre}
                       </button>
                     ))}
                   </div>

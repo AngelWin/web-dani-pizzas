@@ -18,6 +18,7 @@ export const promocionSchema = z
         TIPO_PROMOCION.DESCUENTO_FIJO,
         TIPO_PROMOCION.DOS_POR_UNO,
         TIPO_PROMOCION.COMBO_PRECIO_FIJO,
+        TIPO_PROMOCION.COMBO_PRECIO_PRODUCTO,
         TIPO_PROMOCION.DELIVERY_GRATIS,
       ],
       { required_error: "Selecciona el tipo de promoción" },
@@ -57,6 +58,10 @@ export const promocionSchema = z
     permite_modificaciones: z.boolean().optional().default(true),
     // Nivel de membresía requerido (null = público para todos)
     nivel_membresia_id: z.string().uuid().nullable().optional().default(null),
+    // Combo precio dinámico (precio = producto ancla)
+    precio_dinamico: z.boolean().optional().default(false),
+    // Sabores permitidos en la promo (vacío = todos)
+    sabores_ids: z.array(z.string().uuid()).optional().default([]),
   })
   .superRefine((data, ctx) => {
     // Fecha fin >= fecha inicio

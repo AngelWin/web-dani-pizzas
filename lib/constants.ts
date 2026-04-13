@@ -72,6 +72,7 @@ export const TIPO_PROMOCION = {
   DESCUENTO_FIJO: "descuento_fijo",
   DOS_POR_UNO: "2x1",
   COMBO_PRECIO_FIJO: "combo_precio_fijo",
+  COMBO_PRECIO_PRODUCTO: "combo_precio_producto",
   DELIVERY_GRATIS: "delivery_gratis",
 } as const;
 
@@ -83,6 +84,7 @@ export const TIPO_PROMOCION_LABELS: Record<TipoPromocion, string> = {
   descuento_fijo: "Descuento fijo",
   "2x1": "2 por 1",
   combo_precio_fijo: "Combo precio fijo",
+  combo_precio_producto: "Combo (precio del producto)",
   delivery_gratis: "Delivery gratis",
 };
 

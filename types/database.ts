@@ -1058,6 +1058,36 @@ export type Database = {
           },
         ]
       }
+      promocion_sabores: {
+        Row: {
+          promocion_id: string
+          sabor_id: string
+        }
+        Insert: {
+          promocion_id: string
+          sabor_id: string
+        }
+        Update: {
+          promocion_id?: string
+          sabor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promocion_sabores_promocion_id_fkey"
+            columns: ["promocion_id"]
+            isOneToOne: false
+            referencedRelation: "promociones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promocion_sabores_sabor_id_fkey"
+            columns: ["sabor_id"]
+            isOneToOne: false
+            referencedRelation: "pizza_sabores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promocion_sucursales: {
         Row: {
           promocion_id: string
@@ -1104,6 +1134,7 @@ export type Database = {
           pedido_minimo: number | null
           permite_modificaciones: boolean
           precio_combo: number | null
+          precio_dinamico: boolean
           tipo_descuento: string
           tipo_promocion: Database["public"]["Enums"]["tipo_promocion"]
           tipos_pedido: string[] | null
@@ -1125,6 +1156,7 @@ export type Database = {
           pedido_minimo?: number | null
           permite_modificaciones?: boolean
           precio_combo?: number | null
+          precio_dinamico?: boolean
           tipo_descuento: string
           tipo_promocion: Database["public"]["Enums"]["tipo_promocion"]
           tipos_pedido?: string[] | null
@@ -1146,6 +1178,7 @@ export type Database = {
           pedido_minimo?: number | null
           permite_modificaciones?: boolean
           precio_combo?: number | null
+          precio_dinamico?: boolean
           tipo_descuento?: string
           tipo_promocion?: Database["public"]["Enums"]["tipo_promocion"]
           tipos_pedido?: string[] | null
@@ -1591,6 +1624,7 @@ export type Database = {
         | "2x1"
         | "combo_precio_fijo"
         | "delivery_gratis"
+        | "combo_precio_producto"
       user_estado: "activo" | "inactivo" | "eliminado"
     }
     CompositeTypes: {
@@ -1748,6 +1782,7 @@ export const Constants = {
         "2x1",
         "combo_precio_fijo",
         "delivery_gratis",
+        "combo_precio_producto",
       ],
       user_estado: ["activo", "inactivo", "eliminado"],
     },

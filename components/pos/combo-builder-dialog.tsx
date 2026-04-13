@@ -255,7 +255,10 @@ export function ComboBuilderDialog({
       (acc, p) => acc + p.precio_unitario,
       0,
     );
-    const precioPromo = promo.precio_combo ?? precioOriginal;
+    // Precio dinámico: precio del combo = precio del primer producto (ancla)
+    const precioPromo = promo.precio_dinamico
+      ? (productosConfig[0]?.precio_unitario ?? precioOriginal)
+      : (promo.precio_combo ?? precioOriginal);
     const descuento = Math.max(0, precioOriginal - precioPromo);
 
     const item: ItemPromoCarrito = {
@@ -539,13 +542,20 @@ export function ComboBuilderDialog({
             // Solo mostrar la variante forzada para que el paso 1 se auto-seleccione
             producto_variantes: [productoParaConfigurar.variante],
           }}
-          sabores={
-            productoParaConfigurar.producto.categoria_id
+          sabores={(() => {
+            const todosLosSabores = productoParaConfigurar.producto.categoria_id
               ? (saboresPorCategoria[
                   productoParaConfigurar.producto.categoria_id
                 ] ?? [])
-              : []
-          }
+              : [];
+            // Filtrar sabores si la promo tiene restricción
+            if (promo.sabores_ids.length > 0) {
+              return todosLosSabores.filter((s) =>
+                promo.sabores_ids.includes(s.id),
+              );
+            }
+            return todosLosSabores;
+          })()}
           extras={
             productoParaConfigurar.producto.categoria_id
               ? (extrasPorCategoria[

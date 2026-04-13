@@ -61,12 +61,15 @@ type NivelBasico = {
   descuento_porcentaje: number | null;
 };
 
+type SaborBasico = { id: string; nombre: string; categoria_id: string };
+
 type Props = {
   promociones: PromocionConProductos[];
   productos: ProductoBasico[];
   sucursales: SucursalBasica[];
   medidas: MedidaBasica[];
   niveles: NivelBasico[];
+  sabores: SaborBasico[];
 };
 
 function formatFecha(iso: string): string {
@@ -142,6 +145,7 @@ export function ListaPromociones({
   sucursales,
   medidas,
   niveles,
+  sabores,
 }: Props) {
   const { formatCurrency } = useCurrency();
   const [promociones, setPromociones] =
@@ -408,6 +412,7 @@ export function ListaPromociones({
         sucursales={sucursales}
         medidas={medidas}
         niveles={niveles}
+        sabores={sabores}
       />
 
       {/* Confirm eliminar */}

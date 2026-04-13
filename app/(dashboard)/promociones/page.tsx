@@ -61,13 +61,27 @@ export default async function PromocionesPage() {
   const { data: rolData } = await supabase.rpc("get_user_role");
   if (rolData !== "administrador") redirect("/dashboard");
 
-  const [promociones, productos, sucursales, medidas, niveles] =
+  async function getSaboresBasico() {
+    const { data } = await supabase
+      .from("pizza_sabores")
+      .select("id, nombre, categoria_id")
+      .eq("disponible", true)
+      .order("nombre");
+    return (data ?? []) as {
+      id: string;
+      nombre: string;
+      categoria_id: string;
+    }[];
+  }
+
+  const [promociones, productos, sucursales, medidas, niveles, sabores] =
     await Promise.all([
       getPromociones(),
       getProductosBasico(),
       getSucursalesBasico(),
       getMedidasBasico(),
       getNivelesMembresia(),
+      getSaboresBasico(),
     ]);
 
   return (
@@ -82,6 +96,7 @@ export default async function PromocionesPage() {
         sucursales={sucursales}
         medidas={medidas}
         niveles={niveles}
+        sabores={sabores}
       />
     </div>
   );

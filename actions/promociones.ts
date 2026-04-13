@@ -41,6 +41,8 @@ function buildPromoData(parsed: ReturnType<typeof promocionSchema.safeParse>) {
       d.tipos_pedido && d.tipos_pedido.length > 0 ? d.tipos_pedido : null,
     permite_modificaciones: d.permite_modificaciones ?? true,
     nivel_membresia_id: d.nivel_membresia_id || null,
+    precio_dinamico: d.precio_dinamico ?? false,
+    sabores_ids: d.sabores_ids ?? [],
   };
 }
 
