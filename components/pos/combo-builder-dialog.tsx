@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import {
   Dialog,
@@ -48,6 +48,80 @@ type ProductoConfigCombo = {
   acompanante?: AcompananteOrden;
 };
 
+type PasoCombo = {
+  producto: ProductoPOS;
+  medidaForzada: ProductoPOS["producto_variantes"][number] | null;
+  label: string;
+};
+
+function buildPasosCombo(
+  promo: PromocionActivaPOS,
+  productos: ProductoPOS[],
+): PasoCombo[] {
+  const productosUnicos = promo.productos_ids
+    .map((pid) => productos.find((p) => p.id === pid))
+    .filter(Boolean) as ProductoPOS[];
+
+  if (promo.medidas_ids.length > 0) {
+    const pasos: PasoCombo[] = [];
+    for (const prod of productosUnicos) {
+      const variantesConMedida = prod.producto_variantes.filter((v) =>
+        promo.medidas_ids.includes(v.medida_id),
+      );
+      if (variantesConMedida.length > 0) {
+        for (const v of variantesConMedida) {
+          pasos.push({
+            producto: prod,
+            medidaForzada: v,
+            label: `${prod.nombre} (${v.categoria_medidas?.nombre ?? "Medida"})`,
+          });
+        }
+      } else {
+        pasos.push({
+          producto: prod,
+          medidaForzada: null,
+          label: prod.nombre,
+        });
+      }
+    }
+    return pasos;
+  }
+
+  return productosUnicos.map((p) => ({
+    producto: p,
+    medidaForzada: null,
+    label: p.nombre,
+  }));
+}
+
+function buildConfigVacia(pasos: PasoCombo[]): ProductoConfigCombo[] {
+  return pasos.map((paso) => ({
+    producto_id: paso.producto.id,
+    producto_nombre: paso.label,
+    variante_id: null,
+    variante_nombre: null,
+    medida_id: null,
+    precio_unitario: 0,
+    configurado: false,
+  }));
+}
+
+function buildConfigFija(pasos: PasoCombo[]): ProductoConfigCombo[] {
+  return pasos.map((paso) => {
+    const variante =
+      paso.medidaForzada ?? paso.producto.producto_variantes[0] ?? null;
+    return {
+      producto_id: paso.producto.id,
+      producto_nombre: paso.label,
+      variante_id: variante?.id ?? null,
+      variante_nombre: variante?.categoria_medidas?.nombre ?? null,
+      medida_id: variante?.medida_id ?? null,
+      precio_unitario: variante?.precio ?? paso.producto.precio ?? 0,
+      configurado: true,
+    };
+  });
+}
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -68,90 +142,42 @@ export function ComboBuilderDialog({
   onAgregarAlCarrito,
 }: Props) {
   const { formatCurrency } = useCurrency();
-  const [pasoActual, setPasoActual] = useState(0);
-  const [productosConfig, setProductosConfig] = useState<ProductoConfigCombo[]>(
-    [],
+
+  // Pasos del combo: estable mientras los props no cambien
+  const pasosCombo = useMemo(
+    () => buildPasosCombo(promo, productos),
+    [promo, productos],
   );
-  // Para abrir el configurador de producto cuando tiene sabores
+
+  const totalPasos = pasosCombo.length;
+
+  // Inicializar con el largo correcto desde el primer render
+  // (el componente se monta/desmonta con comboPromo && <ComboBuilderDialog>)
+  const [productosConfig, setProductosConfig] = useState<ProductoConfigCombo[]>(
+    () => {
+      const pasos = buildPasosCombo(promo, productos);
+      return promo.permite_modificaciones
+        ? buildConfigVacia(pasos)
+        : buildConfigFija(pasos);
+    },
+  );
+
+  const [pasoActual, setPasoActual] = useState(() =>
+    promo.permite_modificaciones ? 0 : -1,
+  );
+
   const [productoParaConfigurar, setProductoParaConfigurar] = useState<{
     producto: ProductoPOS;
     variante: ProductoPOS["producto_variantes"][number];
     idx: number;
   } | null>(null);
 
-  // Construir pasos del combo:
-  // Si hay medidas_ids → cada medida es un paso (mismo producto, medidas diferentes)
-  // Si no hay medidas_ids → cada producto es un paso
-  type PasoCombo = {
-    producto: ProductoPOS;
-    medidaForzada: ProductoPOS["producto_variantes"][number] | null;
-    label: string;
-  };
-
-  const pasosCombo: PasoCombo[] = (() => {
-    const productosUnicos = promo.productos_ids
-      .map((pid) => productos.find((p) => p.id === pid))
-      .filter(Boolean) as ProductoPOS[];
-
-    if (promo.medidas_ids.length > 0) {
-      // Crear un paso por cada medida seleccionada en la promo
-      const pasos: PasoCombo[] = [];
-      for (const prod of productosUnicos) {
-        const variantesConMedida = prod.producto_variantes.filter((v) =>
-          promo.medidas_ids.includes(v.medida_id),
-        );
-        if (variantesConMedida.length > 0) {
-          for (const v of variantesConMedida) {
-            pasos.push({
-              producto: prod,
-              medidaForzada: v,
-              label: `${prod.nombre} (${v.categoria_medidas?.nombre ?? "Medida"})`,
-            });
-          }
-        } else {
-          // Producto sin variantes que coincidan → paso normal
-          pasos.push({
-            producto: prod,
-            medidaForzada: null,
-            label: prod.nombre,
-          });
-        }
-      }
-      return pasos;
-    }
-
-    // Sin medidas → un paso por producto
-    return productosUnicos.map((p) => ({
-      producto: p,
-      medidaForzada: null,
-      label: p.nombre,
-    }));
-  })();
-
-  const productosDelCombo = pasosCombo.map((p) => p.producto);
-
-  function inicializarFijo() {
-    const items: ProductoConfigCombo[] = pasosCombo.map((paso) => {
-      const variante =
-        paso.medidaForzada ?? paso.producto.producto_variantes[0] ?? null;
-      return {
-        producto_id: paso.producto.id,
-        producto_nombre: paso.label,
-        variante_id: variante?.id ?? null,
-        variante_nombre: variante?.categoria_medidas?.nombre ?? null,
-        medida_id: variante?.medida_id ?? null,
-        precio_unitario: variante?.precio ?? paso.producto.precio ?? 0,
-        configurado: true,
-      };
-    });
-    return items;
-  }
-
   function seleccionarVariante(
     productoIdx: number,
     variante: ProductoPOS["producto_variantes"][number],
   ) {
-    const prod = productosDelCombo[productoIdx];
+    const prod = pasosCombo[productoIdx]?.producto;
+    if (!prod) return;
 
     // Si el producto tiene sabores → abrir configurador
     if (prod.categorias?.tiene_sabores) {
@@ -161,7 +187,8 @@ export function ComboBuilderDialog({
 
     // Si no tiene sabores → configurar directo
     setProductosConfig((prev) => {
-      const nuevo = [...prev];
+      const nuevo =
+        prev.length === totalPasos ? [...prev] : buildConfigVacia(pasosCombo);
       nuevo[productoIdx] = {
         producto_id: prod.id,
         producto_nombre: prod.nombre,
@@ -173,7 +200,7 @@ export function ComboBuilderDialog({
       };
       return nuevo;
     });
-    if (productoIdx < productosDelCombo.length - 1) {
+    if (productoIdx < totalPasos - 1) {
       setPasoActual(productoIdx + 1);
     }
   }
@@ -200,7 +227,9 @@ export function ComboBuilderDialog({
     const precioExtras = data.extras.reduce((acc, e) => acc + e.precio, 0);
 
     setProductosConfig((prev) => {
-      const nuevo = [...prev];
+      // Defensa: si prev tiene largo incorrecto, reconstruir
+      const nuevo =
+        prev.length === totalPasos ? [...prev] : buildConfigVacia(pasosCombo);
       nuevo[idx] = {
         producto_id: data.producto.id,
         producto_nombre: data.producto.nombre,
@@ -225,28 +254,8 @@ export function ComboBuilderDialog({
     });
 
     setProductoParaConfigurar(null);
-    if (idx < productosDelCombo.length - 1) {
+    if (idx < totalPasos - 1) {
       setPasoActual(idx + 1);
-    }
-  }
-
-  function handleAbrir() {
-    if (!promo.permite_modificaciones) {
-      setProductosConfig(inicializarFijo());
-      setPasoActual(-1);
-    } else {
-      setProductosConfig(
-        pasosCombo.map((paso) => ({
-          producto_id: paso.producto.id,
-          producto_nombre: paso.label,
-          variante_id: null,
-          variante_nombre: null,
-          medida_id: null,
-          precio_unitario: 0,
-          configurado: false,
-        })),
-      );
-      setPasoActual(0);
     }
   }
 
@@ -287,8 +296,11 @@ export function ComboBuilderDialog({
     onClose();
   }
 
+  // Solo marcar como "todos configurados" cuando el largo coincide
   const todosConfigurados =
-    productosConfig.length > 0 && productosConfig.every((p) => p.configurado);
+    productosConfig.length === totalPasos &&
+    totalPasos > 0 &&
+    productosConfig.every((p) => p.configurado);
   const pasoActualCombo = pasosCombo[pasoActual] ?? null;
   const productoActual = pasoActualCombo?.producto ?? null;
 
@@ -298,7 +310,6 @@ export function ComboBuilderDialog({
         open={open && !productoParaConfigurar}
         onOpenChange={(v) => {
           if (!v) onClose();
-          else handleAbrir();
         }}
       >
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -413,7 +424,7 @@ export function ComboBuilderDialog({
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  Paso {pasoActual + 1} de {pasosCombo.length} — Elige{" "}
+                  Paso {pasoActual + 1} de {totalPasos} — Elige{" "}
                   <strong>
                     {pasoActualCombo?.label ?? productoActual.nombre}
                   </strong>
@@ -499,7 +510,10 @@ export function ComboBuilderDialog({
                             return;
                           }
                           setProductosConfig((prev) => {
-                            const nuevo = [...prev];
+                            const nuevo =
+                              prev.length === totalPasos
+                                ? [...prev]
+                                : buildConfigVacia(pasosCombo);
                             nuevo[pasoActual] = {
                               producto_id: productoActual.id,
                               producto_nombre: productoActual.nombre,
@@ -511,7 +525,7 @@ export function ComboBuilderDialog({
                             };
                             return nuevo;
                           });
-                          if (pasoActual < pasosCombo.length - 1) {
+                          if (pasoActual < totalPasos - 1) {
                             setPasoActual(pasoActual + 1);
                           }
                         }}
