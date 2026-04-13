@@ -54,26 +54,36 @@ export type ItemCarrito = {
   subtotal: number;
 };
 
+/** Obtiene la fecha/hora actual en zona horaria Lima (UTC-5) */
+function getNowLima(): Date {
+  // Crear fecha en zona Lima usando toLocaleString
+  const nowStr = new Date().toLocaleString("en-US", {
+    timeZone: "America/Lima",
+  });
+  return new Date(nowStr);
+}
+
 /** Verifica si una promoción está vigente (fecha + día + hora) */
 export function esPromocionVigente(promo: PromocionBase): boolean {
   if (!promo.activa) return false;
 
   const now = new Date();
+  const nowLima = getNowLima();
 
-  // Rango de fechas
+  // Rango de fechas (comparar en UTC ya que las fechas se almacenan en UTC)
   const inicio = new Date(promo.fecha_inicio);
   const fin = new Date(promo.fecha_fin);
   if (now < inicio || now > fin) return false;
 
-  // Días de la semana
+  // Días de la semana (usar hora de Lima para determinar el día correcto)
   if (promo.dias_semana && promo.dias_semana.length > 0) {
-    const diaSemana = now.getDay(); // 0=dom, 6=sab
+    const diaSemana = nowLima.getDay(); // 0=dom, 6=sab en hora Lima
     if (!promo.dias_semana.includes(diaSemana)) return false;
   }
 
-  // Horario
+  // Horario (usar hora de Lima)
   if (promo.hora_inicio && promo.hora_fin) {
-    const horaActual = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    const horaActual = `${nowLima.getHours().toString().padStart(2, "0")}:${nowLima.getMinutes().toString().padStart(2, "0")}`;
     if (
       horaActual < promo.hora_inicio.slice(0, 5) ||
       horaActual > promo.hora_fin.slice(0, 5)
