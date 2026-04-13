@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { InputNumerico } from "@/components/ui/input-numerico";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -134,12 +135,12 @@ export function FormularioReglaDialog({ open, onClose, regla }: Props) {
                   <FormItem>
                     <FormLabel>Monto por punto ({simbolo})</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <InputNumerico
+                        variante="precio"
                         min={0.01}
-                        step={0.5}
                         className="h-12"
-                        {...field}
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
@@ -154,12 +155,12 @@ export function FormularioReglaDialog({ open, onClose, regla }: Props) {
                   <FormItem>
                     <FormLabel>Puntos otorgados</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <InputNumerico
+                        variante="entero"
                         min={1}
-                        step={1}
                         className="h-12"
-                        {...field}
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
