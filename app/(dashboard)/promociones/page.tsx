@@ -25,7 +25,6 @@ async function getMedidasBasico() {
   const { data } = await supabase
     .from("categoria_medidas")
     .select("id, nombre, categoria_id")
-    .eq("activa", true)
     .order("orden");
   return (data ?? []) as {
     id: string;
