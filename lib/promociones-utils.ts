@@ -295,6 +295,12 @@ export function detectarPromoParaVariante(
   for (const promo of promos) {
     // Excluir promos exclusivas de membresía (se aplican en el formulario, no automáticamente)
     if (promo.nivel_membresia_id) continue;
+    // Excluir combos (se aplican manualmente desde el catálogo de promos del POS)
+    if (
+      promo.tipo_promocion === "combo_precio_fijo" ||
+      promo.tipo_promocion === "combo_precio_producto"
+    )
+      continue;
     const itemSimulado: ItemCarrito = {
       producto_id: productoId,
       medida_id: medidaId,
@@ -321,9 +327,6 @@ export function detectarPromoParaVariante(
         break;
       case "2x1":
         etiqueta = "2x1";
-        break;
-      case "combo_precio_fijo":
-        etiqueta = "COMBO";
         break;
       case "delivery_gratis":
         continue;
