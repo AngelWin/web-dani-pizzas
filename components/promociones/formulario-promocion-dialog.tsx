@@ -247,7 +247,12 @@ export function FormularioPromocionDialog({
         break;
       case "combo_precio_fijo":
         if (!precioComboWatch || precioComboWatch <= 0) return true;
-        if (productosSeleccionados.length < 2) return true;
+        // Combo válido: 2+ productos, o 1 producto con 2+ medidas
+        if (
+          productosSeleccionados.length < 2 &&
+          medidasSeleccionadas.length < 2
+        )
+          return true;
         break;
       case "delivery_gratis":
         if (!pedidoMinimoWatch || pedidoMinimoWatch <= 0) return true;

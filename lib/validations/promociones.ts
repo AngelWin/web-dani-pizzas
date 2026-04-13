@@ -114,10 +114,15 @@ export const promocionSchema = z
             path: ["precio_combo"],
           });
         }
-        if (!data.productos_ids || data.productos_ids.length < 2) {
+        // Combo válido: 2+ productos, o 1 producto con 2+ medidas
+        const totalItemsCombo =
+          (data.productos_ids?.length ?? 0) +
+          Math.max(0, (data.medidas_ids?.length ?? 0) - 1);
+        if (totalItemsCombo < 1) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Selecciona al menos 2 productos para el combo",
+            message:
+              "Selecciona al menos 2 productos o 1 producto con 2 medidas",
             path: ["productos_ids"],
           });
         }
