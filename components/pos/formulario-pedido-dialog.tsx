@@ -225,7 +225,7 @@ export function FormularioPedidoDialog({
     );
 
     form.setValue("items", [...itemsNormales, ...itemsPromo]);
-  }, [carrito.items, form]);
+  }, [carrito.items, carrito.promoItems, form]);
 
   // Filtrar promos por tipo de pedido, nivel de membresía, y excluir auto-aplicadas
   const nivelClienteId =
