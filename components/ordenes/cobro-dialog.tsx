@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { InputNumerico } from "@/components/ui/input-numerico";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, DollarSign, Loader2 } from "lucide-react";
+import { CheckCircle, Banknote, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cobrarOrdenAction } from "@/app/(dashboard)/ordenes/actions";
 import {
@@ -283,7 +283,7 @@ export function CobroDialog({ orden, open, onOpenChange }: Props) {
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
-                        <DollarSign className="mr-1 h-4 w-4" />
+                        <Banknote className="mr-1 h-4 w-4" />
                         Cobrar {formatCurrency(totalFinal)}
                       </>
                     )}

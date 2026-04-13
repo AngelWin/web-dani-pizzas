@@ -9,7 +9,7 @@ import {
   ClipboardList,
   Armchair,
   X,
-  DollarSign,
+  Banknote,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -180,7 +180,7 @@ export function ListaOrdenes({
                 className="h-8 gap-1.5 text-xs"
                 onClick={() => setCobrarMesaOpen(true)}
               >
-                <DollarSign className="h-3.5 w-3.5" />
+                <Banknote className="h-3.5 w-3.5" />
                 Cobrar mesa
               </Button>
             )}
