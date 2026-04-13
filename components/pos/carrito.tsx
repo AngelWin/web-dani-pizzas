@@ -181,7 +181,18 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
                   )}
                   {item.sabores && item.sabores.length > 0 && (
                     <span className="block pl-3 text-foreground/50">
-                      {item.sabores.map((s) => s.sabor_nombre).join(" · ")}
+                      {item.sabores.map((s, si) => (
+                        <span key={si}>
+                          {si > 0 && " · "}
+                          {s.sabor_nombre}
+                          {s.exclusiones.length > 0 && (
+                            <span className="text-destructive/70">
+                              {" "}
+                              · sin {s.exclusiones.join(", ")}
+                            </span>
+                          )}
+                        </span>
+                      ))}
                     </span>
                   )}
                   {item.extras && item.extras.length > 0 && (
