@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/types/database";
 
 export type NivelMembresia =
@@ -306,7 +307,8 @@ export async function acumularPuntosCliente(
   clienteId: string,
   totalVenta: number,
 ): Promise<{ puntosGanados: number; nuevoNivel: string | null }> {
-  const supabase = await createClient();
+  // Usar adminClient para bypasear RLS (cajeros no tienen permiso de escritura en membresias)
+  const supabase = createAdminClient();
 
   // 1. Buscar membresía activa del cliente
   const { data: membresia } = await supabase
@@ -338,9 +340,10 @@ export async function acumularPuntosCliente(
 
   if (!regla) return { puntosGanados: 0, nuevoNivel: null };
 
-  // 3. Calcular puntos
+  // 3. Calcular puntos (soles_por_punto viene como string de Supabase numeric)
+  const solesPorPunto = Number(regla.soles_por_punto);
   const puntosGanados =
-    Math.floor(totalVenta / regla.soles_por_punto) * regla.puntos_otorgados;
+    Math.floor(totalVenta / solesPorPunto) * regla.puntos_otorgados;
   if (puntosGanados <= 0) return { puntosGanados: 0, nuevoNivel: null };
 
   const nuevosPuntos = membresia.puntos_acumulados + puntosGanados;
