@@ -12,6 +12,7 @@ import {
 import { cobrarOrden } from "@/lib/services/ventas";
 import { getConfiguracionNegocio } from "@/lib/services/configuracion";
 import { liberarMesaSiCorresponde } from "@/lib/services/mesas";
+import { acumularPuntosCliente } from "@/lib/services/membresias";
 import { cobrarOrdenSchema } from "@/lib/validations/ventas";
 import type { Venta } from "@/lib/services/ventas";
 import type { ActionResult } from "@/types";
@@ -157,6 +158,15 @@ export async function cobrarOrdenAction(
     // Liberar mesa si no tiene más órdenes activas
     if (orden.mesa_id) {
       await liberarMesaSiCorresponde(orden.mesa_id);
+    }
+
+    // Acumular puntos de membresía si el cliente tiene membresía activa
+    if (orden.cliente_id) {
+      try {
+        await acumularPuntosCliente(orden.cliente_id, totalFinal);
+      } catch {
+        // No bloquear el cobro si falla la acumulación de puntos
+      }
     }
 
     revalidatePath("/ordenes");

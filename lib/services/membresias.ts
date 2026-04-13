@@ -238,6 +238,90 @@ export async function desactivarMembresia(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Acumula puntos al cliente después de una venta.
+ * Si supera el umbral del siguiente nivel, hace upgrade automático.
+ */
+export async function acumularPuntosCliente(
+  clienteId: string,
+  totalVenta: number,
+): Promise<{ puntosGanados: number; nuevoNivel: string | null }> {
+  const supabase = await createClient();
+
+  // 1. Buscar membresía activa del cliente
+  const { data: membresia } = await supabase
+    .from("membresias")
+    .select("id, nivel_id, puntos_acumulados")
+    .eq("cliente_id", clienteId)
+    .eq("activa", true)
+    .limit(1)
+    .single();
+
+  if (!membresia) return { puntosGanados: 0, nuevoNivel: null };
+
+  // 2. Buscar regla de puntos para el nivel del cliente (o global)
+  const { data: reglas } = await supabase
+    .from("reglas_puntos")
+    .select("*")
+    .eq("activa", true)
+    .order("soles_por_punto", { ascending: true });
+
+  if (!reglas || reglas.length === 0)
+    return { puntosGanados: 0, nuevoNivel: null };
+
+  // Priorizar regla del nivel, luego global
+  const reglaDelNivel = reglas.find(
+    (r) => r.nivel_membresia_id === membresia.nivel_id,
+  );
+  const reglaGlobal = reglas.find((r) => !r.nivel_membresia_id);
+  const regla = reglaDelNivel ?? reglaGlobal;
+
+  if (!regla) return { puntosGanados: 0, nuevoNivel: null };
+
+  // 3. Calcular puntos
+  const puntosGanados =
+    Math.floor(totalVenta / regla.soles_por_punto) * regla.puntos_otorgados;
+  if (puntosGanados <= 0) return { puntosGanados: 0, nuevoNivel: null };
+
+  const nuevosPuntos = membresia.puntos_acumulados + puntosGanados;
+
+  // 4. Actualizar puntos
+  await supabase
+    .from("membresias")
+    .update({
+      puntos_acumulados: nuevosPuntos,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", membresia.id);
+
+  // 5. Verificar upgrade de nivel
+  const { data: niveles } = await supabase
+    .from("membresias_niveles")
+    .select("id, nombre, puntos_requeridos")
+    .order("puntos_requeridos", { ascending: false });
+
+  let nuevoNivel: string | null = null;
+
+  if (niveles) {
+    // Buscar el nivel más alto que el cliente puede alcanzar
+    const nivelAlcanzable = niveles.find(
+      (n) => nuevosPuntos >= n.puntos_requeridos,
+    );
+    if (nivelAlcanzable && nivelAlcanzable.id !== membresia.nivel_id) {
+      await supabase
+        .from("membresias")
+        .update({
+          nivel_id: nivelAlcanzable.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", membresia.id);
+      nuevoNivel = nivelAlcanzable.nombre;
+    }
+  }
+
+  return { puntosGanados, nuevoNivel };
+}
+
 // Re-export funciones puras desde utils (sin dependencias de servidor)
 export {
   calcularPuntosVenta,
