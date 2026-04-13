@@ -178,3 +178,141 @@ export async function cobrarOrdenAction(
     };
   }
 }
+
+/**
+ * Cobra todas las órdenes cobrables de una mesa en secuencia.
+ * Genera 1 venta por orden (no agrupa en 1 sola venta).
+ * Libera la mesa al final si no quedan órdenes activas.
+ */
+export async function cobrarMesaAction(
+  mesaId: string,
+  rawData: unknown,
+): Promise<ActionResult<{ cobradas: number; total: number }>> {
+  const supabase = await createClient();
+
+  const [{ data: rolNombre }, { data: sucursalId }] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+  ]);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!sucursalId) return { data: null, error: "Sin sucursal asignada" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Solo cajero o administrador pueden cobrar" };
+  }
+
+  const parsed = cobrarOrdenSchema.safeParse(rawData);
+  if (!parsed.success) {
+    return {
+      data: null,
+      error: parsed.error.errors[0]?.message ?? "Datos inválidos",
+    };
+  }
+
+  // Buscar todas las órdenes activas de la mesa
+  const config = await getConfiguracionNegocio();
+  const estadosCobrablesMesa =
+    config.modelo_negocio === "simple"
+      ? (["en_preparacion", "lista"] as const)
+      : (["lista"] as const);
+
+  const { data: ordenesMesa, error: queryError } = await supabase
+    .from("ordenes")
+    .select("*, orden_items(*)")
+    .eq("mesa_id", mesaId)
+    .in("estado", estadosCobrablesMesa);
+
+  if (queryError) return { data: null, error: queryError.message };
+  if (!ordenesMesa || ordenesMesa.length === 0)
+    return { data: null, error: "No hay órdenes cobrables en esta mesa" };
+
+  let cobradas = 0;
+  let totalCobrado = 0;
+
+  try {
+    for (const orden of ordenesMesa) {
+      const totalOrden = orden.total;
+
+      if (
+        parsed.data.metodo_pago === "efectivo" &&
+        cobradas === 0 &&
+        (parsed.data.monto_recibido ?? 0) <
+          ordenesMesa.reduce((acc, o) => acc + o.total, 0)
+      ) {
+        return {
+          data: null,
+          error: "El monto recibido es menor al total de la mesa",
+        };
+      }
+
+      await cobrarOrden({
+        orden_id: orden.id,
+        cajero_id: user.id,
+        sucursal_origen_id: sucursalId,
+        metodo_pago: parsed.data.metodo_pago,
+        monto_recibido:
+          cobradas === 0 ? (parsed.data.monto_recibido ?? null) : null,
+        tipo_pedido: orden.tipo_pedido,
+        subtotal: orden.subtotal,
+        descuento: orden.descuento,
+        delivery_fee: orden.delivery_fee,
+        total: totalOrden,
+        notas: orden.notas,
+        promocion_id: orden.promocion_id,
+        mesa_referencia: orden.mesa_referencia,
+        delivery_method: orden.delivery_method,
+        delivery_address: orden.delivery_address,
+        delivery_referencia: orden.delivery_referencia,
+        repartidor_id: orden.repartidor_id,
+        third_party_name: orden.third_party_name,
+        items: orden.orden_items.map(
+          (i: {
+            producto_id: string;
+            variante_id: string | null;
+            cantidad: number;
+            producto_nombre: string;
+            variante_nombre: string | null;
+            precio_unitario: number;
+            subtotal: number;
+          }) => ({
+            producto_id: i.producto_id,
+            variante_id: i.variante_id,
+            cantidad: i.cantidad,
+            producto_nombre: i.producto_nombre,
+            variante_nombre: i.variante_nombre,
+            precio_unitario: i.precio_unitario,
+            subtotal: i.subtotal,
+          }),
+        ),
+      });
+
+      await actualizarEstadoOrden(orden.id, "entregada");
+
+      if (orden.cliente_id) {
+        try {
+          await acumularPuntosCliente(orden.cliente_id, totalOrden);
+        } catch {
+          // No bloquear
+        }
+      }
+
+      cobradas++;
+      totalCobrado += totalOrden;
+    }
+
+    // Liberar mesa
+    await liberarMesaSiCorresponde(mesaId);
+
+    revalidatePath("/ordenes");
+    return { data: { cobradas, total: totalCobrado }, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error al cobrar mesa",
+    };
+  }
+}

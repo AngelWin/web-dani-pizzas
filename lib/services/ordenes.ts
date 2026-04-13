@@ -36,6 +36,7 @@ export async function getOrdenes(
   sucursalId: string | null,
   filtroEstado: FiltroEstadoOrden = "activas",
   fecha?: string, // formato YYYY-MM-DD (hora Lima UTC-5)
+  mesaId?: string, // filtrar por mesa específica
 ): Promise<OrdenConItems[]> {
   const supabase = await createClient();
 
@@ -59,6 +60,10 @@ export async function getOrdenes(
 
   if (sucursalId) {
     query = query.eq("sucursal_id", sucursalId);
+  }
+
+  if (mesaId) {
+    query = query.eq("mesa_id", mesaId);
   }
 
   if (filtroEstado === "activas") {

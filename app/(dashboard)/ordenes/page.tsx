@@ -24,9 +24,10 @@ function getMinFechaLima(): string {
 export default async function OrdenesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fecha?: string; sucursal?: string }>;
+  searchParams: Promise<{ fecha?: string; sucursal?: string; mesa?: string }>;
 }) {
   const params = await searchParams;
+  const mesaId = params.mesa ?? undefined;
   const hoy = getHoyLima();
 
   const supabase = await createClient();
@@ -50,7 +51,7 @@ export default async function OrdenesPage({
       : hoy;
 
   const [ordenes, config, niveles, sucursales] = await Promise.all([
-    getOrdenes(sucursalId, "todas", fechaFiltro),
+    getOrdenes(sucursalId, "todas", fechaFiltro, mesaId),
     getConfiguracionNegocio(),
     getNivelesMembresia(),
     esAdmin ? getSucursales() : Promise.resolve([]),
@@ -78,6 +79,7 @@ export default async function OrdenesPage({
         hoy={hoy}
         minFecha={minFecha}
         niveles={niveles}
+        mesaFiltro={mesaId}
       />
     </div>
   );

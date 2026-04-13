@@ -1,9 +1,35 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, ClipboardList } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardList,
+  Armchair,
+  X,
+  DollarSign,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { InputNumerico } from "@/components/ui/input-numerico";
+import { useCurrency } from "@/hooks/use-currency";
+import { cobrarMesaAction } from "@/app/(dashboard)/ordenes/actions";
+import { METODO_PAGO } from "@/lib/constants";
 import { TarjetaOrden } from "./tarjeta-orden";
 import type { OrdenConItems, FiltroEstadoOrden } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
@@ -65,6 +91,7 @@ type Props = {
   hoy: string; // YYYY-MM-DD
   minFecha: string | null; // YYYY-MM-DD (7 días atrás) — null = sin restricción (admin)
   niveles?: NivelMembresia[];
+  mesaFiltro?: string; // UUID de mesa si se filtran por mesa
 };
 
 export function ListaOrdenes({
@@ -75,11 +102,33 @@ export function ListaOrdenes({
   hoy,
   minFecha,
   niveles = [],
+  mesaFiltro,
 }: Props) {
   const router = useRouter();
+  const { formatCurrency } = useCurrency();
   const [filtro, setFiltro] = useState<EstadoTab>("activas");
+  const [cobrarMesaOpen, setCobrarMesaOpen] = useState(false);
+  const [metodoPagoMesa, setMetodoPagoMesa] = useState<string>("");
+  const [montoRecibidoMesa, setMontoRecibidoMesa] = useState<number | null>(
+    null,
+  );
+  const [isPendingMesa, startTransitionMesa] = useTransition();
 
   const tabs = getTabs(modeloNegocio);
+
+  // Cuenta de mesa: total acumulado de órdenes activas
+  const totalMesa = mesaFiltro
+    ? ordenes
+        .filter((o) => !["entregada", "cancelada"].includes(o.estado))
+        .reduce((acc, o) => acc + o.total, 0)
+    : 0;
+  const ordenesActivasMesa = mesaFiltro
+    ? ordenes.filter((o) => !["entregada", "cancelada"].includes(o.estado))
+        .length
+    : 0;
+  const mesaReferencia = mesaFiltro
+    ? ordenes.find((o) => o.mesa_referencia)?.mesa_referencia
+    : null;
   const ordenesFiltradas = useMemo(
     () => filtrarOrdenes(ordenes, filtro),
     [ordenes, filtro],
@@ -108,6 +157,46 @@ export function ListaOrdenes({
 
   return (
     <div className="space-y-4">
+      {/* Banner de cuenta de mesa */}
+      {mesaFiltro && (
+        <div className="flex items-center justify-between rounded-xl border border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Armchair className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div>
+              <p className="font-semibold text-blue-700 dark:text-blue-400">
+                Cuenta de {mesaReferencia ?? "Mesa"}
+              </p>
+              <p className="text-xs text-blue-600/80 dark:text-blue-500">
+                {ordenesActivasMesa}{" "}
+                {ordenesActivasMesa === 1 ? "orden activa" : "órdenes activas"}{" "}
+                — Total: {formatCurrency(totalMesa)}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {ordenesActivasMesa > 0 && (
+              <Button
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setCobrarMesaOpen(true)}
+              >
+                <DollarSign className="h-3.5 w-3.5" />
+                Cobrar mesa
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-blue-600 hover:text-blue-800"
+              onClick={() => router.push(`/ordenes?fecha=${fechaFiltro}`)}
+            >
+              <X className="h-3.5 w-3.5 mr-1" />
+              Quitar filtro
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Selector de fecha */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -194,6 +283,121 @@ export function ListaOrdenes({
             />
           ))}
         </div>
+      )}
+      {/* Dialog cobrar mesa completa */}
+      {mesaFiltro && (
+        <Dialog
+          open={cobrarMesaOpen}
+          onOpenChange={(v) => {
+            if (!v) {
+              setCobrarMesaOpen(false);
+              setMetodoPagoMesa("");
+              setMontoRecibidoMesa(null);
+            }
+          }}
+        >
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>
+                Cobrar {mesaReferencia ?? "Mesa"} completa
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="rounded-xl border p-3 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Órdenes</span>
+                  <span>{ordenesActivasMesa}</span>
+                </div>
+                <div className="flex justify-between font-bold text-base">
+                  <span>Total de la mesa</span>
+                  <span className="text-primary">
+                    {formatCurrency(totalMesa)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Método de pago</label>
+                <Select
+                  onValueChange={setMetodoPagoMesa}
+                  value={metodoPagoMesa}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Seleccionar método" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="efectivo">Efectivo</SelectItem>
+                    <SelectItem value="tarjeta">Tarjeta</SelectItem>
+                    <SelectItem value="yape">Yape</SelectItem>
+                    <SelectItem value="plin">Plin</SelectItem>
+                    <SelectItem value="transferencia">Transferencia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {metodoPagoMesa === "efectivo" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Monto recibido</label>
+                  <InputNumerico
+                    variante="precio"
+                    min={totalMesa}
+                    placeholder={`Mínimo ${formatCurrency(totalMesa)}`}
+                    className="h-11"
+                    value={montoRecibidoMesa}
+                    onChange={setMontoRecibidoMesa}
+                    allowNull
+                  />
+                  {montoRecibidoMesa && montoRecibidoMesa > totalMesa && (
+                    <p className="text-xs text-green-600">
+                      Vuelto: {formatCurrency(montoRecibidoMesa - totalMesa)}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                className="h-11"
+                onClick={() => setCobrarMesaOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="h-11 flex-1"
+                disabled={
+                  isPendingMesa ||
+                  !metodoPagoMesa ||
+                  (metodoPagoMesa === "efectivo" &&
+                    (!montoRecibidoMesa || montoRecibidoMesa < totalMesa))
+                }
+                onClick={() => {
+                  startTransitionMesa(async () => {
+                    const result = await cobrarMesaAction(mesaFiltro, {
+                      metodo_pago: metodoPagoMesa,
+                      monto_recibido: montoRecibidoMesa,
+                      descuento_membresia: 0,
+                    });
+                    if (result.error) {
+                      toast.error(result.error);
+                      return;
+                    }
+                    toast.success(
+                      `${result.data!.cobradas} órdenes cobradas — Total: ${formatCurrency(result.data!.total)}`,
+                    );
+                    setCobrarMesaOpen(false);
+                    router.refresh();
+                  });
+                }}
+              >
+                {isPendingMesa
+                  ? "Cobrando..."
+                  : `Cobrar ${formatCurrency(totalMesa)}`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

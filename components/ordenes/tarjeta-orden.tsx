@@ -166,6 +166,14 @@ export function TarjetaOrden({
           {orden.mesa_referencia && (
             <span className="font-medium text-foreground">
               Mesa: {orden.mesa_referencia}
+              {orden.mesa_id && (
+                <a
+                  href={`/ordenes?mesa=${orden.mesa_id}`}
+                  className="ml-1.5 text-[10px] text-primary hover:underline"
+                >
+                  Ver cuenta
+                </a>
+              )}
             </span>
           )}
         </div>

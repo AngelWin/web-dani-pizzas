@@ -1290,9 +1290,9 @@ Subtotal                        S/. 54.90
 
 ---
 
-## Release 20: Cuenta de Mesa y Cobro Agrupado (pendiente)
+## Release 20: Cuenta de Mesa y Cobro Agrupado
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 15 (Gestion de Mesas) + Release 5b/5c (Ordenes/Cobro)
 **Objetivo:** Permitir ver todas las ordenes activas de una mesa agrupadas ("la cuenta") y cobrarlas en un solo pago. Cubre el escenario real de un grupo en una mesa que hace multiples pedidos y paga todo junto al final.
 
