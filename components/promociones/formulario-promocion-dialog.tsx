@@ -949,6 +949,15 @@ export function FormularioPromocionDialog({
                       <strong>{comboProductoPendiente.nombre}</strong>:
                     </p>
                     <div className="flex gap-1.5 flex-wrap">
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-dashed bg-background hover:bg-muted transition-colors"
+                        onClick={() =>
+                          agregarComboItem(comboProductoPendiente, null, null)
+                        }
+                      >
+                        Cualquier medida
+                      </button>
                       {comboProductoPendiente.variantes.map((v) => (
                         <button
                           key={v.medida_id}
