@@ -79,20 +79,68 @@ export function ComboBuilderDialog({
     idx: number;
   } | null>(null);
 
-  const productosDelCombo = promo.productos_ids
-    .map((pid) => productos.find((p) => p.id === pid))
-    .filter(Boolean) as ProductoPOS[];
+  // Construir pasos del combo:
+  // Si hay medidas_ids → cada medida es un paso (mismo producto, medidas diferentes)
+  // Si no hay medidas_ids → cada producto es un paso
+  type PasoCombo = {
+    producto: ProductoPOS;
+    medidaForzada: ProductoPOS["producto_variantes"][number] | null;
+    label: string;
+  };
+
+  const pasosCombo: PasoCombo[] = (() => {
+    const productosUnicos = promo.productos_ids
+      .map((pid) => productos.find((p) => p.id === pid))
+      .filter(Boolean) as ProductoPOS[];
+
+    if (promo.medidas_ids.length > 0) {
+      // Crear un paso por cada medida seleccionada en la promo
+      const pasos: PasoCombo[] = [];
+      for (const prod of productosUnicos) {
+        const variantesConMedida = prod.producto_variantes.filter((v) =>
+          promo.medidas_ids.includes(v.medida_id),
+        );
+        if (variantesConMedida.length > 0) {
+          for (const v of variantesConMedida) {
+            pasos.push({
+              producto: prod,
+              medidaForzada: v,
+              label: `${prod.nombre} (${v.categoria_medidas?.nombre ?? "Medida"})`,
+            });
+          }
+        } else {
+          // Producto sin variantes que coincidan → paso normal
+          pasos.push({
+            producto: prod,
+            medidaForzada: null,
+            label: prod.nombre,
+          });
+        }
+      }
+      return pasos;
+    }
+
+    // Sin medidas → un paso por producto
+    return productosUnicos.map((p) => ({
+      producto: p,
+      medidaForzada: null,
+      label: p.nombre,
+    }));
+  })();
+
+  const productosDelCombo = pasosCombo.map((p) => p.producto);
 
   function inicializarFijo() {
-    const items: ProductoConfigCombo[] = productosDelCombo.map((p) => {
-      const variante = p.producto_variantes[0] ?? null;
+    const items: ProductoConfigCombo[] = pasosCombo.map((paso) => {
+      const variante =
+        paso.medidaForzada ?? paso.producto.producto_variantes[0] ?? null;
       return {
-        producto_id: p.id,
-        producto_nombre: p.nombre,
+        producto_id: paso.producto.id,
+        producto_nombre: paso.label,
         variante_id: variante?.id ?? null,
         variante_nombre: variante?.categoria_medidas?.nombre ?? null,
         medida_id: variante?.medida_id ?? null,
-        precio_unitario: variante?.precio ?? p.precio ?? 0,
+        precio_unitario: variante?.precio ?? paso.producto.precio ?? 0,
         configurado: true,
       };
     });
@@ -188,9 +236,9 @@ export function ComboBuilderDialog({
       setPasoActual(-1);
     } else {
       setProductosConfig(
-        productosDelCombo.map((p) => ({
-          producto_id: p.id,
-          producto_nombre: p.nombre,
+        pasosCombo.map((paso) => ({
+          producto_id: paso.producto.id,
+          producto_nombre: paso.label,
           variante_id: null,
           variante_nombre: null,
           medida_id: null,
@@ -238,7 +286,8 @@ export function ComboBuilderDialog({
 
   const todosConfigurados =
     productosConfig.length > 0 && productosConfig.every((p) => p.configurado);
-  const productoActual = productosDelCombo[pasoActual] ?? null;
+  const pasoActualCombo = pasosCombo[pasoActual] ?? null;
+  const productoActual = pasoActualCombo?.producto ?? null;
 
   return (
     <>
@@ -346,7 +395,7 @@ export function ComboBuilderDialog({
             productoActual && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  {productosDelCombo.map((_, idx) => (
+                  {pasosCombo.map((_, idx) => (
                     <div
                       key={idx}
                       className={`h-1.5 flex-1 rounded-full ${
@@ -361,8 +410,10 @@ export function ComboBuilderDialog({
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  Paso {pasoActual + 1} de {productosDelCombo.length} — Elige{" "}
-                  <strong>{productoActual.nombre}</strong>
+                  Paso {pasoActual + 1} de {pasosCombo.length} — Elige{" "}
+                  <strong>
+                    {pasoActualCombo?.label ?? productoActual.nombre}
+                  </strong>
                   {productoActual.categorias?.tiene_sabores && (
                     <Badge
                       variant="outline"
@@ -373,76 +424,102 @@ export function ComboBuilderDialog({
                   )}
                 </p>
 
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Selecciona tamaño:
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {productoActual.producto_variantes
-                      .filter((v) => v.precio > 0)
-                      .map((v) => (
-                        <Button
-                          key={v.id}
-                          variant="outline"
-                          className="h-14 flex-col gap-0.5"
-                          onClick={() => seleccionarVariante(pasoActual, v)}
-                        >
-                          <span className="font-medium">
-                            {v.categoria_medidas?.nombre ?? "Medida"}
-                          </span>
-                          <span className="text-xs text-primary">
-                            {formatCurrency(v.precio)}
-                          </span>
-                        </Button>
-                      ))}
-                  </div>
-
-                  {productoActual.producto_variantes.filter((v) => v.precio > 0)
-                    .length === 0 && (
+                {/* Si hay medida forzada → auto-seleccionar y mostrar botón directo */}
+                {pasoActualCombo?.medidaForzada ? (
+                  <div className="space-y-2">
                     <Button
                       variant="outline"
-                      className="w-full h-12"
-                      onClick={() => {
-                        // Si tiene sabores → abrir configurador
-                        if (productoActual.categorias?.tiene_sabores) {
-                          setProductoParaConfigurar({
-                            producto: productoActual,
-                            variante: {
-                              id: "",
-                              medida_id: "",
-                              precio: productoActual.precio ?? 0,
-                              disponible: true,
-                              orden: 0,
-                              categoria_medidas: null,
-                            },
-                            idx: pasoActual,
-                          });
-                          return;
-                        }
-                        setProductosConfig((prev) => {
-                          const nuevo = [...prev];
-                          nuevo[pasoActual] = {
-                            producto_id: productoActual.id,
-                            producto_nombre: productoActual.nombre,
-                            variante_id: null,
-                            variante_nombre: null,
-                            medida_id: null,
-                            precio_unitario: productoActual.precio ?? 0,
-                            configurado: true,
-                          };
-                          return nuevo;
-                        });
-                        if (pasoActual < productosDelCombo.length - 1) {
-                          setPasoActual(pasoActual + 1);
-                        }
-                      }}
+                      className="w-full h-14 flex-col gap-0.5"
+                      onClick={() =>
+                        seleccionarVariante(
+                          pasoActual,
+                          pasoActualCombo.medidaForzada!,
+                        )
+                      }
                     >
-                      <Package className="h-4 w-4 mr-2" />
-                      {productoActual.nombre} —{" "}
-                      {formatCurrency(productoActual.precio ?? 0)}
+                      <span className="font-medium">
+                        {pasoActualCombo.medidaForzada.categoria_medidas
+                          ?.nombre ?? "Medida"}{" "}
+                        — {formatCurrency(pasoActualCombo.medidaForzada.precio)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Toca para elegir sabores
+                      </span>
                     </Button>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Selecciona tamaño:
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {productoActual.producto_variantes
+                        .filter((v) => v.precio > 0)
+                        .map((v) => (
+                          <Button
+                            key={v.id}
+                            variant="outline"
+                            className="h-14 flex-col gap-0.5"
+                            onClick={() => seleccionarVariante(pasoActual, v)}
+                          >
+                            <span className="font-medium">
+                              {v.categoria_medidas?.nombre ?? "Medida"}
+                            </span>
+                            <span className="text-xs text-primary">
+                              {formatCurrency(v.precio)}
+                            </span>
+                          </Button>
+                        ))}
+                    </div>
+
+                    {productoActual.producto_variantes.filter(
+                      (v) => v.precio > 0,
+                    ).length === 0 && (
+                      <Button
+                        variant="outline"
+                        className="w-full h-12"
+                        onClick={() => {
+                          // Si tiene sabores → abrir configurador
+                          if (productoActual.categorias?.tiene_sabores) {
+                            setProductoParaConfigurar({
+                              producto: productoActual,
+                              variante: {
+                                id: "",
+                                medida_id: "",
+                                precio: productoActual.precio ?? 0,
+                                disponible: true,
+                                orden: 0,
+                                categoria_medidas: null,
+                              },
+                              idx: pasoActual,
+                            });
+                            return;
+                          }
+                          setProductosConfig((prev) => {
+                            const nuevo = [...prev];
+                            nuevo[pasoActual] = {
+                              producto_id: productoActual.id,
+                              producto_nombre: productoActual.nombre,
+                              variante_id: null,
+                              variante_nombre: null,
+                              medida_id: null,
+                              precio_unitario: productoActual.precio ?? 0,
+                              configurado: true,
+                            };
+                            return nuevo;
+                          });
+                          if (pasoActual < pasosCombo.length - 1) {
+                            setPasoActual(pasoActual + 1);
+                          }
+                        }}
+                      >
+                        <Package className="h-4 w-4 mr-2" />
+                        {productoActual.nombre} —{" "}
+                        {formatCurrency(productoActual.precio ?? 0)}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
