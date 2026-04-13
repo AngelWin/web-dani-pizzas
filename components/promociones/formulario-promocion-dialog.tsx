@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { X } from "lucide-react";
+import { X, ChevronUp, ChevronDown, Star } from "lucide-react";
 import {
   promocionSchema,
   type PromocionFormValues,
@@ -54,6 +54,7 @@ type ProductoBasico = {
   id: string;
   nombre: string;
   categoria_id: string | null;
+  variantes: { medida_id: string; medida_nombre: string; precio: number }[];
 };
 type SucursalBasica = { id: string; nombre: string };
 type MedidaBasica = { id: string; nombre: string; categoria_id: string };
@@ -61,6 +62,15 @@ type NivelBasico = {
   id: string;
   nombre: string;
   descuento_porcentaje: number | null;
+};
+
+type ComboItemDraft = {
+  key: string;
+  producto_id: string;
+  producto_nombre: string;
+  medida_id: string | null;
+  medida_nombre: string | null;
+  es_ancla: boolean;
 };
 
 type Props = {
@@ -87,9 +97,9 @@ const TIPOS_CON_VALOR = [
   TIPO_PROMOCION.DESCUENTO_PORCENTAJE,
   TIPO_PROMOCION.DESCUENTO_FIJO,
 ];
-const TIPOS_CON_PRODUCTOS_REQUERIDOS = [
-  TIPO_PROMOCION.DOS_POR_UNO,
+const TIPOS_COMBO: string[] = [
   TIPO_PROMOCION.COMBO_PRECIO_FIJO,
+  TIPO_PROMOCION.COMBO_PRECIO_PRODUCTO,
 ];
 
 export function FormularioPromocionDialog({
@@ -105,6 +115,7 @@ export function FormularioPromocionDialog({
   const esEdicion = !!promocion;
   const { simbolo } = useCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Legacy: productos/medidas para descuento/2x1
   const [productosSeleccionados, setProductosSeleccionados] = useState<
     ProductoBasico[]
   >([]);
@@ -119,6 +130,13 @@ export function FormularioPromocionDialog({
   >([]);
   const [busquedaProducto, setBusquedaProducto] = useState("");
   const [mostrarHorario, setMostrarHorario] = useState(false);
+
+  // Combo items (nuevo modelo explícito)
+  const [comboItems, setComboItems] = useState<ComboItemDraft[]>([]);
+  const [busquedaCombo, setBusquedaCombo] = useState("");
+  // Producto seleccionado esperando elegir medida
+  const [comboProductoPendiente, setComboProductoPendiente] =
+    useState<ProductoBasico | null>(null);
 
   const form = useForm<PromocionFormValues>({
     resolver: zodResolver(promocionSchema),
@@ -143,6 +161,7 @@ export function FormularioPromocionDialog({
       nivel_membresia_id: null,
       precio_dinamico: false,
       sabores_ids: [],
+      combo_items: [],
     },
   });
 
@@ -172,6 +191,12 @@ export function FormularioPromocionDialog({
         nivel_membresia_id: promocion.nivel_membresia_id ?? null,
         precio_dinamico: promocion.precio_dinamico ?? false,
         sabores_ids: promocion.sabores_ids ?? [],
+        combo_items: (promocion.combo_items ?? []).map((ci, i) => ({
+          producto_id: ci.producto_id,
+          medida_id: ci.medida_id,
+          orden: i,
+          es_ancla: ci.es_ancla,
+        })),
       });
       setProductosSeleccionados(
         productos.filter((p) => promocion.productos_ids.includes(p.id)),
@@ -184,6 +209,19 @@ export function FormularioPromocionDialog({
       );
       setSaboresSeleccionados(
         sabores.filter((s) => (promocion.sabores_ids ?? []).includes(s.id)),
+      );
+      setComboItems(
+        (promocion.combo_items ?? []).map((ci) => ({
+          key: ci.id,
+          producto_id: ci.producto_id,
+          producto_nombre:
+            ci.producto_nombre ??
+            productos.find((p) => p.id === ci.producto_id)?.nombre ??
+            "Producto",
+          medida_id: ci.medida_id,
+          medida_nombre: ci.medida_nombre,
+          es_ancla: ci.es_ancla,
+        })),
       );
       setMostrarHorario(!!promocion.hora_inicio);
     } else if (open) {
@@ -202,14 +240,18 @@ export function FormularioPromocionDialog({
         precio_combo: null,
         productos_ids: [],
         sucursales_ids: [],
+        combo_items: [],
       });
       setProductosSeleccionados([]);
       setSucursalesSeleccionadas([]);
       setMedidasSeleccionadas([]);
       setSaboresSeleccionados([]);
+      setComboItems([]);
       setMostrarHorario(false);
     }
     setBusquedaProducto("");
+    setBusquedaCombo("");
+    setComboProductoPendiente(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, promocion]);
 
@@ -242,6 +284,19 @@ export function FormularioPromocionDialog({
     );
   }, [saboresSeleccionados, form]);
 
+  // Sincronizar combo items → form
+  useEffect(() => {
+    form.setValue(
+      "combo_items",
+      comboItems.map((item, i) => ({
+        producto_id: item.producto_id,
+        medida_id: item.medida_id,
+        orden: i,
+        es_ancla: item.es_ancla,
+      })),
+    );
+  }, [comboItems, form]);
+
   const tipoPromocion = form.watch("tipo_promocion");
   const diasSemana = form.watch("dias_semana") ?? [];
   const nombreWatch = form.watch("nombre");
@@ -250,6 +305,9 @@ export function FormularioPromocionDialog({
   const valorDescuentoWatch = form.watch("valor_descuento");
   const precioComboWatch = form.watch("precio_combo");
   const pedidoMinimoWatch = form.watch("pedido_minimo");
+  const precioDinamico = form.watch("precio_dinamico");
+
+  const esCombo = TIPOS_COMBO.includes(tipoPromocion as string);
 
   // Botón crear deshabilitado hasta que los campos requeridos estén llenos
   const crearDeshabilitado = (() => {
@@ -267,12 +325,10 @@ export function FormularioPromocionDialog({
         break;
       case "combo_precio_fijo":
         if (!precioComboWatch || precioComboWatch <= 0) return true;
-        // Combo válido: 2+ productos, o 1 producto con 2+ medidas
-        if (
-          productosSeleccionados.length < 2 &&
-          medidasSeleccionadas.length < 2
-        )
-          return true;
+        if (comboItems.length < 2) return true;
+        break;
+      case "combo_precio_producto":
+        if (comboItems.length < 2) return true;
         break;
       case "delivery_gratis":
         if (!pedidoMinimoWatch || pedidoMinimoWatch <= 0) return true;
@@ -305,6 +361,7 @@ export function FormularioPromocionDialog({
     );
   }
 
+  // Filtrado de productos para selector legacy (descuento/2x1)
   const productosFiltrados = useMemo(
     () =>
       productos.filter(
@@ -315,7 +372,7 @@ export function FormularioPromocionDialog({
     [productos, productosSeleccionados, busquedaProducto],
   );
 
-  // Medidas filtradas por las categorías de los productos seleccionados
+  // Medidas filtradas por las categorías de los productos seleccionados (legacy)
   const medidasFiltradas = useMemo(() => {
     if (productosSeleccionados.length === 0) return [];
     const categoriasIds = new Set(
@@ -341,6 +398,59 @@ export function FormularioPromocionDialog({
       }
     }
   }, [medidasFiltradas, medidasSeleccionadas]);
+
+  // Filtrado de productos para combo items
+  const comboProductosFiltrados = useMemo(
+    () =>
+      productos.filter((p) =>
+        p.nombre.toLowerCase().includes(busquedaCombo.toLowerCase()),
+      ),
+    [productos, busquedaCombo],
+  );
+
+  // Agregar item al combo
+  function agregarComboItem(
+    producto: ProductoBasico,
+    medida_id: string | null,
+    medida_nombre: string | null,
+  ) {
+    setComboItems((prev) => [
+      ...prev,
+      {
+        key: crypto.randomUUID(),
+        producto_id: producto.id,
+        producto_nombre: producto.nombre,
+        medida_id,
+        medida_nombre,
+        es_ancla: prev.length === 0, // primer item es ancla por defecto
+      },
+    ]);
+    setBusquedaCombo("");
+    setComboProductoPendiente(null);
+  }
+
+  function eliminarComboItem(key: string) {
+    setComboItems((prev) => prev.filter((item) => item.key !== key));
+  }
+
+  function moverComboItem(idx: number, dir: -1 | 1) {
+    setComboItems((prev) => {
+      const nuevo = [...prev];
+      const target = idx + dir;
+      if (target < 0 || target >= nuevo.length) return prev;
+      [nuevo[idx], nuevo[target]] = [nuevo[target], nuevo[idx]];
+      return nuevo;
+    });
+  }
+
+  function toggleAncla(key: string) {
+    setComboItems((prev) =>
+      prev.map((item) => ({
+        ...item,
+        es_ancla: item.key === key ? !item.es_ancla : false,
+      })),
+    );
+  }
 
   async function onSubmit(data: PromocionFormValues) {
     setIsSubmitting(true);
@@ -369,22 +479,16 @@ export function FormularioPromocionDialog({
     }
   }
 
-  // Labels contextuales para productos
-  const productosLabel = TIPOS_CON_PRODUCTOS_REQUERIDOS.includes(
-    tipoPromocion as (typeof TIPOS_CON_PRODUCTOS_REQUERIDOS)[number],
-  )
-    ? tipoPromocion === TIPO_PROMOCION.DOS_POR_UNO
+  // Labels contextuales para productos (legacy - descuento/2x1)
+  const productosLabel =
+    tipoPromocion === TIPO_PROMOCION.DOS_POR_UNO
       ? "Productos elegibles para el 2x1"
-      : "Productos del combo"
-    : "Productos incluidos (opcional)";
+      : "Productos incluidos (opcional)";
 
-  const productosHint = TIPOS_CON_PRODUCTOS_REQUERIDOS.includes(
-    tipoPromocion as (typeof TIPOS_CON_PRODUCTOS_REQUERIDOS)[number],
-  )
-    ? tipoPromocion === TIPO_PROMOCION.DOS_POR_UNO
+  const productosHint =
+    tipoPromocion === TIPO_PROMOCION.DOS_POR_UNO
       ? "Selecciona los productos que participan en el 2x1"
-      : "Selecciona todos los productos que forman el combo"
-    : "Si no seleccionas, el descuento aplica al subtotal completo";
+      : "Si no seleccionas, el descuento aplica al subtotal completo";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -757,8 +861,172 @@ export function FormularioPromocionDialog({
               </div>
             </div>
 
-            {/* ── Sección 7: Productos ── */}
-            {tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS && (
+            {/* ── Sección 7: Items del combo (NUEVO) ── */}
+            {esCombo && (
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-medium">Items del combo</p>
+                  <p className="text-xs text-muted-foreground">
+                    Agrega los productos con su medida/tamaño
+                  </p>
+                </div>
+
+                {/* Lista de items agregados */}
+                {comboItems.length > 0 && (
+                  <div className="space-y-1.5">
+                    {comboItems.map((item, idx) => (
+                      <div
+                        key={item.key}
+                        className="flex items-center gap-2 rounded-xl border p-2.5"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => moverComboItem(idx, -1)}
+                            disabled={idx === 0}
+                            className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moverComboItem(idx, 1)}
+                            disabled={idx === comboItems.length - 1}
+                            className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {item.producto_nombre}
+                            {item.medida_nombre && (
+                              <span className="text-muted-foreground font-normal">
+                                {" "}
+                                · {item.medida_nombre}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        {precioDinamico && (
+                          <button
+                            type="button"
+                            onClick={() => toggleAncla(item.key)}
+                            title={
+                              item.es_ancla
+                                ? "Producto ancla (define el precio)"
+                                : "Marcar como ancla"
+                            }
+                            className={`p-1 rounded-lg transition-colors ${
+                              item.es_ancla
+                                ? "text-amber-500"
+                                : "text-muted-foreground/40 hover:text-muted-foreground"
+                            }`}
+                          >
+                            <Star
+                              className="h-4 w-4"
+                              fill={item.es_ancla ? "currentColor" : "none"}
+                            />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => eliminarComboItem(item.key)}
+                          className="p-1 rounded-lg text-destructive/60 hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Selector de medida pendiente */}
+                {comboProductoPendiente && (
+                  <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
+                    <p className="text-xs font-medium">
+                      Selecciona medida para{" "}
+                      <strong>{comboProductoPendiente.nombre}</strong>:
+                    </p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {comboProductoPendiente.variantes.map((v) => (
+                        <button
+                          key={v.medida_id}
+                          type="button"
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium border bg-background hover:bg-muted transition-colors"
+                          onClick={() =>
+                            agregarComboItem(
+                              comboProductoPendiente,
+                              v.medida_id,
+                              v.medida_nombre,
+                            )
+                          }
+                        >
+                          {v.medida_nombre}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => setComboProductoPendiente(null)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+
+                {/* Buscador de producto para combo */}
+                {!comboProductoPendiente && (
+                  <>
+                    <Input
+                      placeholder="Buscar producto para agregar..."
+                      className="h-10"
+                      value={busquedaCombo}
+                      onChange={(e) => setBusquedaCombo(e.target.value)}
+                    />
+
+                    {busquedaCombo && comboProductosFiltrados.length > 0 && (
+                      <div className="rounded-xl border bg-popover shadow-md max-h-40 overflow-y-auto">
+                        {comboProductosFiltrados.slice(0, 8).map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                            onClick={() => {
+                              if (p.variantes.length > 0) {
+                                // Tiene variantes → mostrar selector de medida
+                                setComboProductoPendiente(p);
+                                setBusquedaCombo("");
+                              } else {
+                                // Sin variantes → agregar directo
+                                agregarComboItem(p, null, null);
+                              }
+                            }}
+                          >
+                            {p.nombre}
+                            {p.variantes.length > 0 && (
+                              <span className="text-xs text-muted-foreground ml-1">
+                                ({p.variantes.length} medidas)
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {busquedaCombo && comboProductosFiltrados.length === 0 && (
+                      <p className="text-xs text-muted-foreground px-1">
+                        Sin resultados para &quot;{busquedaCombo}&quot;
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── Sección 7b: Productos legacy (descuento/2x1) ── */}
+            {!esCombo && tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS && (
               <div className="space-y-2">
                 <div>
                   <p className="text-sm font-medium">{productosLabel}</p>
@@ -826,8 +1094,9 @@ export function FormularioPromocionDialog({
               </div>
             )}
 
-            {/* ── Sección 8: Medidas/Tamaños (filtradas por productos) ── */}
-            {tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS &&
+            {/* ── Sección 8: Medidas/Tamaños legacy (descuento/2x1) ── */}
+            {!esCombo &&
+              tipoPromocion !== TIPO_PROMOCION.DELIVERY_GRATIS &&
               medidasFiltradas.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium">
@@ -857,9 +1126,8 @@ export function FormularioPromocionDialog({
                 </div>
               )}
 
-            {/* ── Precio dinámico (combo_precio_producto) ── */}
-            {(tipoPromocion === "combo_precio_fijo" ||
-              tipoPromocion === "combo_precio_producto") && (
+            {/* ── Precio dinámico (combos) ── */}
+            {esCombo && (
               <FormField
                 control={form.control}
                 name="precio_dinamico"
@@ -871,7 +1139,7 @@ export function FormularioPromocionDialog({
                       </FormLabel>
                       <p className="text-xs text-muted-foreground">
                         {field.value
-                          ? "El precio del combo = precio del primer producto"
+                          ? "Precio = producto marcado con ★"
                           : "Precio fijo definido arriba"}
                       </p>
                     </div>

@@ -21,6 +21,15 @@ export type PromocionBase = {
   nivel_membresia_id?: string | null;
   precio_dinamico?: boolean;
   sabores_ids: string[];
+  combo_items?: Array<{
+    id: string;
+    producto_id: string;
+    medida_id: string | null;
+    medida_nombre: string | null;
+    producto_nombre: string | null;
+    orden: number;
+    es_ancla: boolean;
+  }>;
   // Backward compat
   tipo_descuento: string;
 };

@@ -72,9 +72,15 @@ export function CatalogoPromos({
         const descripcion = getDescripcionPromocion(promo, formatCurrency);
 
         // Resolver nombres de productos
-        const productosNombres = promo.productos_ids
-          .map((pid) => productos.find((p) => p.id === pid)?.nombre)
-          .filter(Boolean);
+        const productosNombres =
+          promo.combo_items && promo.combo_items.length > 0
+            ? promo.combo_items.map(
+                (ci) =>
+                  `${ci.producto_nombre ?? "Producto"}${ci.medida_nombre ? ` (${ci.medida_nombre})` : ""}`,
+              )
+            : promo.productos_ids
+                .map((pid) => productos.find((p) => p.id === pid)?.nombre)
+                .filter(Boolean);
 
         const tipoLabel =
           promo.tipo_promocion === "descuento_porcentaje"
@@ -85,16 +91,21 @@ export function CatalogoPromos({
                 ? "2x1"
                 : promo.tipo_promocion === "combo_precio_fijo"
                   ? formatCurrency(promo.precio_combo ?? 0)
-                  : "GRATIS";
+                  : promo.tipo_promocion === "combo_precio_producto"
+                    ? "Combo"
+                    : "GRATIS";
 
-        const botonLabel =
-          promo.tipo_promocion === "combo_precio_fijo"
-            ? "Armar combo"
-            : promo.tipo_promocion === "2x1"
-              ? "Seleccionar productos"
-              : promo.tipo_promocion === "delivery_gratis"
-                ? "Aplicar"
-                : "Aplicar descuento";
+        const esCombo =
+          promo.tipo_promocion === "combo_precio_fijo" ||
+          promo.tipo_promocion === "combo_precio_producto";
+
+        const botonLabel = esCombo
+          ? "Armar combo"
+          : promo.tipo_promocion === "2x1"
+            ? "Seleccionar productos"
+            : promo.tipo_promocion === "delivery_gratis"
+              ? "Aplicar"
+              : "Aplicar descuento";
 
         return (
           <div

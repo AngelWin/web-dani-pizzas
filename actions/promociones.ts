@@ -43,6 +43,7 @@ function buildPromoData(parsed: ReturnType<typeof promocionSchema.safeParse>) {
     nivel_membresia_id: d.nivel_membresia_id || null,
     precio_dinamico: d.precio_dinamico ?? false,
     sabores_ids: d.sabores_ids ?? [],
+    combo_items: d.combo_items ?? [],
   };
 }
 

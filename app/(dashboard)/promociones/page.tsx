@@ -10,14 +10,27 @@ async function getProductosBasico() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("productos")
-    .select("id, nombre, categoria_id")
+    .select(
+      "id, nombre, categoria_id, producto_variantes(medida_id, precio, categoria_medidas(nombre))",
+    )
     .eq("disponible", true)
     .order("nombre");
-  return (data ?? []) as {
-    id: string;
-    nombre: string;
-    categoria_id: string | null;
-  }[];
+  return (data ?? []).map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    categoria_id: p.categoria_id,
+    variantes: (
+      (p.producto_variantes as Array<{
+        medida_id: string;
+        precio: number;
+        categoria_medidas: { nombre: string } | null;
+      }>) ?? []
+    ).map((v) => ({
+      medida_id: v.medida_id,
+      medida_nombre: v.categoria_medidas?.nombre ?? "",
+      precio: v.precio,
+    })),
+  }));
 }
 
 async function getMedidasBasico() {

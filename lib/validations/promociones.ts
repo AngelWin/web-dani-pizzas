@@ -62,6 +62,18 @@ export const promocionSchema = z
     precio_dinamico: z.boolean().optional().default(false),
     // Sabores permitidos en la promo (vacío = todos)
     sabores_ids: z.array(z.string().uuid()).optional().default([]),
+    // Items explícitos del combo (producto + medida)
+    combo_items: z
+      .array(
+        z.object({
+          producto_id: z.string().uuid(),
+          medida_id: z.string().uuid().nullable().default(null),
+          orden: z.number().int().min(0),
+          es_ancla: z.boolean().default(false),
+        }),
+      )
+      .optional()
+      .default([]),
   })
   .superRefine((data, ctx) => {
     // Fecha fin >= fecha inicio
@@ -119,16 +131,21 @@ export const promocionSchema = z
             path: ["precio_combo"],
           });
         }
-        // Combo válido: 2+ productos, o 1 producto con 2+ medidas
-        const totalItemsCombo =
-          (data.productos_ids?.length ?? 0) +
-          Math.max(0, (data.medidas_ids?.length ?? 0) - 1);
-        if (totalItemsCombo < 1) {
+        if ((data.combo_items?.length ?? 0) < 2) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message:
-              "Selecciona al menos 2 productos o 1 producto con 2 medidas",
-            path: ["productos_ids"],
+            message: "Un combo debe tener al menos 2 items",
+            path: ["combo_items"],
+          });
+        }
+        break;
+
+      case "combo_precio_producto":
+        if ((data.combo_items?.length ?? 0) < 2) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Un combo debe tener al menos 2 items",
+            path: ["combo_items"],
           });
         }
         break;

@@ -1028,6 +1028,58 @@ export type Database = {
           },
         ]
       }
+      promocion_combo_items: {
+        Row: {
+          created_at: string | null
+          es_ancla: boolean
+          id: string
+          medida_id: string | null
+          orden: number
+          producto_id: string
+          promocion_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          es_ancla?: boolean
+          id?: string
+          medida_id?: string | null
+          orden?: number
+          producto_id: string
+          promocion_id: string
+        }
+        Update: {
+          created_at?: string | null
+          es_ancla?: boolean
+          id?: string
+          medida_id?: string | null
+          orden?: number
+          producto_id?: string
+          promocion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promocion_combo_items_medida_id_fkey"
+            columns: ["medida_id"]
+            isOneToOne: false
+            referencedRelation: "categoria_medidas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promocion_combo_items_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promocion_combo_items_promocion_id_fkey"
+            columns: ["promocion_id"]
+            isOneToOne: false
+            referencedRelation: "promociones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promocion_medidas: {
         Row: {
           medida_id: string
@@ -1788,3 +1840,4 @@ export const Constants = {
     },
   },
 } as const
+

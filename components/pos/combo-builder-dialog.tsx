@@ -52,12 +52,40 @@ type PasoCombo = {
   producto: ProductoPOS;
   medidaForzada: ProductoPOS["producto_variantes"][number] | null;
   label: string;
+  es_ancla: boolean;
 };
 
 function buildPasosCombo(
   promo: PromocionActivaPOS,
   productos: ProductoPOS[],
 ): PasoCombo[] {
+  // Nuevo modelo: combo_items explícitos
+  if (promo.combo_items && promo.combo_items.length > 0) {
+    return promo.combo_items
+      .sort((a, b) => a.orden - b.orden)
+      .map((item) => {
+        const producto = productos.find((p) => p.id === item.producto_id);
+        if (!producto) return null;
+
+        const variante = item.medida_id
+          ? (producto.producto_variantes.find(
+              (v) => v.medida_id === item.medida_id,
+            ) ?? null)
+          : null;
+
+        return {
+          producto,
+          medidaForzada: variante,
+          label: variante
+            ? `${producto.nombre} (${variante.categoria_medidas?.nombre ?? ""})`
+            : producto.nombre,
+          es_ancla: item.es_ancla,
+        };
+      })
+      .filter(Boolean) as PasoCombo[];
+  }
+
+  // Fallback legacy: productos_ids + medidas_ids
   const productosUnicos = promo.productos_ids
     .map((pid) => productos.find((p) => p.id === pid))
     .filter(Boolean) as ProductoPOS[];
@@ -74,6 +102,7 @@ function buildPasosCombo(
             producto: prod,
             medidaForzada: v,
             label: `${prod.nombre} (${v.categoria_medidas?.nombre ?? "Medida"})`,
+            es_ancla: false,
           });
         }
       } else {
@@ -81,6 +110,7 @@ function buildPasosCombo(
           producto: prod,
           medidaForzada: null,
           label: prod.nombre,
+          es_ancla: false,
         });
       }
     }
@@ -91,6 +121,7 @@ function buildPasosCombo(
     producto: p,
     medidaForzada: null,
     label: p.nombre,
+    es_ancla: false,
   }));
 }
 
@@ -264,9 +295,15 @@ export function ComboBuilderDialog({
       (acc, p) => acc + p.precio_unitario,
       0,
     );
-    // Precio dinámico: precio del combo = precio del primer producto (ancla)
+    // Precio dinámico: precio del combo = precio del producto ancla (★)
     const precioPromo = promo.precio_dinamico
-      ? (productosConfig[0]?.precio_unitario ?? precioOriginal)
+      ? (() => {
+          const anclaIdx = pasosCombo.findIndex((p) => p.es_ancla);
+          return (
+            productosConfig[anclaIdx >= 0 ? anclaIdx : 0]?.precio_unitario ??
+            precioOriginal
+          );
+        })()
       : (promo.precio_combo ?? precioOriginal);
     const descuento = Math.max(0, precioOriginal - precioPromo);
 

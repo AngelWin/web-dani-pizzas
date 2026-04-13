@@ -134,7 +134,10 @@ export function PosClient({
   const ModeloIcon = modeloNegocio === "simple" ? Zap : Utensils;
 
   function handleSeleccionarPromo(promo: PromocionActivaPOS) {
-    if (promo.tipo_promocion === "combo_precio_fijo") {
+    if (
+      promo.tipo_promocion === "combo_precio_fijo" ||
+      promo.tipo_promocion === "combo_precio_producto"
+    ) {
       setComboPromo(promo);
     } else {
       toast.info(

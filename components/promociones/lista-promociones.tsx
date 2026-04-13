@@ -52,6 +52,7 @@ type ProductoBasico = {
   id: string;
   nombre: string;
   categoria_id: string | null;
+  variantes: { medida_id: string; medida_nombre: string; precio: number }[];
 };
 type SucursalBasica = { id: string; nombre: string };
 type MedidaBasica = { id: string; nombre: string; categoria_id: string };
@@ -365,13 +366,20 @@ export function ListaPromociones({
                     </div>
                   )}
 
-                  {/* Productos */}
+                  {/* Productos / Items del combo */}
                   <div className="flex items-center gap-1.5">
                     <Package className="h-3.5 w-3.5 shrink-0" />
                     <span>
-                      {promo.productos_ids.length > 0
-                        ? `${promo.productos_ids.length} producto${promo.productos_ids.length !== 1 ? "s" : ""}`
-                        : "Todos los productos"}
+                      {promo.combo_items.length > 0
+                        ? promo.combo_items
+                            .map(
+                              (ci) =>
+                                `${ci.producto_nombre ?? "Producto"}${ci.medida_nombre ? ` (${ci.medida_nombre})` : ""}`,
+                            )
+                            .join(", ")
+                        : promo.productos_ids.length > 0
+                          ? `${promo.productos_ids.length} producto${promo.productos_ids.length !== 1 ? "s" : ""}`
+                          : "Todos los productos"}
                     </span>
                   </div>
                 </div>
