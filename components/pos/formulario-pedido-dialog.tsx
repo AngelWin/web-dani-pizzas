@@ -382,7 +382,7 @@ export function FormularioPedidoDialog({
     });
   }
 
-  const descuento = promocionSeleccionada
+  const descuentoPromo = promocionSeleccionada
     ? calcularDescuento(
         promocionSeleccionada,
         itemsParaDescuento,
@@ -390,11 +390,17 @@ export function FormularioPedidoDialog({
         deliveryFee,
       )
     : 0;
+  const descuentoTotal = descuentoPromo + descuentoMembresia;
   const esDeliveryGratis =
     promocionSeleccionada?.tipo_promocion === "delivery_gratis";
   const total = esDeliveryGratis
-    ? Math.max(0, carrito.subtotal + Math.max(0, deliveryFee - descuento))
-    : Math.max(0, carrito.subtotal - descuento + deliveryFee);
+    ? Math.max(
+        0,
+        carrito.subtotal -
+          descuentoMembresia +
+          Math.max(0, deliveryFee - descuentoPromo),
+      )
+    : Math.max(0, carrito.subtotal - descuentoTotal + deliveryFee);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -784,9 +790,9 @@ export function FormularioPedidoDialog({
                             formatCurrency,
                           )}
                         </p>
-                        {descuento > 0 && (
+                        {descuentoPromo > 0 && (
                           <p className="text-xs font-semibold text-green-700 dark:text-green-400 mt-0.5">
-                            Ahorras {formatCurrency(descuento)}
+                            Ahorras {formatCurrency(descuentoPromo)}
                           </p>
                         )}
                       </div>
@@ -870,10 +876,10 @@ export function FormularioPedidoDialog({
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatCurrency(carrito.subtotal)}</span>
               </div>
-              {descuento > 0 && !esDeliveryGratis && (
+              {descuentoPromo > 0 && !esDeliveryGratis && (
                 <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
                   <span>Descuento ({promocionSeleccionada?.nombre})</span>
-                  <span>- {formatCurrency(descuento)}</span>
+                  <span>- {formatCurrency(descuentoPromo)}</span>
                 </div>
               )}
               {deliveryFee > 0 && (
