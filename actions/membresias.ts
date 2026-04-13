@@ -11,6 +11,7 @@ import {
   toggleReglaPuntosActiva,
   asignarMembresia,
   desactivarMembresia,
+  registrarPago,
 } from "@/lib/services/membresias";
 import {
   nivelMembresiaSchema,
@@ -205,6 +206,27 @@ export async function desactivarMembresiaAction(
     return {
       data: null,
       error: e instanceof Error ? e.message : "Error al desactivar membresía",
+    };
+  }
+}
+
+export async function registrarPagoAction(
+  membresiaId: string,
+  monto: number,
+  tipoPlan: string,
+): Promise<ActionResult<null>> {
+  try {
+    await registrarPago({
+      membresia_id: membresiaId,
+      monto,
+      tipo_plan: tipoPlan,
+    });
+    revalidatePath("/membresias");
+    return { data: null, error: null };
+  } catch (e) {
+    return {
+      data: null,
+      error: e instanceof Error ? e.message : "Error al registrar pago",
     };
   }
 }

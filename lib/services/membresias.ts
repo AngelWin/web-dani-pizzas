@@ -229,6 +229,66 @@ export async function asignarMembresia(data: {
   if (pagoError) throw new Error(pagoError.message);
 }
 
+export type PagoMembresia = {
+  id: string;
+  monto: number;
+  tipo_plan: string;
+  fecha_pago: string;
+  periodo_inicio: string;
+  periodo_fin: string;
+};
+
+export async function getPagosMembresia(
+  membresiaId: string,
+): Promise<PagoMembresia[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("membresia_pagos")
+    .select("id, monto, tipo_plan, fecha_pago, periodo_inicio, periodo_fin")
+    .eq("membresia_id", membresiaId)
+    .order("fecha_pago", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as PagoMembresia[];
+}
+
+export async function registrarPago(data: {
+  membresia_id: string;
+  monto: number;
+  tipo_plan: string;
+}): Promise<void> {
+  const supabase = await createClient();
+  const now = new Date();
+
+  const fechaFin = new Date(now);
+  if (data.tipo_plan === "mensual") fechaFin.setMonth(fechaFin.getMonth() + 1);
+  else if (data.tipo_plan === "trimestral")
+    fechaFin.setMonth(fechaFin.getMonth() + 3);
+  else if (data.tipo_plan === "anual")
+    fechaFin.setFullYear(fechaFin.getFullYear() + 1);
+
+  // Registrar pago
+  const { error: pagoError } = await supabase.from("membresia_pagos").insert({
+    membresia_id: data.membresia_id,
+    monto: data.monto,
+    tipo_plan: data.tipo_plan,
+    fecha_pago: now.toISOString(),
+    periodo_inicio: now.toISOString().split("T")[0],
+    periodo_fin: fechaFin.toISOString().split("T")[0],
+  });
+  if (pagoError) throw new Error(pagoError.message);
+
+  // Actualizar membresía
+  await supabase
+    .from("membresias")
+    .update({
+      fecha_ultimo_pago: now.toISOString(),
+      fecha_fin: fechaFin.toISOString(),
+      monto_pagado: data.monto,
+      updated_at: now.toISOString(),
+    })
+    .eq("id", data.membresia_id);
+}
+
 export async function desactivarMembresia(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase
