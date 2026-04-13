@@ -534,7 +534,11 @@ export function ComboBuilderDialog({
       {/* Configurador de producto (sabores/extras) para items del combo */}
       {productoParaConfigurar && (
         <ConfiguradorProductoDialog
-          producto={productoParaConfigurar.producto}
+          producto={{
+            ...productoParaConfigurar.producto,
+            // Solo mostrar la variante forzada para que el paso 1 se auto-seleccione
+            producto_variantes: [productoParaConfigurar.variante],
+          }}
           sabores={
             productoParaConfigurar.producto.categoria_id
               ? (saboresPorCategoria[

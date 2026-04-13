@@ -26,7 +26,6 @@ async function getMedidasBasico() {
     .from("categoria_medidas")
     .select("id, nombre, categoria_id")
     .eq("activa", true)
-    .eq("es_acompanante", false)
     .order("orden");
   return (data ?? []) as {
     id: string;
