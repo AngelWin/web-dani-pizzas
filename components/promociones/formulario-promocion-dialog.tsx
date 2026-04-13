@@ -601,6 +601,23 @@ export function FormularioPromocionDialog({
                   : "Solo los días seleccionados"}
               </p>
               <div className="flex gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (diasSemana.length === 7) {
+                      form.setValue("dias_semana", null);
+                    } else {
+                      form.setValue("dias_semana", [0, 1, 2, 3, 4, 5, 6]);
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    diasSemana.length === 0 || diasSemana.length === 7
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                  }`}
+                >
+                  Todos
+                </button>
                 {DIAS_SEMANA_LABELS.map((label, i) => (
                   <button
                     key={i}

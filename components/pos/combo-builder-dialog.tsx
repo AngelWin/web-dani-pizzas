@@ -236,7 +236,8 @@ export function ComboBuilderDialog({
     onClose();
   }
 
-  const todosConfigurados = productosConfig.every((p) => p.configurado);
+  const todosConfigurados =
+    productosConfig.length > 0 && productosConfig.every((p) => p.configurado);
   const productoActual = productosDelCombo[pasoActual] ?? null;
 
   return (

@@ -154,7 +154,7 @@ export function CatalogoProductos({
 
       {/* Filtro por categoría — scroll horizontal en mobile */}
       <div className="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-none">
-        {/* Tab Ofertas */}
+        {/* Tab Promos */}
         {promociones.length > 0 && (
           <Button
             variant={vistaActiva === "promos" ? "default" : "outline"}
@@ -169,7 +169,7 @@ export function CatalogoProductos({
             }
           >
             <Tag className="h-3.5 w-3.5" />
-            Ofertas
+            Promos
             <Badge className="ml-0.5 bg-white/20 text-white text-[9px] px-1.5 py-0">
               {promociones.length}
             </Badge>
