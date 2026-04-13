@@ -159,14 +159,15 @@ export function FormularioPedidoDialog({
             acompanante: i.acompanante ?? null,
           })),
           ...carrito.promoItems.flatMap((p) =>
-            p.items.map((item) => ({
+            p.items.map((item, idx) => ({
               producto_id: item.producto_id,
               variante_id: item.variante_id,
               cantidad: 1,
               producto_nombre: item.producto_nombre,
               variante_nombre: item.variante_nombre,
-              precio_unitario: item.precio_unitario,
-              subtotal: item.precio_unitario,
+              // Primer item lleva el precio_promo completo, los demás 0
+              precio_unitario: idx === 0 ? p.precio_promo : 0,
+              subtotal: idx === 0 ? p.precio_promo : 0,
               sabores: item.sabores ?? null,
               extras: item.extras ?? null,
               acompanante: item.acompanante ?? null,
@@ -209,15 +210,16 @@ export function FormularioPedidoDialog({
     }));
 
     // Items de promos aplanados como items individuales
+    // Primer item lleva el precio_promo completo, los demás 0
     const itemsPromo = carrito.promoItems.flatMap((p) =>
-      p.items.map((item) => ({
+      p.items.map((item, idx) => ({
         producto_id: item.producto_id,
         variante_id: item.variante_id,
         cantidad: 1,
         producto_nombre: item.producto_nombre,
         variante_nombre: item.variante_nombre,
-        precio_unitario: item.precio_unitario,
-        subtotal: item.precio_unitario,
+        precio_unitario: idx === 0 ? p.precio_promo : 0,
+        subtotal: idx === 0 ? p.precio_promo : 0,
         sabores: item.sabores ?? null,
         extras: item.extras ?? null,
         acompanante: item.acompanante ?? null,
