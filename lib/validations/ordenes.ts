@@ -60,6 +60,8 @@ export const crearOrdenSchema = z
     // Promoción aplicada
     promocion_id: z.string().uuid().nullable().optional(),
     descuento: z.number().min(0).optional(),
+    // Pedido programado
+    entrega_programada_at: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.tipo_pedido !== TIPO_PEDIDO.DELIVERY) return;

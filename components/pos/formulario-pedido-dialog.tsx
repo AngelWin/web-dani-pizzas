@@ -37,7 +37,8 @@ import {
   type CrearOrdenFormValues,
 } from "@/lib/validations/ordenes";
 import { toast } from "sonner";
-import { Tag, X } from "lucide-react";
+import { Tag, X, CalendarClock } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { BuscadorCliente } from "./buscador-cliente";
 import { SelectorMesa } from "./selector-mesa";
@@ -93,6 +94,7 @@ export function FormularioPedidoDialog({
     useState<ClienteConMembresia | null>(null);
   const [promocionSeleccionada, setPromocionSeleccionada] =
     useState<PromocionActivaPOS | null>(null);
+  const [esProgramado, setEsProgramado] = useState(false);
 
   const form = useForm<CrearOrdenFormValues>({
     resolver: zodResolver(crearOrdenSchema),
@@ -113,6 +115,7 @@ export function FormularioPedidoDialog({
       items: [],
       promocion_id: null,
       descuento: 0,
+      entrega_programada_at: null,
     },
   });
 
@@ -176,9 +179,11 @@ export function FormularioPedidoDialog({
         ],
         promocion_id: null,
         descuento: carrito.totalDescuentoPromos,
+        entrega_programada_at: null,
       });
       setClienteSeleccionado(null);
       setPromocionSeleccionada(null);
+      setEsProgramado(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -365,6 +370,7 @@ export function FormularioPedidoDialog({
   function handleClose() {
     setClienteSeleccionado(null);
     setPromocionSeleccionada(null);
+    setEsProgramado(false);
     form.reset();
     onClose();
   }
@@ -761,6 +767,58 @@ export function FormularioPedidoDialog({
                 </FormItem>
               )}
             />
+
+            {/* ── Pedido programado ── */}
+            <div className="rounded-xl border p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Pedido programado</span>
+                </div>
+                <Switch
+                  checked={esProgramado}
+                  onCheckedChange={(checked) => {
+                    setEsProgramado(checked);
+                    if (!checked) {
+                      form.setValue("entrega_programada_at", null);
+                    }
+                  }}
+                />
+              </div>
+              {esProgramado && (
+                <FormField
+                  control={form.control}
+                  name="entrega_programada_at"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fecha y hora de entrega</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          className="h-12"
+                          min={new Date(Date.now() + 60_000)
+                            .toISOString()
+                            .slice(0, 16)}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? new Date(e.target.value).toISOString()
+                                : null,
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-xs text-muted-foreground">
+                        La orden quedará en estado "Confirmada" hasta que la
+                        cocina la prepare.
+                      </p>
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
             {/* ── Promoción ── */}
             {promosFiltradas.length > 0 && (
