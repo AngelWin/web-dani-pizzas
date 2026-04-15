@@ -19,9 +19,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { InputNumerico } from "@/components/ui/input-numerico";
 import { cerrarSesionAction } from "@/actions/caja-sesiones";
 import { useCurrency } from "@/hooks/use-currency";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -29,11 +29,8 @@ import { cn } from "@/lib/utils";
 
 const schema = z.object({
   monto_contado_efectivo: z
-    .string()
-    .min(1, "Ingresa el monto contado")
-    .refine((v) => !isNaN(Number(v)) && Number(v) >= 0, {
-      message: "Debe ser un número mayor o igual a 0",
-    }),
+    .number({ invalid_type_error: "Ingresa el monto contado" })
+    .min(0, "El monto no puede ser negativo"),
   notas_cierre: z.string().max(500).optional(),
 });
 
@@ -55,19 +52,17 @@ export function CerrarCajaDialog({
   onSuccess,
 }: Props) {
   const [loading, setLoading] = useState(false);
-  const [diferencia, setDiferencia] = useState<number | null>(null);
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, simbolo } = useCurrency();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { monto_contado_efectivo: "", notas_cierre: "" },
+    defaultValues: { monto_contado_efectivo: 0, notas_cierre: "" },
   });
 
   const montoContadoWatch = form.watch("monto_contado_efectivo");
-  const montoParsed = Number(montoContadoWatch);
   const diffPreview =
-    !isNaN(montoParsed) && montoContadoWatch !== ""
-      ? Math.round((montoParsed - montoEsperado) * 100) / 100
+    typeof montoContadoWatch === "number"
+      ? Math.round((montoContadoWatch - montoEsperado) * 100) / 100
       : null;
 
   async function onSubmit(values: FormValues) {
@@ -75,7 +70,7 @@ export function CerrarCajaDialog({
     try {
       const result = await cerrarSesionAction({
         sesion_id: sesionId,
-        monto_contado_efectivo: Number(values.monto_contado_efectivo),
+        monto_contado_efectivo: values.monto_contado_efectivo,
         notas_cierre: values.notas_cierre || null,
       });
 
@@ -84,7 +79,6 @@ export function CerrarCajaDialog({
         return;
       }
 
-      setDiferencia(result.data?.diferencia ?? 0);
       toast.success("Caja cerrada correctamente");
       form.reset();
       onSuccess();
@@ -116,15 +110,15 @@ export function CerrarCajaDialog({
               name="monto_contado_efectivo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Monto contado en caja (efectivo real)</FormLabel>
+                  <FormLabel>
+                    Monto contado en caja — efectivo real ({simbolo})
+                  </FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
+                    <InputNumerico
+                      variante="precio"
                       className="h-12 text-lg"
+                      value={field.value}
+                      onChange={(v) => field.onChange(v ?? 0)}
                       autoFocus
                     />
                   </FormControl>

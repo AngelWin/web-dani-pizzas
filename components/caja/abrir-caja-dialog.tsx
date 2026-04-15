@@ -19,19 +19,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { InputNumerico } from "@/components/ui/input-numerico";
 import { abrirSesionAction } from "@/actions/caja-sesiones";
+import { useCurrency } from "@/hooks/use-currency";
 import { Vault } from "lucide-react";
 
 const schema = z.object({
   monto_inicial: z
-    .string()
-    .min(1, "Ingresa el monto inicial")
-    .refine((v) => !isNaN(Number(v)) && Number(v) >= 0, {
-      message: "Debe ser un número mayor o igual a 0",
-    }),
+    .number({ invalid_type_error: "Ingresa el monto inicial" })
+    .min(0, "El monto no puede ser negativo"),
   notas_apertura: z.string().max(500).optional(),
 });
 
@@ -45,10 +43,11 @@ type Props = {
 
 export function AbrirCajaDialog({ open, sucursalId, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
+  const { simbolo } = useCurrency();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { monto_inicial: "0", notas_apertura: "" },
+    defaultValues: { monto_inicial: 0, notas_apertura: "" },
   });
 
   async function onSubmit(values: FormValues) {
@@ -56,7 +55,7 @@ export function AbrirCajaDialog({ open, sucursalId, onSuccess }: Props) {
     try {
       const result = await abrirSesionAction({
         sucursal_id: sucursalId,
-        monto_inicial: Number(values.monto_inicial),
+        monto_inicial: values.monto_inicial,
         notas_apertura: values.notas_apertura || null,
       });
 
@@ -93,15 +92,15 @@ export function AbrirCajaDialog({ open, sucursalId, onSuccess }: Props) {
               name="monto_inicial"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Monto inicial en caja (efectivo)</FormLabel>
+                  <FormLabel>
+                    Monto inicial en caja — efectivo ({simbolo})
+                  </FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
+                    <InputNumerico
+                      variante="precio"
                       className="h-12 text-lg"
+                      value={field.value}
+                      onChange={(v) => field.onChange(v ?? 0)}
                       autoFocus
                     />
                   </FormControl>
