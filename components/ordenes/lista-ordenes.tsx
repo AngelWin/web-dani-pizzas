@@ -35,13 +35,14 @@ import type { OrdenConItems, FiltroEstadoOrden } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { NivelMembresia } from "@/lib/services/membresias";
 
-type EstadoTab = FiltroEstadoOrden;
+type EstadoTab = FiltroEstadoOrden | "programados";
 
 function getTabs(
   modeloNegocio: ModeloNegocio,
 ): { value: EstadoTab; label: string }[] {
   const base: { value: EstadoTab; label: string }[] = [
     { value: "activas", label: "Activas" },
+    { value: "programados", label: "Programados" },
     { value: "todas", label: "Todas" },
     { value: "confirmada", label: "Confirmadas" },
     { value: "en_preparacion", label: "En preparación" },
@@ -65,6 +66,8 @@ function filtrarOrdenes(
   filtro: EstadoTab,
 ): OrdenConItems[] {
   if (filtro === "todas") return ordenes;
+  if (filtro === "programados")
+    return ordenes.filter((o) => !!o.entrega_programada_at);
   if (filtro === "activas")
     return ordenes.filter(
       (o) => o.estado !== "entregada" && o.estado !== "cancelada",
@@ -92,6 +95,7 @@ type Props = {
   minFecha: string | null; // YYYY-MM-DD (7 días atrás) — null = sin restricción (admin)
   niveles?: NivelMembresia[];
   mesaFiltro?: string; // UUID de mesa si se filtran por mesa
+  haySesionActiva: boolean;
 };
 
 export function ListaOrdenes({
@@ -103,6 +107,7 @@ export function ListaOrdenes({
   minFecha,
   niveles = [],
   mesaFiltro,
+  haySesionActiva,
 }: Props) {
   const router = useRouter();
   const { formatCurrency } = useCurrency();
@@ -138,11 +143,14 @@ export function ListaOrdenes({
   const conteosPorTab = useMemo(() => {
     const conteos: Record<string, number> = { todas: ordenes.length };
     let activas = 0;
+    let programados = 0;
     for (const o of ordenes) {
       conteos[o.estado] = (conteos[o.estado] ?? 0) + 1;
       if (o.estado !== "entregada" && o.estado !== "cancelada") activas++;
+      if (o.entrega_programada_at) programados++;
     }
     conteos["activas"] = activas;
+    conteos["programados"] = programados;
     return conteos;
   }, [ordenes]);
 
@@ -280,6 +288,7 @@ export function ListaOrdenes({
               rol={rol}
               modeloNegocio={modeloNegocio}
               niveles={niveles}
+              haySesionActiva={haySesionActiva}
             />
           ))}
         </div>

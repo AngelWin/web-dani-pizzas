@@ -44,7 +44,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Store, Utensils, Zap, ShoppingCart } from "lucide-react";
+import { Store, Utensils, Zap, ShoppingCart, Vault } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 import type { ProductoPOS } from "@/lib/services/ventas";
 import type { Profile } from "@/lib/services/ventas";
@@ -75,6 +75,7 @@ type Props = {
   extrasPorCategoria: Record<string, ProductoExtra[]>;
   deliveryServicios: DeliveryServicio[];
   mesas: Mesa[];
+  sesionActiva: { monto_inicial: number } | null;
 };
 
 export function PosClient({
@@ -90,6 +91,7 @@ export function PosClient({
   extrasPorCategoria,
   deliveryServicios,
   mesas,
+  sesionActiva,
 }: Props) {
   const { formatCurrency } = useCurrency();
   const router = useRouter();
@@ -178,9 +180,23 @@ export function PosClient({
         ) : (
           <div />
         )}
-        <div className="flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground shrink-0">
-          <ModeloIcon className="h-3 w-3" />
-          <span className="hidden sm:inline">{modeloLabel}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Indicador sesión de caja */}
+          {sesionActiva !== null ? (
+            <div className="flex items-center gap-1.5 rounded-full border border-green-300 bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:border-green-700 dark:bg-green-950/30 dark:text-green-400">
+              <Vault className="h-3 w-3" />
+              <span className="hidden sm:inline">Caja abierta</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+              <Vault className="h-3 w-3" />
+              <span className="hidden sm:inline">Sin caja</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+            <ModeloIcon className="h-3 w-3" />
+            <span className="hidden sm:inline">{modeloLabel}</span>
+          </div>
         </div>
       </div>
 

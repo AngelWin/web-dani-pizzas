@@ -16,6 +16,7 @@ import {
   Clock,
   UserCheck,
   Store,
+  CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -88,6 +89,33 @@ function formatHora(isoString: string) {
   });
 }
 
+function formatEntregaProgramada(isoString: string): string {
+  const fecha = new Date(isoString);
+  const hoy = new Date();
+  const manana = new Date(hoy);
+  manana.setDate(hoy.getDate() + 1);
+
+  const esHoy =
+    fecha.toLocaleDateString("es-PE") === hoy.toLocaleDateString("es-PE");
+  const esManana =
+    fecha.toLocaleDateString("es-PE") === manana.toLocaleDateString("es-PE");
+
+  const hora = fecha.toLocaleTimeString("es-PE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (esHoy) return `Hoy ${hora}`;
+  if (esManana) return `Mañana ${hora}`;
+
+  return fecha.toLocaleDateString("es-PE", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function nombreCliente(
   cliente: { nombre: string; apellido: string | null } | null,
 ): string {
@@ -107,6 +135,7 @@ type Props = {
   rol: string | null;
   modeloNegocio: ModeloNegocio;
   niveles?: NivelMembresia[];
+  haySesionActiva: boolean;
 };
 
 export function TarjetaOrden({
@@ -114,6 +143,7 @@ export function TarjetaOrden({
   rol,
   modeloNegocio,
   niveles = [],
+  haySesionActiva,
 }: Props) {
   const { formatCurrency } = useCurrency();
   const puedeCobrar = rol === "administrador" || rol === "cajero";
@@ -144,6 +174,12 @@ export function TarjetaOrden({
             <EstadoOrdenBadge estado={orden.estado} />
             {esDelivery && (
               <EstadoDeliveryBadge estado={orden.delivery_status} />
+            )}
+            {orden.entrega_programada_at && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                <CalendarClock className="h-3 w-3" />
+                {formatEntregaProgramada(orden.entrega_programada_at)}
+              </span>
             )}
           </div>
         </div>
@@ -322,6 +358,7 @@ export function TarjetaOrden({
               puedeCobrar={puedeCobrar}
               modeloNegocio={modeloNegocio}
               niveles={niveles}
+              haySesionActiva={haySesionActiva}
             />
           </div>
         </div>

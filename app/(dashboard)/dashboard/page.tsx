@@ -19,6 +19,8 @@ import {
   getStatsYDesglose,
   getPedidosRecientes,
 } from "@/lib/services/dashboard";
+import { getOrdenesProgramadasProximas } from "@/lib/services/ordenes";
+import { PedidosProgramados } from "@/components/dashboard/pedidos-programados";
 import { ROLES } from "@/lib/constants";
 import type { Database } from "@/types/database";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -76,9 +78,10 @@ export default async function DashboardPage({
   }
 
   // Fetch paralelo de todos los datos (stats + desglose en una sola query)
-  const [{ stats, desglose }, pedidos] = await Promise.all([
+  const [{ stats, desglose }, pedidos, pedidosProgramados] = await Promise.all([
     getStatsYDesglose(sucursalId, isAdmin),
     getPedidosRecientes(sucursalId, 8, isAdmin),
+    getOrdenesProgramadasProximas(sucursalId, 5).catch(() => []),
   ]);
 
   const sucursalActiva = isAdmin
@@ -114,6 +117,13 @@ export default async function DashboardPage({
         <GraficoVentasTipo data={desglose} />
         <PedidosRecientes pedidos={pedidos} />
       </div>
+
+      {pedidosProgramados.length > 0 && (
+        <PedidosProgramados
+          pedidos={pedidosProgramados}
+          mostrarSucursal={isAdmin && !sucursalId}
+        />
+      )}
     </div>
   );
 }

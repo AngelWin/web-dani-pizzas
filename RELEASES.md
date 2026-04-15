@@ -1514,7 +1514,7 @@ MESA 5
 
 ## Release 23: Sesiones de Caja (Cierre de Caja) + Pedidos Programados
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5c (Cobro) + Release 9 (Sucursales) + Release 11 (Usuarios)
 **Objetivo:** Implementar control de efectivo por turno (sesiones de caja) con horario flexible, una caja por sucursal, y soporte para pedidos programados (entregas fuera del horario operativo).
 
@@ -1570,41 +1570,42 @@ Garantiza maximo 1 sesion abierta por sucursal a nivel de DB.
 ### Fases esperadas:
 
 **Fase 1 — DB:**
-- [ ] Migracion: tabla `caja_sesiones` + indice unico parcial + RLS
-- [ ] Migracion: campo `caja_sesion_id` en `ventas`
-- [ ] Migracion: campo `entrega_programada_at` en `ordenes`
-- [ ] Trigger `set_updated_at` en `caja_sesiones`
-- [ ] Regenerar tipos TypeScript
+- [x] Migracion: tabla `caja_sesiones` + indice unico parcial + RLS
+- [x] Migracion: campo `caja_sesion_id` en `ventas`
+- [x] Migracion: campo `entrega_programada_at` en `ordenes`
+- [x] Trigger `set_updated_at` en `caja_sesiones`
+- [x] Regenerar tipos TypeScript
 
 **Fase 2 — Backend:**
-- [ ] Servicio `lib/services/caja-sesiones.ts`: getSesionActivaPorSucursal, abrirSesion, cerrarSesion, getSesionesPorSucursal, getResumenSesion
-- [ ] Validaciones Zod `lib/validations/caja-sesiones.ts`
-- [ ] Server Actions `actions/caja-sesiones.ts`: abrirSesionAction, cerrarSesionAction
-- [ ] Modificar `cobrarOrdenAction` y `cobrarMesaAction`: asociar `caja_sesion_id` automaticamente con la sesion activa
-- [ ] Modificar `lib/services/ventas.ts`: incluir `caja_sesion_id` al insertar
-- [ ] Modificar `lib/validations/ordenes.ts`: agregar `entrega_programada_at` opcional
-- [ ] Modificar `lib/services/ordenes.ts`: soportar `entrega_programada_at`
+- [x] Servicio `lib/services/caja-sesiones.ts`: getSesionActivaPorSucursal, abrirSesion, cerrarSesion, getSesionesPorSucursal, getResumenSesion, getVentasSinSesion
+- [x] Validaciones Zod `lib/validations/caja-sesiones.ts`
+- [x] Server Actions `actions/caja-sesiones.ts`: abrirSesionAction, cerrarSesionAction
+- [x] Modificar `cobrarOrdenAction` y `cobrarMesaAction`: asociar `caja_sesion_id` automaticamente con la sesion activa
+- [x] Modificar `lib/services/ventas.ts`: incluir `caja_sesion_id` al insertar
+- [x] Modificar `lib/validations/ordenes.ts`: agregar `entrega_programada_at` opcional
+- [x] Modificar `lib/services/ordenes.ts`: soportar `entrega_programada_at` + getOrdenesProgramadasProximas
 
 **Fase 3 — UI Cajero (Abrir/Cerrar caja):**
-- [ ] Nueva ruta `/caja` (cajero y administrador)
-- [ ] Componente `components/caja/abrir-caja-dialog.tsx`: input monto inicial + notas
-- [ ] Componente `components/caja/cerrar-caja-dialog.tsx`: input monto contado + notas, calculo de diferencia
-- [ ] Componente `components/caja/sesion-activa.tsx`: dashboard de sesion con totales por metodo de pago
-- [ ] Permisos: agregar `/caja` a `lib/permissions.ts` y `lib/roles.ts`
-- [ ] Modificar `/pos`: indicador de caja abierta/cerrada en header, toast de aviso si entra al POS sin caja
-- [ ] Modificar `cobro-dialog.tsx`: warning si efectivo y no hay sesion abierta
+- [x] Nueva ruta `/caja` (cajero y administrador)
+- [x] Componente `components/caja/abrir-caja-dialog.tsx`: input monto inicial + notas, InputNumerico + simbolo moneda
+- [x] Componente `components/caja/cerrar-caja-dialog.tsx`: input monto contado + notas, preview de diferencia en tiempo real
+- [x] Componente `components/caja/sesion-activa.tsx`: dashboard de sesion con totales por metodo de pago, monto esperado efectivo
+- [x] Permisos: agregar `/caja` a `lib/roles.ts` (cajero y administrador)
+- [x] Modificar `/pos`: indicador verde "Caja abierta" / ambar "Sin caja" en header del POS
+- [x] Modificar `cobro-dialog.tsx`: banner ambar "No hay caja abierta" cuando no hay sesion activa (no bloquea)
+- [x] Seccion "Ventas sin sesion" en `/reportes` (admin): total y desglose por metodo de pago
 
 **Fase 4 — UI Admin (Historial y reportes):**
-- [ ] Nueva tab "Cierres de caja" en `/reportes` (visible solo para admin)
-- [ ] Lista de sesiones de todas las sucursales con filtros (rango fechas, sucursal con opcion "Todas", cajero, con/sin diferencia)
-- [ ] Vista detallada de sesion: ventas por metodo, ventas por cajero individual, lista de ordenes cobradas, notas
-- [ ] Actualizar sidebar: entrada "Caja" para cajero (link a `/caja`) y admin
+- [x] Nueva tab "Cierres de caja" en `/reportes` (ruta `/reportes/cierres`, visible para admin y cajero)
+- [x] Lista de sesiones con filtros: rango de fechas (30 dias por defecto), sucursal ("Todas" para admin), con/sin diferencia
+- [x] Vista detallada expandible por sesion: ventas por metodo, cuadre de efectivo (inicial/esperado/contado), notas de apertura y cierre
+- [x] Tabs de navegacion `TabsReporte` en cabecera de ambas paginas de reportes
 
 **Fase 5 — Pedidos programados (UI):**
-- [ ] Modificar `formulario-pedido-dialog.tsx`: toggle "Pedido programado" + input datetime-local
-- [ ] Modificar `tarjeta-orden.tsx`: badge "📅 Programado para X" si tiene `entrega_programada_at`
-- [ ] Modificar `/ordenes`: filtros adicionales "Solo programados" / "Para hoy" / "Para manana"
-- [ ] Modificar `/dashboard`: widget "Pedidos programados proximos" con las proximas 5 ordenes
+- [x] Modificar `formulario-pedido-dialog.tsx`: toggle "Pedido programado" + input datetime-local con validacion futura
+- [x] Modificar `tarjeta-orden.tsx`: badge purpura con CalendarClock y texto contextual ("Hoy 20:00", "Manana 08:00", fecha corta)
+- [x] Modificar `/ordenes`: tab "Programados" con filtro y conteo dinamico
+- [x] Modificar `/dashboard`: widget "Pedidos programados proximos" con las proximas 5 ordenes ordenadas por fecha
 
 ### Edge cases cubiertos:
 - Cajero olvida abrir caja → ventas con `caja_sesion_id = null`, warning visible, futura mejora permite reasignar

@@ -128,6 +128,85 @@ export async function cerrarSesion(params: {
   return data;
 }
 
+export type VentaSinSesion = {
+  id: string;
+  total: number;
+  metodo_pago: string | null;
+  descuento: number | null;
+  created_at: string;
+  sucursal_id: string | null;
+  sucursal_nombre: string | null;
+};
+
+export type ResumenVentasSinSesion = {
+  total_ventas: number;
+  cantidad: number;
+  por_metodo: Record<string, number>;
+  ventas: VentaSinSesion[];
+};
+
+/** Ventas sin sesión de caja (caja_sesion_id IS NULL) agrupadas y desglosadas */
+export async function getVentasSinSesion(
+  sucursalId: string | null,
+  filtros?: { desde?: string; hasta?: string },
+): Promise<ResumenVentasSinSesion> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("ventas")
+    .select(
+      `id, total, metodo_pago, descuento, created_at, sucursal_origen_id,
+       sucursal:sucursales!ventas_sucursal_origen_id_fkey(nombre)`,
+    )
+    .is("caja_sesion_id", null)
+    .eq("estado_pago_v2", "pagado")
+    .order("created_at", { ascending: false });
+
+  if (sucursalId) {
+    query = query.eq("sucursal_origen_id", sucursalId);
+  }
+
+  if (filtros?.desde) {
+    query = query.gte("created_at", filtros.desde);
+  }
+
+  if (filtros?.hasta) {
+    query = query.lte("created_at", filtros.hasta);
+  }
+
+  const { data, error } = await query.limit(200);
+  if (error) throw new Error(error.message);
+
+  const ventas: VentaSinSesion[] = (data ?? []).map(
+    (v: Record<string, unknown>) => ({
+      id: v.id as string,
+      total: v.total as number,
+      metodo_pago: v.metodo_pago as string | null,
+      descuento: v.descuento as number | null,
+      created_at: v.created_at as string,
+      sucursal_id: v.sucursal_origen_id as string | null,
+      sucursal_nombre:
+        (v.sucursal as { nombre: string } | null)?.nombre ?? null,
+    }),
+  );
+
+  const por_metodo: Record<string, number> = {};
+  let total_ventas = 0;
+
+  for (const v of ventas) {
+    const metodo = v.metodo_pago ?? "sin_metodo";
+    por_metodo[metodo] = (por_metodo[metodo] ?? 0) + v.total;
+    total_ventas += v.total;
+  }
+
+  return {
+    total_ventas: Math.round(total_ventas * 100) / 100,
+    cantidad: ventas.length,
+    por_metodo,
+    ventas,
+  };
+}
+
 /** Historial de sesiones por sucursal con filtros opcionales */
 export async function getSesionesPorSucursal(
   sucursalId: string | null,

@@ -5,6 +5,7 @@ import { getOrdenes } from "@/lib/services/ordenes";
 import { getConfiguracionNegocio } from "@/lib/services/configuracion";
 import { getNivelesMembresia } from "@/lib/services/membresias";
 import { getSucursales } from "@/lib/services/sucursales";
+import { getSesionActivaPorSucursal } from "@/lib/services/caja-sesiones";
 import { FiltroSucursalOrdenes } from "@/components/ordenes/filtro-sucursal-ordenes";
 
 export const dynamic = "force-dynamic";
@@ -50,12 +51,16 @@ export default async function OrdenesPage({
       ? fechaParam
       : hoy;
 
-  const [ordenes, config, niveles, sucursales] = await Promise.all([
-    getOrdenes(sucursalId, "todas", fechaFiltro, mesaId),
-    getConfiguracionNegocio(),
-    getNivelesMembresia(),
-    esAdmin ? getSucursales() : Promise.resolve([]),
-  ]);
+  const [ordenes, config, niveles, sucursales, sesionActiva] =
+    await Promise.all([
+      getOrdenes(sucursalId, "todas", fechaFiltro, mesaId),
+      getConfiguracionNegocio(),
+      getNivelesMembresia(),
+      esAdmin ? getSucursales() : Promise.resolve([]),
+      sucursalId
+        ? getSesionActivaPorSucursal(sucursalId).catch(() => null)
+        : Promise.resolve(null),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -80,6 +85,7 @@ export default async function OrdenesPage({
         minFecha={minFecha}
         niveles={niveles}
         mesaFiltro={mesaId}
+        haySesionActiva={sesionActiva !== null}
       />
     </div>
   );

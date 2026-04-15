@@ -66,6 +66,7 @@ type Props = {
   puedeCobrar: boolean;
   modeloNegocio: ModeloNegocio;
   niveles?: NivelMembresia[];
+  haySesionActiva: boolean;
 };
 
 export function AccionesOrden({
@@ -74,6 +75,7 @@ export function AccionesOrden({
   puedeCobrar,
   modeloNegocio,
   niveles = [],
+  haySesionActiva,
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
@@ -192,6 +194,7 @@ export function AccionesOrden({
               orden={orden}
               open={cobrarOpen}
               onOpenChange={setCobrarOpen}
+              haySesionActiva={haySesionActiva}
             />
           </>
         )}

@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { InputNumerico } from "@/components/ui/input-numerico";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Banknote, Loader2 } from "lucide-react";
+import { CheckCircle, Banknote, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { cobrarOrdenAction } from "@/app/(dashboard)/ordenes/actions";
 import {
@@ -53,11 +53,17 @@ type Props = {
   orden: OrdenConItems;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  haySesionActiva: boolean;
 };
 
 type Fase = "formulario" | "confirmacion";
 
-export function CobroDialog({ orden, open, onOpenChange }: Props) {
+export function CobroDialog({
+  orden,
+  open,
+  onOpenChange,
+  haySesionActiva,
+}: Props) {
   const [fase, setFase] = useState<Fase>("formulario");
   const [ventaResultado, setVentaResultado] = useState<Venta | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -119,6 +125,17 @@ export function CobroDialog({ orden, open, onOpenChange }: Props) {
                 Cobrar orden #{orden.numero_orden}
               </DialogTitle>
             </DialogHeader>
+
+            {/* Warning sin sesión activa */}
+            {!haySesionActiva && (
+              <div className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  No hay caja abierta — esta venta no se asociará a ningún
+                  turno.
+                </span>
+              </div>
+            )}
 
             {/* Cliente */}
             <div className="flex items-center gap-2 text-sm">

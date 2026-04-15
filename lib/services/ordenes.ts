@@ -32,6 +32,48 @@ export type FiltroEstadoOrden = EstadoOrden | "todas" | "activas";
 
 // ─── Consultas ─────────────────────────────────────────────────────────────
 
+export type OrdenProgramadaResumen = {
+  id: string;
+  numero_orden: number;
+  entrega_programada_at: string;
+  total: number;
+  tipo_pedido: TipoPedido;
+  estado: EstadoOrden;
+  cliente: { nombre: string; apellido: string | null } | null;
+  sucursal: { nombre: string } | null;
+};
+
+/** Próximas N órdenes con entrega_programada_at futura (no canceladas ni entregadas) */
+export async function getOrdenesProgramadasProximas(
+  sucursalId: string | null,
+  limit = 5,
+): Promise<OrdenProgramadaResumen[]> {
+  const supabase = await createClient();
+
+  const ahora = new Date().toISOString();
+
+  let query = supabase
+    .from("ordenes")
+    .select(
+      `id, numero_orden, entrega_programada_at, total, tipo_pedido, estado,
+       cliente:clientes!ordenes_cliente_id_fkey(nombre, apellido),
+       sucursal:sucursales!ordenes_sucursal_id_fkey(nombre)`,
+    )
+    .not("entrega_programada_at", "is", null)
+    .gte("entrega_programada_at", ahora)
+    .not("estado", "in", '("entregada","cancelada")')
+    .order("entrega_programada_at", { ascending: true })
+    .limit(limit);
+
+  if (sucursalId) {
+    query = query.eq("sucursal_id", sucursalId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as OrdenProgramadaResumen[];
+}
+
 export async function getOrdenes(
   sucursalId: string | null,
   filtroEstado: FiltroEstadoOrden = "activas",

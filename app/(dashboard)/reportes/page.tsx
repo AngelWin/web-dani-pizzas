@@ -28,7 +28,10 @@ import { TablaTopProductos } from "@/components/reportes/tabla-top-productos";
 import { TablaDetalleDelivery } from "@/components/reportes/tabla-detalle-delivery";
 import { TablaSucursales } from "@/components/reportes/tabla-sucursales";
 import { TablaVentasDetalle } from "@/components/reportes/tabla-ventas-detalle";
+import { TabsReporte } from "@/components/reportes/tabs-reporte";
 import { getReporteCompleto } from "@/lib/services/reportes";
+import { getVentasSinSesion } from "@/lib/services/caja-sesiones";
+import { VentasSinSesion } from "@/components/reportes/ventas-sin-sesion";
 import type { Database } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -95,15 +98,26 @@ export default async function ReportesPage({
   };
 
   // Una sola query a ventas + 1 a venta_items (antes eran 6+1)
-  const {
-    resumen,
-    ventasPorDia,
-    ventasPorTipo,
-    ventasPorSucursal,
-    detalleDelivery,
-    topProductos,
-    ventasDetalle,
-  } = await getReporteCompleto(filtros, esAdmin, 10, 50);
+  const [
+    {
+      resumen,
+      ventasPorDia,
+      ventasPorTipo,
+      ventasPorSucursal,
+      detalleDelivery,
+      topProductos,
+      ventasDetalle,
+    },
+    ventasSinSesionData,
+  ] = await Promise.all([
+    getReporteCompleto(filtros, esAdmin, 10, 50),
+    esAdmin
+      ? getVentasSinSesion(sucursalParam, {
+          desde: `${fechaDesde}T00:00:00-05:00`,
+          hasta: `${fechaHasta}T23:59:59.999-05:00`,
+        }).catch(() => null)
+      : Promise.resolve(null),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -111,6 +125,9 @@ export default async function ReportesPage({
         title="Reportes"
         description="Análisis de ventas y rendimiento del negocio"
       />
+
+      {/* Tabs de navegación (solo admin) */}
+      {esAdmin && <TabsReporte />}
 
       {/* Filtros */}
       <FiltrosReporte
@@ -137,6 +154,11 @@ export default async function ReportesPage({
       {/* Rendimiento por sucursal (solo admin) */}
       {esAdmin && ventasPorSucursal.length > 0 && (
         <TablaSucursales data={ventasPorSucursal} />
+      )}
+
+      {/* Ventas sin sesión de caja (solo admin) */}
+      {esAdmin && ventasSinSesionData && ventasSinSesionData.cantidad > 0 && (
+        <VentasSinSesion data={ventasSinSesionData} />
       )}
 
       {/* Detalle de ventas */}
