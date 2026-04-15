@@ -267,6 +267,7 @@ export type CobrarOrdenData = {
   orden_id: string;
   cajero_id: string;
   sucursal_origen_id: string;
+  caja_sesion_id?: string | null;
   tipo_pedido: Database["public"]["Enums"]["tipo_pedido"];
   metodo_pago: Database["public"]["Enums"]["metodo_pago"];
   monto_recibido?: number | null;
@@ -303,6 +304,7 @@ export async function cobrarOrden(data: CobrarOrdenData): Promise<Venta> {
       orden_id: ventaData.orden_id,
       cajero_id: ventaData.cajero_id,
       sucursal_origen_id: ventaData.sucursal_origen_id,
+      caja_sesion_id: ventaData.caja_sesion_id ?? null,
       tipo_pedido: ventaData.tipo_pedido,
       metodo_pago: ventaData.metodo_pago,
       monto_recibido: ventaData.monto_recibido ?? null,

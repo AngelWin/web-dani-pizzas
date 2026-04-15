@@ -4,1707 +4,1798 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: "14.5";
+  };
   public: {
     Tables: {
+      caja_sesiones: {
+        Row: {
+          abierta_at: string;
+          abierta_por: string;
+          cerrada_at: string | null;
+          cerrada_por: string | null;
+          created_at: string;
+          diferencia: number | null;
+          estado: string;
+          id: string;
+          monto_contado_efectivo: number | null;
+          monto_inicial: number;
+          notas_apertura: string | null;
+          notas_cierre: string | null;
+          sucursal_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          abierta_at?: string;
+          abierta_por: string;
+          cerrada_at?: string | null;
+          cerrada_por?: string | null;
+          created_at?: string;
+          diferencia?: number | null;
+          estado?: string;
+          id?: string;
+          monto_contado_efectivo?: number | null;
+          monto_inicial?: number;
+          notas_apertura?: string | null;
+          notas_cierre?: string | null;
+          sucursal_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          abierta_at?: string;
+          abierta_por?: string;
+          cerrada_at?: string | null;
+          cerrada_por?: string | null;
+          created_at?: string;
+          diferencia?: number | null;
+          estado?: string;
+          id?: string;
+          monto_contado_efectivo?: number | null;
+          monto_inicial?: number;
+          notas_apertura?: string | null;
+          notas_cierre?: string | null;
+          sucursal_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "caja_sesiones_abierta_por_fkey";
+            columns: ["abierta_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "caja_sesiones_cerrada_por_fkey";
+            columns: ["cerrada_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "caja_sesiones_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       categoria_medidas: {
         Row: {
-          activa: boolean
-          categoria_id: string
-          created_at: string | null
-          descripcion: string | null
-          es_acompanante: boolean
-          id: string
-          max_sabores: number | null
-          nombre: string
-          orden: number
-          permite_combinacion: boolean
-          tiene_acompanante: boolean
-          updated_at: string | null
-        }
+          activa: boolean;
+          categoria_id: string;
+          created_at: string | null;
+          descripcion: string | null;
+          es_acompanante: boolean;
+          id: string;
+          max_sabores: number | null;
+          nombre: string;
+          orden: number;
+          permite_combinacion: boolean;
+          tiene_acompanante: boolean;
+          updated_at: string | null;
+        };
         Insert: {
-          activa?: boolean
-          categoria_id: string
-          created_at?: string | null
-          descripcion?: string | null
-          es_acompanante?: boolean
-          id?: string
-          max_sabores?: number | null
-          nombre: string
-          orden?: number
-          permite_combinacion?: boolean
-          tiene_acompanante?: boolean
-          updated_at?: string | null
-        }
+          activa?: boolean;
+          categoria_id: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          es_acompanante?: boolean;
+          id?: string;
+          max_sabores?: number | null;
+          nombre: string;
+          orden?: number;
+          permite_combinacion?: boolean;
+          tiene_acompanante?: boolean;
+          updated_at?: string | null;
+        };
         Update: {
-          activa?: boolean
-          categoria_id?: string
-          created_at?: string | null
-          descripcion?: string | null
-          es_acompanante?: boolean
-          id?: string
-          max_sabores?: number | null
-          nombre?: string
-          orden?: number
-          permite_combinacion?: boolean
-          tiene_acompanante?: boolean
-          updated_at?: string | null
-        }
+          activa?: boolean;
+          categoria_id?: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          es_acompanante?: boolean;
+          id?: string;
+          max_sabores?: number | null;
+          nombre?: string;
+          orden?: number;
+          permite_combinacion?: boolean;
+          tiene_acompanante?: boolean;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "categoria_medidas_categoria_id_fkey"
-            columns: ["categoria_id"]
-            isOneToOne: false
-            referencedRelation: "categorias"
-            referencedColumns: ["id"]
+            foreignKeyName: "categoria_medidas_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       categorias: {
         Row: {
-          activa: boolean | null
-          created_at: string | null
-          id: string
-          nombre: string
-          orden: number | null
-          updated_at: string | null
-        }
+          activa: boolean | null;
+          created_at: string | null;
+          id: string;
+          nombre: string;
+          orden: number | null;
+          updated_at: string | null;
+        };
         Insert: {
-          activa?: boolean | null
-          created_at?: string | null
-          id?: string
-          nombre: string
-          orden?: number | null
-          updated_at?: string | null
-        }
+          activa?: boolean | null;
+          created_at?: string | null;
+          id?: string;
+          nombre: string;
+          orden?: number | null;
+          updated_at?: string | null;
+        };
         Update: {
-          activa?: boolean | null
-          created_at?: string | null
-          id?: string
-          nombre?: string
-          orden?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+          activa?: boolean | null;
+          created_at?: string | null;
+          id?: string;
+          nombre?: string;
+          orden?: number | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       clientes: {
         Row: {
-          activo: boolean
-          apellido: string | null
-          auth_user_id: string | null
-          correo: string | null
-          created_at: string
-          dni: string | null
-          fecha_nacimiento: string | null
-          id: string
-          nombre: string
-          telefono: string | null
-          tipo: Database["public"]["Enums"]["tipo_cliente"]
-          updated_at: string
-        }
+          activo: boolean;
+          apellido: string | null;
+          auth_user_id: string | null;
+          correo: string | null;
+          created_at: string;
+          dni: string | null;
+          fecha_nacimiento: string | null;
+          id: string;
+          nombre: string;
+          telefono: string | null;
+          tipo: Database["public"]["Enums"]["tipo_cliente"];
+          updated_at: string;
+        };
         Insert: {
-          activo?: boolean
-          apellido?: string | null
-          auth_user_id?: string | null
-          correo?: string | null
-          created_at?: string
-          dni?: string | null
-          fecha_nacimiento?: string | null
-          id?: string
-          nombre: string
-          telefono?: string | null
-          tipo?: Database["public"]["Enums"]["tipo_cliente"]
-          updated_at?: string
-        }
+          activo?: boolean;
+          apellido?: string | null;
+          auth_user_id?: string | null;
+          correo?: string | null;
+          created_at?: string;
+          dni?: string | null;
+          fecha_nacimiento?: string | null;
+          id?: string;
+          nombre: string;
+          telefono?: string | null;
+          tipo?: Database["public"]["Enums"]["tipo_cliente"];
+          updated_at?: string;
+        };
         Update: {
-          activo?: boolean
-          apellido?: string | null
-          auth_user_id?: string | null
-          correo?: string | null
-          created_at?: string
-          dni?: string | null
-          fecha_nacimiento?: string | null
-          id?: string
-          nombre?: string
-          telefono?: string | null
-          tipo?: Database["public"]["Enums"]["tipo_cliente"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          activo?: boolean;
+          apellido?: string | null;
+          auth_user_id?: string | null;
+          correo?: string | null;
+          created_at?: string;
+          dni?: string | null;
+          fecha_nacimiento?: string | null;
+          id?: string;
+          nombre?: string;
+          telefono?: string | null;
+          tipo?: Database["public"]["Enums"]["tipo_cliente"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       configuracion_negocio: {
         Row: {
-          id: string
-          modelo_negocio: Database["public"]["Enums"]["modelo_negocio"]
-          moneda_activa_id: string | null
-          updated_at: string
-          updated_by: string | null
-        }
+          id: string;
+          modelo_negocio: Database["public"]["Enums"]["modelo_negocio"];
+          moneda_activa_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
         Insert: {
-          id?: string
-          modelo_negocio?: Database["public"]["Enums"]["modelo_negocio"]
-          moneda_activa_id?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
+          id?: string;
+          modelo_negocio?: Database["public"]["Enums"]["modelo_negocio"];
+          moneda_activa_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
         Update: {
-          id?: string
-          modelo_negocio?: Database["public"]["Enums"]["modelo_negocio"]
-          moneda_activa_id?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
+          id?: string;
+          modelo_negocio?: Database["public"]["Enums"]["modelo_negocio"];
+          moneda_activa_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "configuracion_negocio_moneda_activa_id_fkey"
-            columns: ["moneda_activa_id"]
-            isOneToOne: false
-            referencedRelation: "monedas"
-            referencedColumns: ["id"]
+            foreignKeyName: "configuracion_negocio_moneda_activa_id_fkey";
+            columns: ["moneda_activa_id"];
+            isOneToOne: false;
+            referencedRelation: "monedas";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       delivery_fees_config: {
         Row: {
-          created_at: string | null
-          id: string
-          monto: number
-          sucursal_id: string
-          tipo: string
-          updated_at: string | null
-        }
+          created_at: string | null;
+          id: string;
+          monto: number;
+          sucursal_id: string;
+          tipo: string;
+          updated_at: string | null;
+        };
         Insert: {
-          created_at?: string | null
-          id?: string
-          monto?: number
-          sucursal_id: string
-          tipo: string
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          id?: string;
+          monto?: number;
+          sucursal_id: string;
+          tipo: string;
+          updated_at?: string | null;
+        };
         Update: {
-          created_at?: string | null
-          id?: string
-          monto?: number
-          sucursal_id?: string
-          tipo?: string
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          id?: string;
+          monto?: number;
+          sucursal_id?: string;
+          tipo?: string;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "delivery_fees_config_sucursal_id_fkey"
-            columns: ["sucursal_id"]
-            isOneToOne: false
-            referencedRelation: "sucursales"
-            referencedColumns: ["id"]
+            foreignKeyName: "delivery_fees_config_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       delivery_servicios: {
         Row: {
-          activo: boolean
-          created_at: string | null
-          id: string
-          nombre: string
-          orden: number
-          precio_base: number
-          sucursal_id: string
-          tipo: Database["public"]["Enums"]["delivery_method_tipo"]
-          updated_at: string | null
-        }
+          activo: boolean;
+          created_at: string | null;
+          id: string;
+          nombre: string;
+          orden: number;
+          precio_base: number;
+          sucursal_id: string;
+          tipo: Database["public"]["Enums"]["delivery_method_tipo"];
+          updated_at: string | null;
+        };
         Insert: {
-          activo?: boolean
-          created_at?: string | null
-          id?: string
-          nombre: string
-          orden?: number
-          precio_base?: number
-          sucursal_id: string
-          tipo: Database["public"]["Enums"]["delivery_method_tipo"]
-          updated_at?: string | null
-        }
+          activo?: boolean;
+          created_at?: string | null;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          precio_base?: number;
+          sucursal_id: string;
+          tipo: Database["public"]["Enums"]["delivery_method_tipo"];
+          updated_at?: string | null;
+        };
         Update: {
-          activo?: boolean
-          created_at?: string | null
-          id?: string
-          nombre?: string
-          orden?: number
-          precio_base?: number
-          sucursal_id?: string
-          tipo?: Database["public"]["Enums"]["delivery_method_tipo"]
-          updated_at?: string | null
-        }
+          activo?: boolean;
+          created_at?: string | null;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          precio_base?: number;
+          sucursal_id?: string;
+          tipo?: Database["public"]["Enums"]["delivery_method_tipo"];
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "delivery_servicios_sucursal_id_fkey"
-            columns: ["sucursal_id"]
-            isOneToOne: false
-            referencedRelation: "sucursales"
-            referencedColumns: ["id"]
+            foreignKeyName: "delivery_servicios_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       membresia_pagos: {
         Row: {
-          created_at: string | null
-          fecha_pago: string
-          id: string
-          membresia_id: string
-          monto: number
-          periodo_fin: string
-          periodo_inicio: string
-          tipo_plan: string
-        }
+          created_at: string | null;
+          fecha_pago: string;
+          id: string;
+          membresia_id: string;
+          monto: number;
+          periodo_fin: string;
+          periodo_inicio: string;
+          tipo_plan: string;
+        };
         Insert: {
-          created_at?: string | null
-          fecha_pago?: string
-          id?: string
-          membresia_id: string
-          monto: number
-          periodo_fin: string
-          periodo_inicio: string
-          tipo_plan: string
-        }
+          created_at?: string | null;
+          fecha_pago?: string;
+          id?: string;
+          membresia_id: string;
+          monto: number;
+          periodo_fin: string;
+          periodo_inicio: string;
+          tipo_plan: string;
+        };
         Update: {
-          created_at?: string | null
-          fecha_pago?: string
-          id?: string
-          membresia_id?: string
-          monto?: number
-          periodo_fin?: string
-          periodo_inicio?: string
-          tipo_plan?: string
-        }
+          created_at?: string | null;
+          fecha_pago?: string;
+          id?: string;
+          membresia_id?: string;
+          monto?: number;
+          periodo_fin?: string;
+          periodo_inicio?: string;
+          tipo_plan?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "membresia_pagos_membresia_id_fkey"
-            columns: ["membresia_id"]
-            isOneToOne: false
-            referencedRelation: "membresias"
-            referencedColumns: ["id"]
+            foreignKeyName: "membresia_pagos_membresia_id_fkey";
+            columns: ["membresia_id"];
+            isOneToOne: false;
+            referencedRelation: "membresias";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       membresias: {
         Row: {
-          activa: boolean
-          cliente_id: string
-          created_at: string
-          fecha_fin: string | null
-          fecha_inicio: string
-          fecha_ultimo_pago: string | null
-          id: string
-          monto_pagado: number | null
-          nivel_id: string
-          puntos_acumulados: number
-          tipo_plan: string | null
-          updated_at: string
-        }
+          activa: boolean;
+          cliente_id: string;
+          created_at: string;
+          fecha_fin: string | null;
+          fecha_inicio: string;
+          fecha_ultimo_pago: string | null;
+          id: string;
+          monto_pagado: number | null;
+          nivel_id: string;
+          puntos_acumulados: number;
+          tipo_plan: string | null;
+          updated_at: string;
+        };
         Insert: {
-          activa?: boolean
-          cliente_id: string
-          created_at?: string
-          fecha_fin?: string | null
-          fecha_inicio?: string
-          fecha_ultimo_pago?: string | null
-          id?: string
-          monto_pagado?: number | null
-          nivel_id: string
-          puntos_acumulados?: number
-          tipo_plan?: string | null
-          updated_at?: string
-        }
+          activa?: boolean;
+          cliente_id: string;
+          created_at?: string;
+          fecha_fin?: string | null;
+          fecha_inicio?: string;
+          fecha_ultimo_pago?: string | null;
+          id?: string;
+          monto_pagado?: number | null;
+          nivel_id: string;
+          puntos_acumulados?: number;
+          tipo_plan?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          activa?: boolean
-          cliente_id?: string
-          created_at?: string
-          fecha_fin?: string | null
-          fecha_inicio?: string
-          fecha_ultimo_pago?: string | null
-          id?: string
-          monto_pagado?: number | null
-          nivel_id?: string
-          puntos_acumulados?: number
-          tipo_plan?: string | null
-          updated_at?: string
-        }
+          activa?: boolean;
+          cliente_id?: string;
+          created_at?: string;
+          fecha_fin?: string | null;
+          fecha_inicio?: string;
+          fecha_ultimo_pago?: string | null;
+          id?: string;
+          monto_pagado?: number | null;
+          nivel_id?: string;
+          puntos_acumulados?: number;
+          tipo_plan?: string | null;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "membresias_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
+            foreignKeyName: "membresias_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "membresias_nivel_id_fkey"
-            columns: ["nivel_id"]
-            isOneToOne: false
-            referencedRelation: "membresias_niveles"
-            referencedColumns: ["id"]
+            foreignKeyName: "membresias_nivel_id_fkey";
+            columns: ["nivel_id"];
+            isOneToOne: false;
+            referencedRelation: "membresias_niveles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       membresias_niveles: {
         Row: {
-          beneficios: string | null
-          created_at: string | null
-          descuento_porcentaje: number | null
-          fecha_fin_lanzamiento: string | null
-          fecha_inicio_lanzamiento: string | null
-          id: string
-          nombre: string
-          orden: number | null
-          precio_anual: number | null
-          precio_lanzamiento: number | null
-          precio_mensual: number | null
-          precio_trimestral: number | null
-          puntos_requeridos: number
-          updated_at: string | null
-        }
+          beneficios: string | null;
+          created_at: string | null;
+          descuento_porcentaje: number | null;
+          fecha_fin_lanzamiento: string | null;
+          fecha_inicio_lanzamiento: string | null;
+          id: string;
+          nombre: string;
+          orden: number | null;
+          precio_anual: number | null;
+          precio_lanzamiento: number | null;
+          precio_mensual: number | null;
+          precio_trimestral: number | null;
+          puntos_requeridos: number;
+          updated_at: string | null;
+        };
         Insert: {
-          beneficios?: string | null
-          created_at?: string | null
-          descuento_porcentaje?: number | null
-          fecha_fin_lanzamiento?: string | null
-          fecha_inicio_lanzamiento?: string | null
-          id?: string
-          nombre: string
-          orden?: number | null
-          precio_anual?: number | null
-          precio_lanzamiento?: number | null
-          precio_mensual?: number | null
-          precio_trimestral?: number | null
-          puntos_requeridos?: number
-          updated_at?: string | null
-        }
+          beneficios?: string | null;
+          created_at?: string | null;
+          descuento_porcentaje?: number | null;
+          fecha_fin_lanzamiento?: string | null;
+          fecha_inicio_lanzamiento?: string | null;
+          id?: string;
+          nombre: string;
+          orden?: number | null;
+          precio_anual?: number | null;
+          precio_lanzamiento?: number | null;
+          precio_mensual?: number | null;
+          precio_trimestral?: number | null;
+          puntos_requeridos?: number;
+          updated_at?: string | null;
+        };
         Update: {
-          beneficios?: string | null
-          created_at?: string | null
-          descuento_porcentaje?: number | null
-          fecha_fin_lanzamiento?: string | null
-          fecha_inicio_lanzamiento?: string | null
-          id?: string
-          nombre?: string
-          orden?: number | null
-          precio_anual?: number | null
-          precio_lanzamiento?: number | null
-          precio_mensual?: number | null
-          precio_trimestral?: number | null
-          puntos_requeridos?: number
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+          beneficios?: string | null;
+          created_at?: string | null;
+          descuento_porcentaje?: number | null;
+          fecha_fin_lanzamiento?: string | null;
+          fecha_inicio_lanzamiento?: string | null;
+          id?: string;
+          nombre?: string;
+          orden?: number | null;
+          precio_anual?: number | null;
+          precio_lanzamiento?: number | null;
+          precio_mensual?: number | null;
+          precio_trimestral?: number | null;
+          puntos_requeridos?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       mesas: {
         Row: {
-          activa: boolean
-          created_at: string | null
-          estado: Database["public"]["Enums"]["estado_mesa"]
-          id: string
-          numero: number
-          sillas: number
-          sucursal_id: string
-          updated_at: string | null
-        }
+          activa: boolean;
+          created_at: string | null;
+          estado: Database["public"]["Enums"]["estado_mesa"];
+          id: string;
+          numero: number;
+          sillas: number;
+          sucursal_id: string;
+          updated_at: string | null;
+        };
         Insert: {
-          activa?: boolean
-          created_at?: string | null
-          estado?: Database["public"]["Enums"]["estado_mesa"]
-          id?: string
-          numero: number
-          sillas?: number
-          sucursal_id: string
-          updated_at?: string | null
-        }
+          activa?: boolean;
+          created_at?: string | null;
+          estado?: Database["public"]["Enums"]["estado_mesa"];
+          id?: string;
+          numero: number;
+          sillas?: number;
+          sucursal_id: string;
+          updated_at?: string | null;
+        };
         Update: {
-          activa?: boolean
-          created_at?: string | null
-          estado?: Database["public"]["Enums"]["estado_mesa"]
-          id?: string
-          numero?: number
-          sillas?: number
-          sucursal_id?: string
-          updated_at?: string | null
-        }
+          activa?: boolean;
+          created_at?: string | null;
+          estado?: Database["public"]["Enums"]["estado_mesa"];
+          id?: string;
+          numero?: number;
+          sillas?: number;
+          sucursal_id?: string;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "mesas_sucursal_id_fkey"
-            columns: ["sucursal_id"]
-            isOneToOne: false
-            referencedRelation: "sucursales"
-            referencedColumns: ["id"]
+            foreignKeyName: "mesas_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       monedas: {
         Row: {
-          codigo: string
-          created_at: string | null
-          es_predefinida: boolean
-          id: string
-          nombre: string
-          simbolo: string
-          updated_at: string | null
-        }
+          codigo: string;
+          created_at: string | null;
+          es_predefinida: boolean;
+          id: string;
+          nombre: string;
+          simbolo: string;
+          updated_at: string | null;
+        };
         Insert: {
-          codigo: string
-          created_at?: string | null
-          es_predefinida?: boolean
-          id?: string
-          nombre: string
-          simbolo: string
-          updated_at?: string | null
-        }
+          codigo: string;
+          created_at?: string | null;
+          es_predefinida?: boolean;
+          id?: string;
+          nombre: string;
+          simbolo: string;
+          updated_at?: string | null;
+        };
         Update: {
-          codigo?: string
-          created_at?: string | null
-          es_predefinida?: boolean
-          id?: string
-          nombre?: string
-          simbolo?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+          codigo?: string;
+          created_at?: string | null;
+          es_predefinida?: boolean;
+          id?: string;
+          nombre?: string;
+          simbolo?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       orden_estado_historial: {
         Row: {
-          cambiado_at: string
-          cambiado_por: string | null
-          estado_desde: Database["public"]["Enums"]["estado_orden"] | null
-          estado_hasta: Database["public"]["Enums"]["estado_orden"]
-          id: string
-          notas: string | null
-          orden_id: string
-        }
+          cambiado_at: string;
+          cambiado_por: string | null;
+          estado_desde: Database["public"]["Enums"]["estado_orden"] | null;
+          estado_hasta: Database["public"]["Enums"]["estado_orden"];
+          id: string;
+          notas: string | null;
+          orden_id: string;
+        };
         Insert: {
-          cambiado_at?: string
-          cambiado_por?: string | null
-          estado_desde?: Database["public"]["Enums"]["estado_orden"] | null
-          estado_hasta: Database["public"]["Enums"]["estado_orden"]
-          id?: string
-          notas?: string | null
-          orden_id: string
-        }
+          cambiado_at?: string;
+          cambiado_por?: string | null;
+          estado_desde?: Database["public"]["Enums"]["estado_orden"] | null;
+          estado_hasta: Database["public"]["Enums"]["estado_orden"];
+          id?: string;
+          notas?: string | null;
+          orden_id: string;
+        };
         Update: {
-          cambiado_at?: string
-          cambiado_por?: string | null
-          estado_desde?: Database["public"]["Enums"]["estado_orden"] | null
-          estado_hasta?: Database["public"]["Enums"]["estado_orden"]
-          id?: string
-          notas?: string | null
-          orden_id?: string
-        }
+          cambiado_at?: string;
+          cambiado_por?: string | null;
+          estado_desde?: Database["public"]["Enums"]["estado_orden"] | null;
+          estado_hasta?: Database["public"]["Enums"]["estado_orden"];
+          id?: string;
+          notas?: string | null;
+          orden_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "orden_estado_historial_cambiado_por_fkey"
-            columns: ["cambiado_por"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "orden_estado_historial_cambiado_por_fkey";
+            columns: ["cambiado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "orden_estado_historial_orden_id_fkey"
-            columns: ["orden_id"]
-            isOneToOne: false
-            referencedRelation: "ordenes"
-            referencedColumns: ["id"]
+            foreignKeyName: "orden_estado_historial_orden_id_fkey";
+            columns: ["orden_id"];
+            isOneToOne: false;
+            referencedRelation: "ordenes";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       orden_items: {
         Row: {
-          acompanante: Json | null
-          cantidad: number
-          created_at: string
-          extras: Json | null
-          id: string
-          notas_item: string | null
-          orden_id: string
-          precio_unitario: number
-          producto_id: string
-          producto_nombre: string
-          sabores: Json | null
-          subtotal: number
-          variante_id: string | null
-          variante_nombre: string | null
-        }
+          acompanante: Json | null;
+          cantidad: number;
+          created_at: string;
+          extras: Json | null;
+          id: string;
+          notas_item: string | null;
+          orden_id: string;
+          precio_unitario: number;
+          producto_id: string;
+          producto_nombre: string;
+          sabores: Json | null;
+          subtotal: number;
+          variante_id: string | null;
+          variante_nombre: string | null;
+        };
         Insert: {
-          acompanante?: Json | null
-          cantidad: number
-          created_at?: string
-          extras?: Json | null
-          id?: string
-          notas_item?: string | null
-          orden_id: string
-          precio_unitario: number
-          producto_id: string
-          producto_nombre: string
-          sabores?: Json | null
-          subtotal: number
-          variante_id?: string | null
-          variante_nombre?: string | null
-        }
+          acompanante?: Json | null;
+          cantidad: number;
+          created_at?: string;
+          extras?: Json | null;
+          id?: string;
+          notas_item?: string | null;
+          orden_id: string;
+          precio_unitario: number;
+          producto_id: string;
+          producto_nombre: string;
+          sabores?: Json | null;
+          subtotal: number;
+          variante_id?: string | null;
+          variante_nombre?: string | null;
+        };
         Update: {
-          acompanante?: Json | null
-          cantidad?: number
-          created_at?: string
-          extras?: Json | null
-          id?: string
-          notas_item?: string | null
-          orden_id?: string
-          precio_unitario?: number
-          producto_id?: string
-          producto_nombre?: string
-          sabores?: Json | null
-          subtotal?: number
-          variante_id?: string | null
-          variante_nombre?: string | null
-        }
+          acompanante?: Json | null;
+          cantidad?: number;
+          created_at?: string;
+          extras?: Json | null;
+          id?: string;
+          notas_item?: string | null;
+          orden_id?: string;
+          precio_unitario?: number;
+          producto_id?: string;
+          producto_nombre?: string;
+          sabores?: Json | null;
+          subtotal?: number;
+          variante_id?: string | null;
+          variante_nombre?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "orden_items_orden_id_fkey"
-            columns: ["orden_id"]
-            isOneToOne: false
-            referencedRelation: "ordenes"
-            referencedColumns: ["id"]
+            foreignKeyName: "orden_items_orden_id_fkey";
+            columns: ["orden_id"];
+            isOneToOne: false;
+            referencedRelation: "ordenes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "orden_items_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos"
-            referencedColumns: ["id"]
+            foreignKeyName: "orden_items_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "orden_items_variante_id_fkey"
-            columns: ["variante_id"]
-            isOneToOne: false
-            referencedRelation: "producto_variantes"
-            referencedColumns: ["id"]
+            foreignKeyName: "orden_items_variante_id_fkey";
+            columns: ["variante_id"];
+            isOneToOne: false;
+            referencedRelation: "producto_variantes";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       ordenes: {
         Row: {
-          cajero_id: string
-          cliente_id: string | null
-          created_at: string
-          delivery_address: string | null
-          delivery_fee: number
+          cajero_id: string;
+          cliente_id: string | null;
+          created_at: string;
+          delivery_address: string | null;
+          delivery_fee: number;
           delivery_method:
             | Database["public"]["Enums"]["delivery_method_tipo"]
-            | null
-          delivery_referencia: string | null
-          delivery_status: Database["public"]["Enums"]["estado_delivery"] | null
-          delivery_status_updated_at: string | null
-          descuento: number
-          estado: Database["public"]["Enums"]["estado_orden"]
-          id: string
-          mesa_id: string | null
-          mesa_referencia: string | null
-          notas: string | null
-          numero_orden: number
-          promocion_id: string | null
-          repartidor_id: string | null
-          subtotal: number
-          sucursal_id: string
-          third_party_name: string | null
-          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"]
-          total: number
-          updated_at: string
-        }
+            | null;
+          delivery_referencia: string | null;
+          delivery_status:
+            | Database["public"]["Enums"]["estado_delivery"]
+            | null;
+          delivery_status_updated_at: string | null;
+          descuento: number;
+          entrega_programada_at: string | null;
+          estado: Database["public"]["Enums"]["estado_orden"];
+          id: string;
+          mesa_id: string | null;
+          mesa_referencia: string | null;
+          notas: string | null;
+          numero_orden: number;
+          promocion_id: string | null;
+          repartidor_id: string | null;
+          subtotal: number;
+          sucursal_id: string;
+          third_party_name: string | null;
+          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"];
+          total: number;
+          updated_at: string;
+        };
         Insert: {
-          cajero_id: string
-          cliente_id?: string | null
-          created_at?: string
-          delivery_address?: string | null
-          delivery_fee?: number
+          cajero_id: string;
+          cliente_id?: string | null;
+          created_at?: string;
+          delivery_address?: string | null;
+          delivery_fee?: number;
           delivery_method?:
             | Database["public"]["Enums"]["delivery_method_tipo"]
-            | null
-          delivery_referencia?: string | null
+            | null;
+          delivery_referencia?: string | null;
           delivery_status?:
             | Database["public"]["Enums"]["estado_delivery"]
-            | null
-          delivery_status_updated_at?: string | null
-          descuento?: number
-          estado?: Database["public"]["Enums"]["estado_orden"]
-          id?: string
-          mesa_id?: string | null
-          mesa_referencia?: string | null
-          notas?: string | null
-          numero_orden?: never
-          promocion_id?: string | null
-          repartidor_id?: string | null
-          subtotal?: number
-          sucursal_id: string
-          third_party_name?: string | null
-          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"]
-          total?: number
-          updated_at?: string
-        }
+            | null;
+          delivery_status_updated_at?: string | null;
+          descuento?: number;
+          entrega_programada_at?: string | null;
+          estado?: Database["public"]["Enums"]["estado_orden"];
+          id?: string;
+          mesa_id?: string | null;
+          mesa_referencia?: string | null;
+          notas?: string | null;
+          numero_orden?: never;
+          promocion_id?: string | null;
+          repartidor_id?: string | null;
+          subtotal?: number;
+          sucursal_id: string;
+          third_party_name?: string | null;
+          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"];
+          total?: number;
+          updated_at?: string;
+        };
         Update: {
-          cajero_id?: string
-          cliente_id?: string | null
-          created_at?: string
-          delivery_address?: string | null
-          delivery_fee?: number
+          cajero_id?: string;
+          cliente_id?: string | null;
+          created_at?: string;
+          delivery_address?: string | null;
+          delivery_fee?: number;
           delivery_method?:
             | Database["public"]["Enums"]["delivery_method_tipo"]
-            | null
-          delivery_referencia?: string | null
+            | null;
+          delivery_referencia?: string | null;
           delivery_status?:
             | Database["public"]["Enums"]["estado_delivery"]
-            | null
-          delivery_status_updated_at?: string | null
-          descuento?: number
-          estado?: Database["public"]["Enums"]["estado_orden"]
-          id?: string
-          mesa_id?: string | null
-          mesa_referencia?: string | null
-          notas?: string | null
-          numero_orden?: never
-          promocion_id?: string | null
-          repartidor_id?: string | null
-          subtotal?: number
-          sucursal_id?: string
-          third_party_name?: string | null
-          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"]
-          total?: number
-          updated_at?: string
-        }
+            | null;
+          delivery_status_updated_at?: string | null;
+          descuento?: number;
+          entrega_programada_at?: string | null;
+          estado?: Database["public"]["Enums"]["estado_orden"];
+          id?: string;
+          mesa_id?: string | null;
+          mesa_referencia?: string | null;
+          notas?: string | null;
+          numero_orden?: never;
+          promocion_id?: string | null;
+          repartidor_id?: string | null;
+          subtotal?: number;
+          sucursal_id?: string;
+          third_party_name?: string | null;
+          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"];
+          total?: number;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "ordenes_cajero_id_fkey"
-            columns: ["cajero_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "ordenes_cajero_id_fkey";
+            columns: ["cajero_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ordenes_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
+            foreignKeyName: "ordenes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ordenes_mesa_id_fkey"
-            columns: ["mesa_id"]
-            isOneToOne: false
-            referencedRelation: "mesas"
-            referencedColumns: ["id"]
+            foreignKeyName: "ordenes_mesa_id_fkey";
+            columns: ["mesa_id"];
+            isOneToOne: false;
+            referencedRelation: "mesas";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ordenes_promocion_id_fkey"
-            columns: ["promocion_id"]
-            isOneToOne: false
-            referencedRelation: "promociones"
-            referencedColumns: ["id"]
+            foreignKeyName: "ordenes_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ordenes_repartidor_id_fkey"
-            columns: ["repartidor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "ordenes_repartidor_id_fkey";
+            columns: ["repartidor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ordenes_sucursal_id_fkey"
-            columns: ["sucursal_id"]
-            isOneToOne: false
-            referencedRelation: "sucursales"
-            referencedColumns: ["id"]
+            foreignKeyName: "ordenes_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       pizza_sabores: {
         Row: {
-          categoria_id: string
-          created_at: string | null
-          descripcion: string | null
-          disponible: boolean
-          id: string
-          imagen_url: string | null
-          nombre: string
-          orden: number
-          updated_at: string | null
-        }
+          categoria_id: string;
+          created_at: string | null;
+          descripcion: string | null;
+          disponible: boolean;
+          id: string;
+          imagen_url: string | null;
+          nombre: string;
+          orden: number;
+          updated_at: string | null;
+        };
         Insert: {
-          categoria_id: string
-          created_at?: string | null
-          descripcion?: string | null
-          disponible?: boolean
-          id?: string
-          imagen_url?: string | null
-          nombre: string
-          orden?: number
-          updated_at?: string | null
-        }
+          categoria_id: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean;
+          id?: string;
+          imagen_url?: string | null;
+          nombre: string;
+          orden?: number;
+          updated_at?: string | null;
+        };
         Update: {
-          categoria_id?: string
-          created_at?: string | null
-          descripcion?: string | null
-          disponible?: boolean
-          id?: string
-          imagen_url?: string | null
-          nombre?: string
-          orden?: number
-          updated_at?: string | null
-        }
+          categoria_id?: string;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean;
+          id?: string;
+          imagen_url?: string | null;
+          nombre?: string;
+          orden?: number;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "pizza_sabores_categoria_id_fkey"
-            columns: ["categoria_id"]
-            isOneToOne: false
-            referencedRelation: "categorias"
-            referencedColumns: ["id"]
+            foreignKeyName: "pizza_sabores_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       producto_extras: {
         Row: {
-          categoria_id: string
-          created_at: string | null
-          disponible: boolean
-          id: string
-          nombre: string
-          orden: number
-          precio: number
-          updated_at: string | null
-        }
+          categoria_id: string;
+          created_at: string | null;
+          disponible: boolean;
+          id: string;
+          nombre: string;
+          orden: number;
+          precio: number;
+          updated_at: string | null;
+        };
         Insert: {
-          categoria_id: string
-          created_at?: string | null
-          disponible?: boolean
-          id?: string
-          nombre: string
-          orden?: number
-          precio?: number
-          updated_at?: string | null
-        }
+          categoria_id: string;
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          precio?: number;
+          updated_at?: string | null;
+        };
         Update: {
-          categoria_id?: string
-          created_at?: string | null
-          disponible?: boolean
-          id?: string
-          nombre?: string
-          orden?: number
-          precio?: number
-          updated_at?: string | null
-        }
+          categoria_id?: string;
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          precio?: number;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "producto_extras_categoria_id_fkey"
-            columns: ["categoria_id"]
-            isOneToOne: false
-            referencedRelation: "categorias"
-            referencedColumns: ["id"]
+            foreignKeyName: "producto_extras_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       producto_sucursal: {
         Row: {
-          created_at: string | null
-          disponible: boolean
-          id: string
-          producto_id: string
-          sucursal_id: string
-          updated_at: string | null
-        }
+          created_at: string | null;
+          disponible: boolean;
+          id: string;
+          producto_id: string;
+          sucursal_id: string;
+          updated_at: string | null;
+        };
         Insert: {
-          created_at?: string | null
-          disponible?: boolean
-          id?: string
-          producto_id: string
-          sucursal_id: string
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          producto_id: string;
+          sucursal_id: string;
+          updated_at?: string | null;
+        };
         Update: {
-          created_at?: string | null
-          disponible?: boolean
-          id?: string
-          producto_id?: string
-          sucursal_id?: string
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          producto_id?: string;
+          sucursal_id?: string;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "producto_sucursal_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos"
-            referencedColumns: ["id"]
+            foreignKeyName: "producto_sucursal_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "producto_sucursal_sucursal_id_fkey"
-            columns: ["sucursal_id"]
-            isOneToOne: false
-            referencedRelation: "sucursales"
-            referencedColumns: ["id"]
+            foreignKeyName: "producto_sucursal_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       producto_variantes: {
         Row: {
-          created_at: string | null
-          disponible: boolean
-          id: string
-          medida_id: string
-          orden: number
-          precio: number
-          producto_id: string
-          updated_at: string | null
-        }
+          created_at: string | null;
+          disponible: boolean;
+          id: string;
+          medida_id: string;
+          orden: number;
+          precio: number;
+          producto_id: string;
+          updated_at: string | null;
+        };
         Insert: {
-          created_at?: string | null
-          disponible?: boolean
-          id?: string
-          medida_id: string
-          orden?: number
-          precio: number
-          producto_id: string
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          medida_id: string;
+          orden?: number;
+          precio: number;
+          producto_id: string;
+          updated_at?: string | null;
+        };
         Update: {
-          created_at?: string | null
-          disponible?: boolean
-          id?: string
-          medida_id?: string
-          orden?: number
-          precio?: number
-          producto_id?: string
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          disponible?: boolean;
+          id?: string;
+          medida_id?: string;
+          orden?: number;
+          precio?: number;
+          producto_id?: string;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "producto_variantes_medida_id_fkey"
-            columns: ["medida_id"]
-            isOneToOne: false
-            referencedRelation: "categoria_medidas"
-            referencedColumns: ["id"]
+            foreignKeyName: "producto_variantes_medida_id_fkey";
+            columns: ["medida_id"];
+            isOneToOne: false;
+            referencedRelation: "categoria_medidas";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "producto_variantes_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos"
-            referencedColumns: ["id"]
+            foreignKeyName: "producto_variantes_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       productos: {
         Row: {
-          categoria_id: string | null
-          created_at: string | null
-          descripcion: string | null
-          disponible: boolean | null
-          id: string
-          imagen_url: string | null
-          nombre: string
-          precio: number | null
-          updated_at: string | null
-        }
+          categoria_id: string | null;
+          created_at: string | null;
+          descripcion: string | null;
+          disponible: boolean | null;
+          id: string;
+          imagen_url: string | null;
+          nombre: string;
+          precio: number | null;
+          updated_at: string | null;
+        };
         Insert: {
-          categoria_id?: string | null
-          created_at?: string | null
-          descripcion?: string | null
-          disponible?: boolean | null
-          id?: string
-          imagen_url?: string | null
-          nombre: string
-          precio?: number | null
-          updated_at?: string | null
-        }
+          categoria_id?: string | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean | null;
+          id?: string;
+          imagen_url?: string | null;
+          nombre: string;
+          precio?: number | null;
+          updated_at?: string | null;
+        };
         Update: {
-          categoria_id?: string | null
-          created_at?: string | null
-          descripcion?: string | null
-          disponible?: boolean | null
-          id?: string
-          imagen_url?: string | null
-          nombre?: string
-          precio?: number | null
-          updated_at?: string | null
-        }
+          categoria_id?: string | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          disponible?: boolean | null;
+          id?: string;
+          imagen_url?: string | null;
+          nombre?: string;
+          precio?: number | null;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "productos_categoria_id_fkey"
-            columns: ["categoria_id"]
-            isOneToOne: false
-            referencedRelation: "categorias"
-            referencedColumns: ["id"]
+            foreignKeyName: "productos_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       profiles: {
         Row: {
-          apellido_materno: string | null
-          apellido_paterno: string
-          celular: string | null
-          codigo_pais: string
-          codigo_qr: string | null
-          created_at: string | null
-          edad: number | null
-          email: string
-          estado: Database["public"]["Enums"]["user_estado"]
-          fecha_nacimiento: string | null
-          foto_url: string | null
-          id: string
-          nombre: string
-          numero_documento: string | null
-          rol_id: string | null
-          segundo_nombre: string | null
-          sexo: string | null
-          sucursal_id: string | null
-          tipo_documento: string
-          updated_at: string | null
-        }
+          apellido_materno: string | null;
+          apellido_paterno: string;
+          celular: string | null;
+          codigo_pais: string;
+          codigo_qr: string | null;
+          created_at: string | null;
+          edad: number | null;
+          email: string;
+          estado: Database["public"]["Enums"]["user_estado"];
+          fecha_nacimiento: string | null;
+          foto_url: string | null;
+          id: string;
+          nombre: string;
+          numero_documento: string | null;
+          rol_id: string | null;
+          segundo_nombre: string | null;
+          sexo: string | null;
+          sucursal_id: string | null;
+          tipo_documento: string;
+          updated_at: string | null;
+        };
         Insert: {
-          apellido_materno?: string | null
-          apellido_paterno: string
-          celular?: string | null
-          codigo_pais?: string
-          codigo_qr?: string | null
-          created_at?: string | null
-          edad?: number | null
-          email: string
-          estado?: Database["public"]["Enums"]["user_estado"]
-          fecha_nacimiento?: string | null
-          foto_url?: string | null
-          id: string
-          nombre: string
-          numero_documento?: string | null
-          rol_id?: string | null
-          segundo_nombre?: string | null
-          sexo?: string | null
-          sucursal_id?: string | null
-          tipo_documento?: string
-          updated_at?: string | null
-        }
+          apellido_materno?: string | null;
+          apellido_paterno: string;
+          celular?: string | null;
+          codigo_pais?: string;
+          codigo_qr?: string | null;
+          created_at?: string | null;
+          edad?: number | null;
+          email: string;
+          estado?: Database["public"]["Enums"]["user_estado"];
+          fecha_nacimiento?: string | null;
+          foto_url?: string | null;
+          id: string;
+          nombre: string;
+          numero_documento?: string | null;
+          rol_id?: string | null;
+          segundo_nombre?: string | null;
+          sexo?: string | null;
+          sucursal_id?: string | null;
+          tipo_documento?: string;
+          updated_at?: string | null;
+        };
         Update: {
-          apellido_materno?: string | null
-          apellido_paterno?: string
-          celular?: string | null
-          codigo_pais?: string
-          codigo_qr?: string | null
-          created_at?: string | null
-          edad?: number | null
-          email?: string
-          estado?: Database["public"]["Enums"]["user_estado"]
-          fecha_nacimiento?: string | null
-          foto_url?: string | null
-          id?: string
-          nombre?: string
-          numero_documento?: string | null
-          rol_id?: string | null
-          segundo_nombre?: string | null
-          sexo?: string | null
-          sucursal_id?: string | null
-          tipo_documento?: string
-          updated_at?: string | null
-        }
+          apellido_materno?: string | null;
+          apellido_paterno?: string;
+          celular?: string | null;
+          codigo_pais?: string;
+          codigo_qr?: string | null;
+          created_at?: string | null;
+          edad?: number | null;
+          email?: string;
+          estado?: Database["public"]["Enums"]["user_estado"];
+          fecha_nacimiento?: string | null;
+          foto_url?: string | null;
+          id?: string;
+          nombre?: string;
+          numero_documento?: string | null;
+          rol_id?: string | null;
+          segundo_nombre?: string | null;
+          sexo?: string | null;
+          sucursal_id?: string | null;
+          tipo_documento?: string;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "profiles_rol_id_fkey"
-            columns: ["rol_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id"]
+            foreignKeyName: "profiles_rol_id_fkey";
+            columns: ["rol_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "profiles_sucursal_id_fkey"
-            columns: ["sucursal_id"]
-            isOneToOne: false
-            referencedRelation: "sucursales"
-            referencedColumns: ["id"]
+            foreignKeyName: "profiles_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       promocion_combo_items: {
         Row: {
-          created_at: string | null
-          es_ancla: boolean
-          id: string
-          medida_id: string | null
-          orden: number
-          producto_id: string
-          promocion_id: string
-        }
+          created_at: string | null;
+          es_ancla: boolean;
+          id: string;
+          medida_id: string | null;
+          orden: number;
+          producto_id: string;
+          promocion_id: string;
+        };
         Insert: {
-          created_at?: string | null
-          es_ancla?: boolean
-          id?: string
-          medida_id?: string | null
-          orden?: number
-          producto_id: string
-          promocion_id: string
-        }
+          created_at?: string | null;
+          es_ancla?: boolean;
+          id?: string;
+          medida_id?: string | null;
+          orden?: number;
+          producto_id: string;
+          promocion_id: string;
+        };
         Update: {
-          created_at?: string | null
-          es_ancla?: boolean
-          id?: string
-          medida_id?: string | null
-          orden?: number
-          producto_id?: string
-          promocion_id?: string
-        }
+          created_at?: string | null;
+          es_ancla?: boolean;
+          id?: string;
+          medida_id?: string | null;
+          orden?: number;
+          producto_id?: string;
+          promocion_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "promocion_combo_items_medida_id_fkey"
-            columns: ["medida_id"]
-            isOneToOne: false
-            referencedRelation: "categoria_medidas"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_combo_items_medida_id_fkey";
+            columns: ["medida_id"];
+            isOneToOne: false;
+            referencedRelation: "categoria_medidas";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "promocion_combo_items_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_combo_items_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "promocion_combo_items_promocion_id_fkey"
-            columns: ["promocion_id"]
-            isOneToOne: false
-            referencedRelation: "promociones"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_combo_items_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       promocion_medidas: {
         Row: {
-          medida_id: string
-          promocion_id: string
-        }
+          medida_id: string;
+          promocion_id: string;
+        };
         Insert: {
-          medida_id: string
-          promocion_id: string
-        }
+          medida_id: string;
+          promocion_id: string;
+        };
         Update: {
-          medida_id?: string
-          promocion_id?: string
-        }
+          medida_id?: string;
+          promocion_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "promocion_medidas_medida_id_fkey"
-            columns: ["medida_id"]
-            isOneToOne: false
-            referencedRelation: "categoria_medidas"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_medidas_medida_id_fkey";
+            columns: ["medida_id"];
+            isOneToOne: false;
+            referencedRelation: "categoria_medidas";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "promocion_medidas_promocion_id_fkey"
-            columns: ["promocion_id"]
-            isOneToOne: false
-            referencedRelation: "promociones"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_medidas_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       promocion_sabores: {
         Row: {
-          promocion_id: string
-          sabor_id: string
-        }
+          promocion_id: string;
+          sabor_id: string;
+        };
         Insert: {
-          promocion_id: string
-          sabor_id: string
-        }
+          promocion_id: string;
+          sabor_id: string;
+        };
         Update: {
-          promocion_id?: string
-          sabor_id?: string
-        }
+          promocion_id?: string;
+          sabor_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "promocion_sabores_promocion_id_fkey"
-            columns: ["promocion_id"]
-            isOneToOne: false
-            referencedRelation: "promociones"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_sabores_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "promocion_sabores_sabor_id_fkey"
-            columns: ["sabor_id"]
-            isOneToOne: false
-            referencedRelation: "pizza_sabores"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_sabores_sabor_id_fkey";
+            columns: ["sabor_id"];
+            isOneToOne: false;
+            referencedRelation: "pizza_sabores";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       promocion_sucursales: {
         Row: {
-          promocion_id: string
-          sucursal_id: string
-        }
+          promocion_id: string;
+          sucursal_id: string;
+        };
         Insert: {
-          promocion_id: string
-          sucursal_id: string
-        }
+          promocion_id: string;
+          sucursal_id: string;
+        };
         Update: {
-          promocion_id?: string
-          sucursal_id?: string
-        }
+          promocion_id?: string;
+          sucursal_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "promocion_sucursales_promocion_id_fkey"
-            columns: ["promocion_id"]
-            isOneToOne: false
-            referencedRelation: "promociones"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_sucursales_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "promocion_sucursales_sucursal_id_fkey"
-            columns: ["sucursal_id"]
-            isOneToOne: false
-            referencedRelation: "sucursales"
-            referencedColumns: ["id"]
+            foreignKeyName: "promocion_sucursales_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       promociones: {
         Row: {
-          activa: boolean | null
-          created_at: string | null
-          descripcion: string | null
-          dias_semana: number[] | null
-          fecha_fin: string
-          fecha_inicio: string
-          hora_fin: string | null
-          hora_inicio: string | null
-          id: string
-          nivel_membresia_id: string | null
-          nombre: string
-          pedido_minimo: number | null
-          permite_modificaciones: boolean
-          precio_combo: number | null
-          precio_dinamico: boolean
-          tipo_descuento: string
-          tipo_promocion: Database["public"]["Enums"]["tipo_promocion"]
-          tipos_pedido: string[] | null
-          updated_at: string | null
-          valor_descuento: number
-        }
+          activa: boolean | null;
+          created_at: string | null;
+          descripcion: string | null;
+          dias_semana: number[] | null;
+          fecha_fin: string;
+          fecha_inicio: string;
+          hora_fin: string | null;
+          hora_inicio: string | null;
+          id: string;
+          nivel_membresia_id: string | null;
+          nombre: string;
+          pedido_minimo: number | null;
+          permite_modificaciones: boolean;
+          precio_combo: number | null;
+          precio_dinamico: boolean;
+          tipo_descuento: string;
+          tipo_promocion: Database["public"]["Enums"]["tipo_promocion"];
+          tipos_pedido: string[] | null;
+          updated_at: string | null;
+          valor_descuento: number;
+        };
         Insert: {
-          activa?: boolean | null
-          created_at?: string | null
-          descripcion?: string | null
-          dias_semana?: number[] | null
-          fecha_fin: string
-          fecha_inicio: string
-          hora_fin?: string | null
-          hora_inicio?: string | null
-          id?: string
-          nivel_membresia_id?: string | null
-          nombre: string
-          pedido_minimo?: number | null
-          permite_modificaciones?: boolean
-          precio_combo?: number | null
-          precio_dinamico?: boolean
-          tipo_descuento: string
-          tipo_promocion: Database["public"]["Enums"]["tipo_promocion"]
-          tipos_pedido?: string[] | null
-          updated_at?: string | null
-          valor_descuento: number
-        }
+          activa?: boolean | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          dias_semana?: number[] | null;
+          fecha_fin: string;
+          fecha_inicio: string;
+          hora_fin?: string | null;
+          hora_inicio?: string | null;
+          id?: string;
+          nivel_membresia_id?: string | null;
+          nombre: string;
+          pedido_minimo?: number | null;
+          permite_modificaciones?: boolean;
+          precio_combo?: number | null;
+          precio_dinamico?: boolean;
+          tipo_descuento: string;
+          tipo_promocion: Database["public"]["Enums"]["tipo_promocion"];
+          tipos_pedido?: string[] | null;
+          updated_at?: string | null;
+          valor_descuento: number;
+        };
         Update: {
-          activa?: boolean | null
-          created_at?: string | null
-          descripcion?: string | null
-          dias_semana?: number[] | null
-          fecha_fin?: string
-          fecha_inicio?: string
-          hora_fin?: string | null
-          hora_inicio?: string | null
-          id?: string
-          nivel_membresia_id?: string | null
-          nombre?: string
-          pedido_minimo?: number | null
-          permite_modificaciones?: boolean
-          precio_combo?: number | null
-          precio_dinamico?: boolean
-          tipo_descuento?: string
-          tipo_promocion?: Database["public"]["Enums"]["tipo_promocion"]
-          tipos_pedido?: string[] | null
-          updated_at?: string | null
-          valor_descuento?: number
-        }
+          activa?: boolean | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          dias_semana?: number[] | null;
+          fecha_fin?: string;
+          fecha_inicio?: string;
+          hora_fin?: string | null;
+          hora_inicio?: string | null;
+          id?: string;
+          nivel_membresia_id?: string | null;
+          nombre?: string;
+          pedido_minimo?: number | null;
+          permite_modificaciones?: boolean;
+          precio_combo?: number | null;
+          precio_dinamico?: boolean;
+          tipo_descuento?: string;
+          tipo_promocion?: Database["public"]["Enums"]["tipo_promocion"];
+          tipos_pedido?: string[] | null;
+          updated_at?: string | null;
+          valor_descuento?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "promociones_nivel_membresia_id_fkey"
-            columns: ["nivel_membresia_id"]
-            isOneToOne: false
-            referencedRelation: "membresias_niveles"
-            referencedColumns: ["id"]
+            foreignKeyName: "promociones_nivel_membresia_id_fkey";
+            columns: ["nivel_membresia_id"];
+            isOneToOne: false;
+            referencedRelation: "membresias_niveles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       promociones_productos: {
         Row: {
-          id: string
-          producto_id: string | null
-          promocion_id: string | null
-        }
+          id: string;
+          producto_id: string | null;
+          promocion_id: string | null;
+        };
         Insert: {
-          id?: string
-          producto_id?: string | null
-          promocion_id?: string | null
-        }
+          id?: string;
+          producto_id?: string | null;
+          promocion_id?: string | null;
+        };
         Update: {
-          id?: string
-          producto_id?: string | null
-          promocion_id?: string | null
-        }
+          id?: string;
+          producto_id?: string | null;
+          promocion_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "promociones_productos_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos"
-            referencedColumns: ["id"]
+            foreignKeyName: "promociones_productos_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "promociones_productos_promocion_id_fkey"
-            columns: ["promocion_id"]
-            isOneToOne: false
-            referencedRelation: "promociones"
-            referencedColumns: ["id"]
+            foreignKeyName: "promociones_productos_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       reglas_puntos: {
         Row: {
-          activa: boolean | null
-          created_at: string | null
-          descripcion: string | null
-          id: string
-          nivel_membresia_id: string | null
-          nombre: string
-          puntos_otorgados: number
-          soles_por_punto: number
-          updated_at: string | null
-        }
+          activa: boolean | null;
+          created_at: string | null;
+          descripcion: string | null;
+          id: string;
+          nivel_membresia_id: string | null;
+          nombre: string;
+          puntos_otorgados: number;
+          soles_por_punto: number;
+          updated_at: string | null;
+        };
         Insert: {
-          activa?: boolean | null
-          created_at?: string | null
-          descripcion?: string | null
-          id?: string
-          nivel_membresia_id?: string | null
-          nombre: string
-          puntos_otorgados?: number
-          soles_por_punto?: number
-          updated_at?: string | null
-        }
+          activa?: boolean | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          id?: string;
+          nivel_membresia_id?: string | null;
+          nombre: string;
+          puntos_otorgados?: number;
+          soles_por_punto?: number;
+          updated_at?: string | null;
+        };
         Update: {
-          activa?: boolean | null
-          created_at?: string | null
-          descripcion?: string | null
-          id?: string
-          nivel_membresia_id?: string | null
-          nombre?: string
-          puntos_otorgados?: number
-          soles_por_punto?: number
-          updated_at?: string | null
-        }
+          activa?: boolean | null;
+          created_at?: string | null;
+          descripcion?: string | null;
+          id?: string;
+          nivel_membresia_id?: string | null;
+          nombre?: string;
+          puntos_otorgados?: number;
+          soles_por_punto?: number;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "reglas_puntos_nivel_membresia_id_fkey"
-            columns: ["nivel_membresia_id"]
-            isOneToOne: false
-            referencedRelation: "membresias_niveles"
-            referencedColumns: ["id"]
+            foreignKeyName: "reglas_puntos_nivel_membresia_id_fkey";
+            columns: ["nivel_membresia_id"];
+            isOneToOne: false;
+            referencedRelation: "membresias_niveles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       repartidor_detalles: {
         Row: {
-          created_at: string | null
-          direccion: string | null
-          id: string
-          notas: string | null
-          tipo_vehiculo: string[] | null
-          updated_at: string | null
-        }
+          created_at: string | null;
+          direccion: string | null;
+          id: string;
+          notas: string | null;
+          tipo_vehiculo: string[] | null;
+          updated_at: string | null;
+        };
         Insert: {
-          created_at?: string | null
-          direccion?: string | null
-          id: string
-          notas?: string | null
-          tipo_vehiculo?: string[] | null
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          direccion?: string | null;
+          id: string;
+          notas?: string | null;
+          tipo_vehiculo?: string[] | null;
+          updated_at?: string | null;
+        };
         Update: {
-          created_at?: string | null
-          direccion?: string | null
-          id?: string
-          notas?: string | null
-          tipo_vehiculo?: string[] | null
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          direccion?: string | null;
+          id?: string;
+          notas?: string | null;
+          tipo_vehiculo?: string[] | null;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "repartidor_detalles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "repartidor_detalles_id_fkey";
+            columns: ["id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       roles: {
         Row: {
-          activo: boolean
-          created_at: string
-          descripcion: string | null
-          id: string
-          nombre: string
-          updated_at: string
-        }
+          activo: boolean;
+          created_at: string;
+          descripcion: string | null;
+          id: string;
+          nombre: string;
+          updated_at: string;
+        };
         Insert: {
-          activo?: boolean
-          created_at?: string
-          descripcion?: string | null
-          id?: string
-          nombre: string
-          updated_at?: string
-        }
+          activo?: boolean;
+          created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre: string;
+          updated_at?: string;
+        };
         Update: {
-          activo?: boolean
-          created_at?: string
-          descripcion?: string | null
-          id?: string
-          nombre?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          activo?: boolean;
+          created_at?: string;
+          descripcion?: string | null;
+          id?: string;
+          nombre?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       sabor_ingredientes: {
         Row: {
-          es_principal: boolean
-          id: string
-          nombre: string
-          orden: number
-          sabor_id: string
-        }
+          es_principal: boolean;
+          id: string;
+          nombre: string;
+          orden: number;
+          sabor_id: string;
+        };
         Insert: {
-          es_principal?: boolean
-          id?: string
-          nombre: string
-          orden?: number
-          sabor_id: string
-        }
+          es_principal?: boolean;
+          id?: string;
+          nombre: string;
+          orden?: number;
+          sabor_id: string;
+        };
         Update: {
-          es_principal?: boolean
-          id?: string
-          nombre?: string
-          orden?: number
-          sabor_id?: string
-        }
+          es_principal?: boolean;
+          id?: string;
+          nombre?: string;
+          orden?: number;
+          sabor_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "sabor_ingredientes_sabor_id_fkey"
-            columns: ["sabor_id"]
-            isOneToOne: false
-            referencedRelation: "pizza_sabores"
-            referencedColumns: ["id"]
+            foreignKeyName: "sabor_ingredientes_sabor_id_fkey";
+            columns: ["sabor_id"];
+            isOneToOne: false;
+            referencedRelation: "pizza_sabores";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       sucursales: {
         Row: {
-          activa: boolean | null
-          created_at: string | null
-          direccion: string
-          id: string
-          nombre: string
-          telefono: string | null
-          updated_at: string | null
-        }
+          activa: boolean | null;
+          created_at: string | null;
+          direccion: string;
+          id: string;
+          nombre: string;
+          telefono: string | null;
+          updated_at: string | null;
+        };
         Insert: {
-          activa?: boolean | null
-          created_at?: string | null
-          direccion: string
-          id?: string
-          nombre: string
-          telefono?: string | null
-          updated_at?: string | null
-        }
+          activa?: boolean | null;
+          created_at?: string | null;
+          direccion: string;
+          id?: string;
+          nombre: string;
+          telefono?: string | null;
+          updated_at?: string | null;
+        };
         Update: {
-          activa?: boolean | null
-          created_at?: string | null
-          direccion?: string
-          id?: string
-          nombre?: string
-          telefono?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+          activa?: boolean | null;
+          created_at?: string | null;
+          direccion?: string;
+          id?: string;
+          nombre?: string;
+          telefono?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       venta_items: {
         Row: {
-          cantidad: number
-          created_at: string | null
-          id: string
-          producto_id: string
-          producto_nombre: string
-          producto_precio: number
-          subtotal: number
-          variante_id: string | null
-          variante_nombre: string | null
-          venta_id: string
-        }
+          cantidad: number;
+          created_at: string | null;
+          id: string;
+          producto_id: string;
+          producto_nombre: string;
+          producto_precio: number;
+          subtotal: number;
+          variante_id: string | null;
+          variante_nombre: string | null;
+          venta_id: string;
+        };
         Insert: {
-          cantidad: number
-          created_at?: string | null
-          id?: string
-          producto_id: string
-          producto_nombre: string
-          producto_precio: number
-          subtotal: number
-          variante_id?: string | null
-          variante_nombre?: string | null
-          venta_id: string
-        }
+          cantidad: number;
+          created_at?: string | null;
+          id?: string;
+          producto_id: string;
+          producto_nombre: string;
+          producto_precio: number;
+          subtotal: number;
+          variante_id?: string | null;
+          variante_nombre?: string | null;
+          venta_id: string;
+        };
         Update: {
-          cantidad?: number
-          created_at?: string | null
-          id?: string
-          producto_id?: string
-          producto_nombre?: string
-          producto_precio?: number
-          subtotal?: number
-          variante_id?: string | null
-          variante_nombre?: string | null
-          venta_id?: string
-        }
+          cantidad?: number;
+          created_at?: string | null;
+          id?: string;
+          producto_id?: string;
+          producto_nombre?: string;
+          producto_precio?: number;
+          subtotal?: number;
+          variante_id?: string | null;
+          variante_nombre?: string | null;
+          venta_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "venta_items_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos"
-            referencedColumns: ["id"]
+            foreignKeyName: "venta_items_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "venta_items_variante_id_fkey"
-            columns: ["variante_id"]
-            isOneToOne: false
-            referencedRelation: "producto_variantes"
-            referencedColumns: ["id"]
+            foreignKeyName: "venta_items_variante_id_fkey";
+            columns: ["variante_id"];
+            isOneToOne: false;
+            referencedRelation: "producto_variantes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "venta_items_venta_id_fkey"
-            columns: ["venta_id"]
-            isOneToOne: false
-            referencedRelation: "ventas"
-            referencedColumns: ["id"]
+            foreignKeyName: "venta_items_venta_id_fkey";
+            columns: ["venta_id"];
+            isOneToOne: false;
+            referencedRelation: "ventas";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       ventas: {
         Row: {
-          cajero_id: string
-          cliente_id: string | null
-          created_at: string | null
-          delivery_address: string | null
-          delivery_fee: number | null
-          delivery_method: string | null
-          delivery_referencia: string | null
-          delivery_status: string | null
-          delivery_status_updated_at: string | null
-          descuento: number | null
-          estado_pago_v2: Database["public"]["Enums"]["estado_pago"]
-          id: string
-          mesa_referencia: string | null
-          metodo_pago: Database["public"]["Enums"]["metodo_pago"] | null
-          monto_recibido: number | null
-          notas: string | null
-          numero_venta: number
-          orden_id: string | null
-          promocion_id: string | null
-          repartidor_id: string | null
-          subtotal: number
-          sucursal_origen_id: string
-          third_party_name: string | null
-          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"] | null
-          total: number
-          updated_at: string | null
-        }
+          caja_sesion_id: string | null;
+          cajero_id: string;
+          cliente_id: string | null;
+          created_at: string | null;
+          delivery_address: string | null;
+          delivery_fee: number | null;
+          delivery_method: string | null;
+          delivery_referencia: string | null;
+          delivery_status: string | null;
+          delivery_status_updated_at: string | null;
+          descuento: number | null;
+          estado_pago_v2: Database["public"]["Enums"]["estado_pago"];
+          id: string;
+          mesa_referencia: string | null;
+          metodo_pago: Database["public"]["Enums"]["metodo_pago"] | null;
+          monto_recibido: number | null;
+          notas: string | null;
+          numero_venta: number;
+          orden_id: string | null;
+          promocion_id: string | null;
+          repartidor_id: string | null;
+          subtotal: number;
+          sucursal_origen_id: string;
+          third_party_name: string | null;
+          tipo_pedido: Database["public"]["Enums"]["tipo_pedido"] | null;
+          total: number;
+          updated_at: string | null;
+        };
         Insert: {
-          cajero_id: string
-          cliente_id?: string | null
-          created_at?: string | null
-          delivery_address?: string | null
-          delivery_fee?: number | null
-          delivery_method?: string | null
-          delivery_referencia?: string | null
-          delivery_status?: string | null
-          delivery_status_updated_at?: string | null
-          descuento?: number | null
-          estado_pago_v2?: Database["public"]["Enums"]["estado_pago"]
-          id?: string
-          mesa_referencia?: string | null
-          metodo_pago?: Database["public"]["Enums"]["metodo_pago"] | null
-          monto_recibido?: number | null
-          notas?: string | null
-          numero_venta?: number
-          orden_id?: string | null
-          promocion_id?: string | null
-          repartidor_id?: string | null
-          subtotal: number
-          sucursal_origen_id: string
-          third_party_name?: string | null
-          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"] | null
-          total: number
-          updated_at?: string | null
-        }
+          caja_sesion_id?: string | null;
+          cajero_id: string;
+          cliente_id?: string | null;
+          created_at?: string | null;
+          delivery_address?: string | null;
+          delivery_fee?: number | null;
+          delivery_method?: string | null;
+          delivery_referencia?: string | null;
+          delivery_status?: string | null;
+          delivery_status_updated_at?: string | null;
+          descuento?: number | null;
+          estado_pago_v2?: Database["public"]["Enums"]["estado_pago"];
+          id?: string;
+          mesa_referencia?: string | null;
+          metodo_pago?: Database["public"]["Enums"]["metodo_pago"] | null;
+          monto_recibido?: number | null;
+          notas?: string | null;
+          numero_venta?: number;
+          orden_id?: string | null;
+          promocion_id?: string | null;
+          repartidor_id?: string | null;
+          subtotal: number;
+          sucursal_origen_id: string;
+          third_party_name?: string | null;
+          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"] | null;
+          total: number;
+          updated_at?: string | null;
+        };
         Update: {
-          cajero_id?: string
-          cliente_id?: string | null
-          created_at?: string | null
-          delivery_address?: string | null
-          delivery_fee?: number | null
-          delivery_method?: string | null
-          delivery_referencia?: string | null
-          delivery_status?: string | null
-          delivery_status_updated_at?: string | null
-          descuento?: number | null
-          estado_pago_v2?: Database["public"]["Enums"]["estado_pago"]
-          id?: string
-          mesa_referencia?: string | null
-          metodo_pago?: Database["public"]["Enums"]["metodo_pago"] | null
-          monto_recibido?: number | null
-          notas?: string | null
-          numero_venta?: number
-          orden_id?: string | null
-          promocion_id?: string | null
-          repartidor_id?: string | null
-          subtotal?: number
-          sucursal_origen_id?: string
-          third_party_name?: string | null
-          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"] | null
-          total?: number
-          updated_at?: string | null
-        }
+          caja_sesion_id?: string | null;
+          cajero_id?: string;
+          cliente_id?: string | null;
+          created_at?: string | null;
+          delivery_address?: string | null;
+          delivery_fee?: number | null;
+          delivery_method?: string | null;
+          delivery_referencia?: string | null;
+          delivery_status?: string | null;
+          delivery_status_updated_at?: string | null;
+          descuento?: number | null;
+          estado_pago_v2?: Database["public"]["Enums"]["estado_pago"];
+          id?: string;
+          mesa_referencia?: string | null;
+          metodo_pago?: Database["public"]["Enums"]["metodo_pago"] | null;
+          monto_recibido?: number | null;
+          notas?: string | null;
+          numero_venta?: number;
+          orden_id?: string | null;
+          promocion_id?: string | null;
+          repartidor_id?: string | null;
+          subtotal?: number;
+          sucursal_origen_id?: string;
+          third_party_name?: string | null;
+          tipo_pedido?: Database["public"]["Enums"]["tipo_pedido"] | null;
+          total?: number;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "ventas_cajero_id_fkey"
-            columns: ["cajero_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "ventas_caja_sesion_id_fkey";
+            columns: ["caja_sesion_id"];
+            isOneToOne: false;
+            referencedRelation: "caja_sesiones";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ventas_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
+            foreignKeyName: "ventas_cajero_id_fkey";
+            columns: ["cajero_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ventas_orden_id_fkey"
-            columns: ["orden_id"]
-            isOneToOne: false
-            referencedRelation: "ordenes"
-            referencedColumns: ["id"]
+            foreignKeyName: "ventas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ventas_promocion_id_fkey"
-            columns: ["promocion_id"]
-            isOneToOne: false
-            referencedRelation: "promociones"
-            referencedColumns: ["id"]
+            foreignKeyName: "ventas_orden_id_fkey";
+            columns: ["orden_id"];
+            isOneToOne: false;
+            referencedRelation: "ordenes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ventas_repartidor_id_fkey"
-            columns: ["repartidor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "ventas_promocion_id_fkey";
+            columns: ["promocion_id"];
+            isOneToOne: false;
+            referencedRelation: "promociones";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ventas_sucursal_origen_id_fkey"
-            columns: ["sucursal_origen_id"]
-            isOneToOne: false
-            referencedRelation: "sucursales"
-            referencedColumns: ["id"]
+            foreignKeyName: "ventas_repartidor_id_fkey";
+            columns: ["repartidor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
-    }
+          {
+            foreignKeyName: "ventas_sucursal_origen_id_fkey";
+            columns: ["sucursal_origen_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      generate_codigo_qr: { Args: never; Returns: string }
-      get_user_role: { Args: never; Returns: string }
-      get_user_sucursal: { Args: never; Returns: string }
-    }
+      generate_codigo_qr: { Args: never; Returns: string };
+      get_user_role: { Args: never; Returns: string };
+      get_user_sucursal: { Args: never; Returns: string };
+    };
     Enums: {
-      delivery_method_tipo: "propio" | "tercero"
-      estado_delivery: "pendiente" | "en_camino" | "entregado"
-      estado_mesa: "libre" | "ocupada" | "reservada"
+      delivery_method_tipo: "propio" | "tercero";
+      estado_delivery: "pendiente" | "en_camino" | "entregado";
+      estado_mesa: "libre" | "ocupada" | "reservada";
       estado_orden:
         | "borrador"
         | "confirmada"
         | "en_preparacion"
         | "lista"
         | "entregada"
-        | "cancelada"
-      estado_pago: "pagado" | "pendiente" | "anulado"
+        | "cancelada";
+      estado_pago: "pagado" | "pendiente" | "anulado";
       metodo_pago:
         | "efectivo"
         | "yape"
         | "plin"
         | "tarjeta"
         | "mixto"
-        | "transferencia"
-      modelo_negocio: "simple" | "cocina_independiente"
-      tipo_cliente: "registrado" | "paso"
-      tipo_pedido: "local" | "delivery" | "para_llevar"
+        | "transferencia";
+      modelo_negocio: "simple" | "cocina_independiente";
+      tipo_cliente: "registrado" | "paso";
+      tipo_pedido: "local" | "delivery" | "para_llevar";
       tipo_promocion:
         | "descuento_porcentaje"
         | "descuento_fijo"
         | "2x1"
         | "combo_precio_fijo"
         | "delivery_gratis"
-        | "combo_precio_producto"
-      user_estado: "activo" | "inactivo" | "eliminado"
-    }
+        | "combo_precio_producto";
+      user_estado: "activo" | "inactivo" | "eliminado";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
@@ -1712,95 +1803,95 @@ export type Tables<
         DefaultSchema["Views"])
     ? (DefaultSchema["Tables"] &
         DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
@@ -1839,5 +1930,4 @@ export const Constants = {
       user_estado: ["activo", "inactivo", "eliminado"],
     },
   },
-} as const
-
+} as const;

@@ -13,6 +13,7 @@ export const PROTECTED_ROUTES = [
   "/usuarios",
   "/entregas",
   "/perfil",
+  "/caja",
 ] as const;
 
 export type ProtectedRoute = (typeof PROTECTED_ROUTES)[number];
@@ -20,7 +21,14 @@ export type ProtectedRoute = (typeof PROTECTED_ROUTES)[number];
 /** Rutas permitidas por rol */
 export const ROLE_ROUTES: Record<Role, readonly ProtectedRoute[]> = {
   [ROLES.ADMINISTRADOR]: PROTECTED_ROUTES,
-  [ROLES.CAJERO]: ["/pos", "/ordenes", "/reportes", "/entregas", "/perfil"],
+  [ROLES.CAJERO]: [
+    "/pos",
+    "/ordenes",
+    "/caja",
+    "/reportes",
+    "/entregas",
+    "/perfil",
+  ],
   [ROLES.MESERO]: ["/pos", "/ordenes", "/perfil"],
   [ROLES.REPARTIDOR]: ["/pos", "/ordenes", "/entregas", "/perfil"],
 };

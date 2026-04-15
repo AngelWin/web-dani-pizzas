@@ -10,6 +10,7 @@ import {
   Store,
   Settings,
   Users,
+  Vault,
   type LucideIcon,
 } from "lucide-react";
 import type { Role } from "@/lib/constants";
@@ -25,6 +26,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Punto de Venta", href: "/pos", icon: ShoppingCart },
   { title: "Órdenes", href: "/ordenes", icon: ClipboardList },
+  { title: "Caja", href: "/caja", icon: Vault },
   { title: "Productos", href: "/productos", icon: Package },
   { title: "Promociones", href: "/promociones", icon: Tag },
   { title: "Membresías", href: "/membresias", icon: Crown },

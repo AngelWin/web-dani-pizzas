@@ -24,12 +24,13 @@ R9 (Sucursales) + R5a (POS) + R5b/R5c (Ordenes) -> R15 (Gestion de Mesas)
                                                         -> R16 (Reservas de Mesas) [pendiente]
 R7 (Promociones) + R9 (Sucursales) + R5a (POS) -> R17 (Promociones Mejoradas)
                                                         -> R17.2 (Descuento Auto por Producto)
-                                                        -> R18 (Promos por Membresia) [pendiente]
+                                                        -> R18 (Promos por Membresia)
                                                         -> R19 (Promos en POS: Venta y Visualizacion)
-                                                             -> R19.1 (Combo con Configurador Pizza) [pendiente]
+                                                             -> R19.1 (Combo con Configurador Pizza)
 R8 (Membresias) + R17 -> R21 (Membresia Auto al Crear Orden)
 R8 (Membresias) -> R22 (Sistema de Membresias Completo)
-R15 (Mesas) + R5b/R5c (Ordenes/Cobro) -> R20 (Cuenta de Mesa y Cobro Agrupado) [pendiente]
+R15 (Mesas) + R5b/R5c (Ordenes/Cobro) -> R20 (Cuenta de Mesa y Cobro Agrupado)
+R5c (Cobro) + R9 (Sucursales) + R11 (Usuarios) -> R23 (Sesiones de Caja + Pedidos Programados) [pendiente]
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -1507,6 +1508,144 @@ MESA 5
 - Lista de miembros visible en /membresias tab "Miembros"
 - En POS: descuento de membresia se aplica auto al buscar cliente
 - Al cobrar: puntos se acumulan en la membresia del cliente
+- Build pasa sin errores
+
+---
+
+## Release 23: Sesiones de Caja (Cierre de Caja) + Pedidos Programados
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5c (Cobro) + Release 9 (Sucursales) + Release 11 (Usuarios)
+**Objetivo:** Implementar control de efectivo por turno (sesiones de caja) con horario flexible, una caja por sucursal, y soporte para pedidos programados (entregas fuera del horario operativo).
+
+### Contexto del negocio:
+- DANI PIZZAS opera con turnos de 5 PM a 11:30 PM, pero el cierre puede hacerse pasando medianoche y a veces hay ventas tras las 12 AM
+- El negocio recibe pedidos programados (ej: 10 pizzas para entrega en la mañana a una institucion educativa) que se toman fuera del horario operativo
+- Los pedidos programados pueden cobrarse al momento, al entregar, o por transferencia
+- Hoy no existe control de efectivo por turno, no se detectan descuadres, y los reportes mezclan ventas de turnos consecutivos por fecha calendario
+
+### Decisiones de diseno:
+- **Una caja por sucursal** (no por cajero) — una sola sesion abierta a la vez por sucursal, todos los cajeros de esa sucursal registran ventas a la misma sesion
+- **Quien abre puede ser distinto al que cierra** — campos `abierta_por` y `cerrada_por` separados
+- **Sesion = duracion real, no fecha calendario** — una venta a las 12:30 AM cae en la sesion que se abrio a las 5 PM del dia anterior
+- **Cobro independiente de la orden** — la `venta` se asocia con la sesion activa al momento del cobro, no al momento de crear la orden
+- **Pedido programado** desacoplado — la orden se crea hoy, el cobro entra a la sesion activa cuando ocurra (hoy, manana o sin caja si es transferencia)
+- **Roles:** administrador y cajero pueden abrir/cerrar caja. Mesero y repartidor sin acceso.
+- **Visibilidad:** cajero ve solo su sucursal. Admin ve todas las sucursales con selector.
+
+### Nueva tabla DB: `caja_sesiones`
+
+```
+id              uuid PK DEFAULT gen_random_uuid()
+sucursal_id     uuid NOT NULL REFERENCES sucursales(id)
+abierta_por     uuid NOT NULL REFERENCES profiles(id)
+cerrada_por     uuid NULL REFERENCES profiles(id)
+abierta_at      timestamptz NOT NULL DEFAULT now()
+cerrada_at      timestamptz NULL
+monto_inicial   numeric(10,2) NOT NULL DEFAULT 0
+monto_contado_efectivo  numeric(10,2) NULL
+diferencia      numeric(10,2) NULL
+notas_apertura  text NULL
+notas_cierre    text NULL
+estado          text NOT NULL DEFAULT 'abierta' CHECK (estado IN ('abierta','cerrada'))
+created_at      timestamptz DEFAULT now()
+updated_at      timestamptz DEFAULT now()
+```
+
+**Constraint critico:** indice unico parcial sobre `sucursal_id` filtrado a sesiones abiertas:
+```sql
+CREATE UNIQUE INDEX caja_sesiones_sucursal_abierta_idx
+  ON caja_sesiones(sucursal_id) WHERE estado = 'abierta';
+```
+Garantiza maximo 1 sesion abierta por sucursal a nivel de DB.
+
+### Cambios en tablas existentes:
+- `ventas` → agregar `caja_sesion_id uuid REFERENCES caja_sesiones(id) ON DELETE SET NULL`
+- `ordenes` → agregar `entrega_programada_at timestamptz NULL`
+
+### RLS:
+- `caja_sesiones`: SELECT autenticado (cajero ve solo de su sucursal, admin ve todas), INSERT/UPDATE solo administrador y cajero
+- Trigger `set_updated_at` en `caja_sesiones`
+
+### Fases esperadas:
+
+**Fase 1 — DB:**
+- [ ] Migracion: tabla `caja_sesiones` + indice unico parcial + RLS
+- [ ] Migracion: campo `caja_sesion_id` en `ventas`
+- [ ] Migracion: campo `entrega_programada_at` en `ordenes`
+- [ ] Trigger `set_updated_at` en `caja_sesiones`
+- [ ] Regenerar tipos TypeScript
+
+**Fase 2 — Backend:**
+- [ ] Servicio `lib/services/caja-sesiones.ts`: getSesionActivaPorSucursal, abrirSesion, cerrarSesion, getSesionesPorSucursal, getResumenSesion
+- [ ] Validaciones Zod `lib/validations/caja-sesiones.ts`
+- [ ] Server Actions `actions/caja-sesiones.ts`: abrirSesionAction, cerrarSesionAction
+- [ ] Modificar `cobrarOrdenAction` y `cobrarMesaAction`: asociar `caja_sesion_id` automaticamente con la sesion activa
+- [ ] Modificar `lib/services/ventas.ts`: incluir `caja_sesion_id` al insertar
+- [ ] Modificar `lib/validations/ordenes.ts`: agregar `entrega_programada_at` opcional
+- [ ] Modificar `lib/services/ordenes.ts`: soportar `entrega_programada_at`
+
+**Fase 3 — UI Cajero (Abrir/Cerrar caja):**
+- [ ] Nueva ruta `/caja` (cajero y administrador)
+- [ ] Componente `components/caja/abrir-caja-dialog.tsx`: input monto inicial + notas
+- [ ] Componente `components/caja/cerrar-caja-dialog.tsx`: input monto contado + notas, calculo de diferencia
+- [ ] Componente `components/caja/sesion-activa.tsx`: dashboard de sesion con totales por metodo de pago
+- [ ] Permisos: agregar `/caja` a `lib/permissions.ts` y `lib/roles.ts`
+- [ ] Modificar `/pos`: indicador de caja abierta/cerrada en header, toast de aviso si entra al POS sin caja
+- [ ] Modificar `cobro-dialog.tsx`: warning si efectivo y no hay sesion abierta
+
+**Fase 4 — UI Admin (Historial y reportes):**
+- [ ] Nueva tab "Cierres de caja" en `/reportes` (visible solo para admin)
+- [ ] Lista de sesiones de todas las sucursales con filtros (rango fechas, sucursal con opcion "Todas", cajero, con/sin diferencia)
+- [ ] Vista detallada de sesion: ventas por metodo, ventas por cajero individual, lista de ordenes cobradas, notas
+- [ ] Actualizar sidebar: entrada "Caja" para cajero (link a `/caja`) y admin
+
+**Fase 5 — Pedidos programados (UI):**
+- [ ] Modificar `formulario-pedido-dialog.tsx`: toggle "Pedido programado" + input datetime-local
+- [ ] Modificar `tarjeta-orden.tsx`: badge "📅 Programado para X" si tiene `entrega_programada_at`
+- [ ] Modificar `/ordenes`: filtros adicionales "Solo programados" / "Para hoy" / "Para manana"
+- [ ] Modificar `/dashboard`: widget "Pedidos programados proximos" con las proximas 5 ordenes
+
+### Edge cases cubiertos:
+- Cajero olvida abrir caja → ventas con `caja_sesion_id = null`, warning visible, futura mejora permite reasignar
+- Cierre pasando medianoche → sesion se cierra a la hora real, ventas siguen asociadas a la misma sesion
+- Venta a la 1 AM con caja abierta → entra a la sesion que abrio a las 5 PM
+- Pedido programado pagado al entregar → cobro entra a la sesion activa de manana
+- Pago por transferencia sin caja → venta con `caja_sesion_id = null`, no afecta cuadre de efectivo
+- Multiples cajeros en la misma sucursal → comparten la misma sesion, cada venta guarda su `cajero_id`
+
+### Archivos nuevos:
+- `lib/services/caja-sesiones.ts`
+- `lib/validations/caja-sesiones.ts`
+- `actions/caja-sesiones.ts`
+- `app/(dashboard)/caja/page.tsx`
+- `components/caja/abrir-caja-dialog.tsx`
+- `components/caja/cerrar-caja-dialog.tsx`
+- `components/caja/sesion-activa.tsx`
+
+### Archivos a modificar:
+- `types/database.ts` — regenerar
+- `lib/services/ventas.ts` — agregar `caja_sesion_id` al insertar
+- `lib/services/ordenes.ts` — soportar `entrega_programada_at`
+- `lib/validations/ordenes.ts` — agregar `entrega_programada_at`
+- `app/(dashboard)/ordenes/actions.ts` — `cobrarOrdenAction` y `cobrarMesaAction` buscan sesion activa
+- `lib/permissions.ts` y `lib/roles.ts` — agregar ruta `/caja`
+- `components/pos/pos-client.tsx` — indicador caja abierta/cerrada
+- `components/pos/formulario-pedido-dialog.tsx` — toggle pedido programado
+- `components/pos/cobro-dialog.tsx` — warning sin sesion
+- `components/ordenes/tarjeta-orden.tsx` — badge programado
+- `app/(dashboard)/dashboard/*` — widget pedidos programados
+- `app/(dashboard)/reportes/*` — tab "Cierres de caja"
+- `components/layout/sidebar.tsx` — entrada "Caja"
+
+### Criterio de exito:
+- Cajero entra a `/caja`, abre con S/.50 inicial → estado "abierta"
+- 3 ordenes cobradas (efectivo S/.46, tarjeta S/.30, efectivo S/.20) → todas con `caja_sesion_id`
+- Pedido programado a las 10 PM con entrega manana 8 AM → orden visible con badge en `/ordenes`
+- A las 12:15 AM cajero cierra con monto contado S/.116 → diferencia 0, estado "cerrada"
+- Cobro del pedido programado al dia siguiente → entra a la sesion nueva
+- Admin ve ambas sesiones (Casma + Villa Hermosa) en `/reportes` tab "Cierres de caja"
+- Constraint impide abrir 2 sesiones simultaneas en la misma sucursal
 - Build pasa sin errores
 
 ---

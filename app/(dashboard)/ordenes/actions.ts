@@ -10,6 +10,7 @@ import {
   type EstadoDelivery,
 } from "@/lib/services/ordenes";
 import { cobrarOrden } from "@/lib/services/ventas";
+import { getSesionActivaPorSucursal } from "@/lib/services/caja-sesiones";
 import { getConfiguracionNegocio } from "@/lib/services/configuracion";
 import { liberarMesaSiCorresponde } from "@/lib/services/mesas";
 import { acumularPuntosCliente } from "@/lib/services/membresias";
@@ -85,14 +86,16 @@ export async function cobrarOrdenAction(
     };
   }
 
-  const [{ data: orden, error: ordenError }, config] = await Promise.all([
-    supabase
-      .from("ordenes")
-      .select("*, orden_items(*)")
-      .eq("id", ordenId)
-      .single(),
-    getConfiguracionNegocio(),
-  ]);
+  const [{ data: orden, error: ordenError }, config, sesionActiva] =
+    await Promise.all([
+      supabase
+        .from("ordenes")
+        .select("*, orden_items(*)")
+        .eq("id", ordenId)
+        .single(),
+      getConfiguracionNegocio(),
+      getSesionActivaPorSucursal(sucursalId).catch(() => null),
+    ]);
 
   if (ordenError || !orden) return { data: null, error: "Orden no encontrada" };
 
@@ -127,6 +130,7 @@ export async function cobrarOrdenAction(
       orden_id: ordenId,
       cajero_id: user.id,
       sucursal_origen_id: sucursalId,
+      caja_sesion_id: sesionActiva?.id ?? null,
       metodo_pago: parsed.data.metodo_pago,
       monto_recibido: parsed.data.monto_recibido ?? null,
       tipo_pedido: orden.tipo_pedido,
@@ -213,8 +217,11 @@ export async function cobrarMesaAction(
     };
   }
 
-  // Buscar todas las órdenes activas de la mesa
-  const config = await getConfiguracionNegocio();
+  // Buscar sesión activa y configuración en paralelo
+  const [config, sesionActivaMesa] = await Promise.all([
+    getConfiguracionNegocio(),
+    getSesionActivaPorSucursal(sucursalId).catch(() => null),
+  ]);
   const estadosCobrablesMesa =
     config.modelo_negocio === "simple"
       ? (["en_preparacion", "lista"] as const)
@@ -253,6 +260,7 @@ export async function cobrarMesaAction(
         orden_id: orden.id,
         cajero_id: user.id,
         sucursal_origen_id: sucursalId,
+        caja_sesion_id: sesionActivaMesa?.id ?? null,
         metodo_pago: parsed.data.metodo_pago,
         monto_recibido:
           cobradas === 0 ? (parsed.data.monto_recibido ?? null) : null,
