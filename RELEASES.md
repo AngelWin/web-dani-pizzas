@@ -1938,7 +1938,7 @@ function RepartidorDetallesFields({ control }: { control: Control<UsuarioFormVal
 
 ## Release 29: Arquitectura — Separación de Capas y Utilidad de Fechas
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Ninguna (transversal)
 **Prioridad:** 🟠 Importante
 **Objetivo:** Corregir dos violaciones a la arquitectura de capas detectadas en auditoría: (1) páginas que llaman directamente a Supabase sin pasar por `lib/services/`, y (2) funciones de cálculo de fecha con timezone Lima duplicadas en múltiples páginas.
@@ -2001,10 +2001,10 @@ export function getDiasAtrasLima(dias: number): string {
 - `app/(dashboard)/promociones/page.tsx`
 
 ### Commits esperados:
-- [ ] Crear `lib/utils/fecha.ts` con funciones de timezone Lima
-- [ ] Reemplazar definiciones duplicadas en las 4 páginas que tienen `getHoyLima()` y similares
-- [ ] Mover queries directas de `sucursales` a llamadas vía `lib/services/sucursales.ts`
-- [ ] Extraer funciones auxiliares de `promociones/page.tsx` que usan Supabase directamente hacia `lib/services/`
+- [x] Crear `lib/utils/fecha.ts` con funciones de timezone Lima
+- [x] Reemplazar definiciones duplicadas en las 4 páginas que tienen `getHoyLima()` y similares
+- [x] Mover queries directas de `sucursales` a llamadas vía `lib/services/sucursales.ts`
+- [x] Extraer funciones auxiliares de `promociones/page.tsx` que usan Supabase directamente hacia `lib/services/`
 
 ### Criterio de éxito:
 - No existe ninguna definición local de `getHoyLima()` en páginas
@@ -2189,7 +2189,7 @@ Presentes en `reportes.ts`, `ordenes.ts`, `clientes.ts`, `ventas.ts`. Indican di
 
 ## Release 33: UI Importante — Estandarización Touch-Friendly de Controles
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 32 (touch targets críticos)
 **Prioridad:** 🟠 Importante
 **Objetivo:** Estandarizar todos los controles interactivos a los tamaños táctiles correctos: inputs a `h-11 text-base`, botones de filtro/categoría a `h-10`, y verificar que ningún input dispare zoom automático en iOS Safari.
@@ -2249,10 +2249,10 @@ Afecta líneas: ~540, ~633, ~674, ~717, ~743, ~759
 - `components/usuarios/usuario-form.tsx`
 
 ### Commits esperados:
-- [ ] Subir botones de categoría de `h-9` a `h-10` en `catalogo-productos.tsx`
-- [ ] Corregir input de fecha a `h-11 text-base` en `lista-ordenes.tsx`
-- [ ] Agregar `text-base` a todos los `SelectTrigger` e `Input` en `formulario-pedido-dialog.tsx`
-- [ ] Estandarizar inputs de `usuario-form.tsx` a `h-11`
+- [x] Subir botones de categoría de `h-9` a `h-10` en `catalogo-productos.tsx`
+- [x] Corregir input de fecha a `h-11 text-base` en `lista-ordenes.tsx`
+- [x] Agregar `text-base` a todos los `SelectTrigger` e `Input` en `formulario-pedido-dialog.tsx`
+- [x] Estandarizar inputs de `usuario-form.tsx` a `h-11`
 
 ### Criterio de éxito:
 - Ningún input tiene `font-size < 16px` (verificar en DevTools > Elements > Computed Styles en iOS)

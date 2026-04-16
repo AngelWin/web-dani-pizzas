@@ -232,7 +232,7 @@ export function ListaOrdenes({
             {...(minFecha ? { min: minFecha } : {})}
             max={hoy}
             onChange={handleFechaChange}
-            className="h-9 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-11 rounded-xl border border-border bg-card px-3 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
           {!esHoy && (
             <Button

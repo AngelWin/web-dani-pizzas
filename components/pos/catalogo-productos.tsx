@@ -160,7 +160,7 @@ export function CatalogoProductos({
             variant={vistaActiva === "promos" ? "default" : "outline"}
             size="sm"
             className={cn(
-              "h-9 shrink-0 gap-1.5",
+              "h-10 shrink-0 gap-1.5",
               vistaActiva === "promos" &&
                 "bg-red-500 hover:bg-red-600 text-white",
             )}
@@ -182,7 +182,7 @@ export function CatalogoProductos({
             <Button
               variant={categoriaActiva === null ? "default" : "outline"}
               size="sm"
-              className="h-9 shrink-0"
+              className="h-10 shrink-0"
               onClick={() => setCategoriaActiva(null)}
             >
               Todos
@@ -192,7 +192,7 @@ export function CatalogoProductos({
                 key={cat.id}
                 variant={categoriaActiva === cat.id ? "default" : "outline"}
                 size="sm"
-                className="h-9 shrink-0"
+                className="h-10 shrink-0"
                 onClick={() =>
                   setCategoriaActiva(cat.id === categoriaActiva ? null : cat.id)
                 }

@@ -79,7 +79,7 @@ function RepartidorDetallesFields({
                 value={field.value ?? ""}
                 maxLength={300}
                 placeholder="Av. Ejemplo 123, Casma"
-                className="h-10 rounded-xl"
+                className="h-11 rounded-xl"
               />
             </FormControl>
             <FormMessage />
@@ -199,7 +199,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
               <FormItem>
                 <FormLabel>Nombre</FormLabel>
                 <FormControl>
-                  <Input {...field} className="h-10 rounded-xl" />
+                  <Input {...field} className="h-11 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -212,7 +212,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
               <FormItem>
                 <FormLabel>Apellido paterno</FormLabel>
                 <FormControl>
-                  <Input {...field} className="h-10 rounded-xl" />
+                  <Input {...field} className="h-11 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -230,7 +230,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                 <Input
                   {...field}
                   value={field.value ?? ""}
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </FormControl>
               <FormMessage />
@@ -249,7 +249,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                   {...field}
                   type="email"
                   autoComplete="off"
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </FormControl>
               <FormMessage />
@@ -268,7 +268,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                   {...field}
                   type="password"
                   autoComplete="new-password"
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </FormControl>
               <FormMessage />
@@ -300,7 +300,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                   }}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl">
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona un rol" />
                     </SelectTrigger>
                   </FormControl>
@@ -328,7 +328,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                   onValueChange={(v) => field.onChange(v === "none" ? null : v)}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl">
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Sin sucursal" />
                     </SelectTrigger>
                   </FormControl>
@@ -437,7 +437,7 @@ export function EditarUsuarioForm({
               <FormItem>
                 <FormLabel>Nombre</FormLabel>
                 <FormControl>
-                  <Input {...field} className="h-10 rounded-xl" />
+                  <Input {...field} className="h-11 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -450,7 +450,7 @@ export function EditarUsuarioForm({
               <FormItem>
                 <FormLabel>Apellido paterno</FormLabel>
                 <FormControl>
-                  <Input {...field} className="h-10 rounded-xl" />
+                  <Input {...field} className="h-11 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -468,7 +468,7 @@ export function EditarUsuarioForm({
                 <Input
                   {...field}
                   value={field.value ?? ""}
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </FormControl>
               <FormMessage />
@@ -500,7 +500,7 @@ export function EditarUsuarioForm({
                   }}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl">
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona un rol" />
                     </SelectTrigger>
                   </FormControl>
@@ -528,7 +528,7 @@ export function EditarUsuarioForm({
                   onValueChange={(v) => field.onChange(v === "none" ? null : v)}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl">
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Sin sucursal" />
                     </SelectTrigger>
                   </FormControl>
@@ -555,7 +555,7 @@ export function EditarUsuarioForm({
               <FormLabel>Estado</FormLabel>
               <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="h-10 rounded-xl">
+                  <SelectTrigger className="h-11 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                 </FormControl>
