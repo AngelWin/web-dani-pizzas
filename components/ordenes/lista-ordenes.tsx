@@ -133,11 +133,16 @@ export function ListaOrdenes({
         .reduce((acc, o) => acc + o.total, 0)
     : 0;
 
-  // "Cobrar mesa" solo si hay al menos una orden en estado cobrable
+  // "Cobrar mesa" solo si hay al menos una orden cobrable
+  // Y ninguna en "confirmada" (todas deben haber pasado a preparación)
   const estadosCobrables =
     modeloNegocio === "simple" ? ["en_preparacion", "lista"] : ["lista"];
+  const hayConfirmadasEnMesa = mesaFiltro
+    ? ordenes.some((o) => o.estado === "confirmada")
+    : false;
   const hayCobrablesEnMesa = mesaFiltro
-    ? ordenes.some((o) => estadosCobrables.includes(o.estado))
+    ? !hayConfirmadasEnMesa &&
+      ordenes.some((o) => estadosCobrables.includes(o.estado))
     : false;
   const mesaReferencia = mesaFiltro
     ? ordenes.find((o) => o.mesa_referencia)?.mesa_referencia
