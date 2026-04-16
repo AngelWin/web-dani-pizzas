@@ -53,7 +53,8 @@ export default async function OrdenesPage({
 
   const [ordenes, config, niveles, sucursales, sesionActiva] =
     await Promise.all([
-      getOrdenes(sucursalId, "todas", fechaFiltro, mesaId),
+      // Sin filtro de fecha cuando se filtra por mesa, para mostrar órdenes de cualquier día
+      getOrdenes(sucursalId, "todas", mesaId ? undefined : fechaFiltro, mesaId),
       getConfiguracionNegocio(),
       getNivelesMembresia(),
       esAdmin ? getSucursales() : Promise.resolve([]),
