@@ -21,7 +21,7 @@ export default async function LoginPage({
             className="mb-4 rounded-xl"
             priority
           />
-          <h1 className="text-3xl font-bold text-primary">DANI PIZZAS</h1>
+          <h1 className="text-3xl font-bold text-primary">DANI PIZZAS - QA</h1>
           <p className="mt-2 text-muted-foreground">
             Ingresa a tu cuenta para continuar
           </p>
@@ -32,7 +32,7 @@ export default async function LoginPage({
 
       <footer className="py-4 text-center text-xs text-muted-foreground/60">
         <p>
-          &copy; {new Date().getFullYear()} DANI PIZZAS. Todos los derechos
+          &copy; {new Date().getFullYear()} DANI PIZZAS - QA. Todos los derechos
           reservados.
         </p>
         <p className="mt-0.5">Desarrollado por Angel Abad</p>

@@ -1717,6 +1717,82 @@ Cancelar manualmente las órdenes atascadas desde `/ordenes` usando el botón "C
 
 ---
 
+## Release 26: Resiliencia ante Base de Datos Vacía (Clean Install)
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Ninguna (transversal)
+**Objetivo:** Que la aplicación arranque sin errores cuando la base de datos está vacía (entrega a cliente nuevo, entorno de prueba limpio). Actualmente varias queries usan `.single()` que lanza excepción si la tabla devuelve 0 filas, bloqueando el POS y otras secciones.
+
+### Contexto del problema:
+- Al entregar el proyecto con BD limpia (sin datos de configuración), el POS y el dashboard lanzan "Cannot coerce the result to a single JSON object"
+- La causa raíz es el uso de `.single()` en queries que esperan exactamente 1 fila pero no tienen garantía de ello en una BD vacía
+- Las tablas afectadas son de configuración global, no de negocio (no son productos ni ventas)
+
+### Tablas que deben tener datos mínimos para que la app funcione:
+
+| Tabla | Por qué es crítica |
+|---|---|
+| `configuracion_negocio` | Cargada en layout/dashboard con `.single()` |
+| `monedas` | Usada en POS y formateo de precios |
+| `delivery_fees_config` | Cargada al seleccionar tipo de pedido delivery |
+| `delivery_servicios` | Lista de servicios de delivery en el POS |
+| `sucursales` | Requerida en casi todas las queries |
+| `roles` | Requerida para el sistema de auth |
+
+### Solución: reemplazar `.single()` por `.maybeSingle()` + manejo de null
+
+**Regla:** Ninguna query hacia tablas de configuración debe usar `.single()`. Usar `.maybeSingle()` y manejar el caso `null` con un estado vacío, un valor por defecto, o una pantalla de configuración inicial.
+
+**Patrón a aplicar:**
+
+```typescript
+// ❌ Antes — explota si la tabla está vacía
+const { data } = await supabase
+  .from('configuracion_negocio')
+  .select('*')
+  .single()
+
+// ✅ Después — maneja el caso vacío
+const { data } = await supabase
+  .from('configuracion_negocio')
+  .select('*')
+  .maybeSingle()
+
+if (!data) {
+  // mostrar estado vacío o redirigir a pantalla de configuración inicial
+}
+```
+
+### Archivos a auditar y corregir:
+
+**Servicios (`lib/services/`):**
+- [ ] `lib/services/configuracion.ts` — queries a `configuracion_negocio` y `delivery_fees_config`
+- [ ] `lib/services/monedas.ts` — query a moneda activa
+- [ ] `lib/services/delivery-servicios.ts` — query de servicios activos
+- [ ] Cualquier otro servicio con `.single()` hacia tablas de configuración global
+
+**Pages (`app/(dashboard)/`):**
+- [ ] `app/(dashboard)/pos/page.tsx` — carga de configuración, moneda, fees, mesas
+- [ ] `app/(dashboard)/dashboard/page.tsx` — carga de configuración del negocio
+- [ ] `app/(dashboard)/configuracion/page.tsx` — carga de config, moneda, fees, servicios
+
+**Componentes:**
+- [ ] Cualquier componente que muestre datos de configuración y no tenga guard para `null`
+
+### Comportamiento esperado con BD vacía:
+
+- POS carga sin error — muestra mensaje "Configura tu negocio antes de operar" si faltan datos críticos
+- Dashboard carga sin error — widgets muestran S/. 0.00 o estado vacío
+- `/configuracion` carga sin error — permite crear la configuración inicial desde cero
+- No se requiere insertar filas manualmente antes de usar la app
+
+### Criterio de éxito:
+- Clonar el proyecto, apuntar a una BD vacía (solo con schema), y poder navegar todas las rutas sin que lance un error 500
+- El POS muestra un estado vacío o advertencia si no hay productos/sucursales configurados
+- Build pasa sin errores
+
+---
+
 ## Sub-Agentes del Proyecto
 
 | Agente | Responsabilidad | Directorios |
