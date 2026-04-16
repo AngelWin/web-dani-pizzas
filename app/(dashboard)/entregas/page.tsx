@@ -5,13 +5,9 @@ import { ResumenEntregasCards } from "@/components/entregas/resumen-entregas";
 import { TablaEntregas } from "@/components/entregas/tabla-entregas";
 import { getEntregasPorRepartidor } from "@/lib/services/entregas";
 import { getSucursalesActivas } from "@/lib/services/usuarios";
+import { getHoyLima } from "@/lib/utils/fecha";
 
 export const dynamic = "force-dynamic";
-
-function getHoyLima(): string {
-  const now = new Date(Date.now() - 5 * 60 * 60 * 1000);
-  return now.toISOString().split("T")[0];
-}
 
 export default async function EntregasPage({
   searchParams,
