@@ -1881,7 +1881,7 @@ export async function cambiarEstadoOrdenAction(
 
 ## Release 28: Correcciones de Calidad en Capa de Servicios
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5b, Release 17, Release 23
 **Prioridad:** 🟠 Importante
 **Objetivo:** Corregir varios problemas puntuales en `lib/services/` detectados en auditoría: guards tardíos de `.single()`, deletes secuenciales sin paralelizar, `any` en componente de formulario, y fetch secuencial en página de perfil.
@@ -1923,11 +1923,11 @@ function RepartidorDetallesFields({ control }: { control: Control<UsuarioFormVal
 - `app/(dashboard)/perfil/page.tsx`
 
 ### Commits esperados:
-- [ ] Fix guard inmediato en `caja-sesiones.ts` línea ~100
-- [ ] Fix guard inmediato en `ordenes.ts` línea ~173
-- [ ] Paralelizar 5 DELETEs en `promociones.ts` `updatePromocion()`
-- [ ] Reemplazar `any` por `Control<UsuarioFormValues>` en `usuario-form.tsx`
-- [ ] Paralelizar fetches en `perfil/page.tsx`
+- [x] Fix guard inmediato en `caja-sesiones.ts` línea ~100
+- [x] Fix guard inmediato en `ordenes.ts` línea ~173
+- [x] Paralelizar 5 DELETEs en `promociones.ts` `updatePromocion()` y `deletePromocion()`
+- [x] Reemplazar `any` por `Control<FormWithRepartidor>` en `usuario-form.tsx`
+- [x] Paralelizar fetches en `perfil/page.tsx`
 
 ### Criterio de éxito:
 - Build pasa sin errores

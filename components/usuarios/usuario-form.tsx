@@ -29,7 +29,9 @@ import {
   actualizarUsuarioSchema,
   type CrearUsuarioFormData,
   type ActualizarUsuarioFormData,
+  type RepartidorDetallesFormData,
 } from "@/lib/validations/usuarios";
+import type { Control } from "react-hook-form";
 import {
   crearUsuarioAction,
   actualizarUsuarioAction,
@@ -47,12 +49,16 @@ const TIPOS_VEHICULO_OPTIONS = Object.entries(TIPOS_VEHICULO_LABELS) as [
   string,
 ][];
 
+// Tipo mínimo compartido por ambos formularios (crear y actualizar)
+type FormWithRepartidor = {
+  repartidor_detalles?: RepartidorDetallesFormData | null;
+};
+
 /** Sección condicional con los campos de repartidor */
 function RepartidorDetallesFields({
   control,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: any;
+  control: Control<FormWithRepartidor>;
 }) {
   return (
     <div className="space-y-4 rounded-xl border border-border bg-surface/50 p-4">
@@ -341,7 +347,11 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
           />
         </div>
 
-        {isRepartidor && <RepartidorDetallesFields control={form.control} />}
+        {isRepartidor && (
+          <RepartidorDetallesFields
+            control={form.control as unknown as Control<FormWithRepartidor>}
+          />
+        )}
 
         <div className="flex justify-end pt-2">
           <Button
@@ -562,7 +572,11 @@ export function EditarUsuarioForm({
           )}
         />
 
-        {isRepartidor && <RepartidorDetallesFields control={form.control} />}
+        {isRepartidor && (
+          <RepartidorDetallesFields
+            control={form.control as unknown as Control<FormWithRepartidor>}
+          />
+        )}
 
         <div className="flex justify-end pt-2">
           <Button

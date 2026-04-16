@@ -403,12 +403,14 @@ export async function updatePromocion(
 
   if (error) throw new Error(error.message);
 
-  // Reemplazar relaciones (delete + insert)
-  await supabase.from("promocion_combo_items").delete().eq("promocion_id", id);
-  await supabase.from("promociones_productos").delete().eq("promocion_id", id);
-  await supabase.from("promocion_sucursales").delete().eq("promocion_id", id);
-  await supabase.from("promocion_medidas").delete().eq("promocion_id", id);
-  await supabase.from("promocion_sabores").delete().eq("promocion_id", id);
+  // Reemplazar relaciones (delete paralelo + insert)
+  await Promise.all([
+    supabase.from("promocion_combo_items").delete().eq("promocion_id", id),
+    supabase.from("promociones_productos").delete().eq("promocion_id", id),
+    supabase.from("promocion_sucursales").delete().eq("promocion_id", id),
+    supabase.from("promocion_medidas").delete().eq("promocion_id", id),
+    supabase.from("promocion_sabores").delete().eq("promocion_id", id),
+  ]);
 
   if (combo_items && combo_items.length > 0) {
     const { error: ciError } = await supabase
@@ -461,11 +463,13 @@ export async function updatePromocion(
 export async function deletePromocion(id: string): Promise<void> {
   const supabase = await createClient();
 
-  await supabase.from("promocion_combo_items").delete().eq("promocion_id", id);
-  await supabase.from("promociones_productos").delete().eq("promocion_id", id);
-  await supabase.from("promocion_sucursales").delete().eq("promocion_id", id);
-  await supabase.from("promocion_medidas").delete().eq("promocion_id", id);
-  await supabase.from("promocion_sabores").delete().eq("promocion_id", id);
+  await Promise.all([
+    supabase.from("promocion_combo_items").delete().eq("promocion_id", id),
+    supabase.from("promociones_productos").delete().eq("promocion_id", id),
+    supabase.from("promocion_sucursales").delete().eq("promocion_id", id),
+    supabase.from("promocion_medidas").delete().eq("promocion_id", id),
+    supabase.from("promocion_sabores").delete().eq("promocion_id", id),
+  ]);
 
   const { error } = await supabase.from("promociones").delete().eq("id", id);
   if (error) throw new Error(error.message);

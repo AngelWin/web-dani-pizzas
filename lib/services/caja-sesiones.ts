@@ -93,11 +93,13 @@ export async function cerrarSesion(params: {
     .eq("metodo_pago", "efectivo")
     .eq("estado_pago_v2", "pagado");
 
-  const { data: sesion } = await supabase
+  const { data: sesion, error: sesionError } = await supabase
     .from("caja_sesiones")
     .select("monto_inicial")
     .eq("id", params.sesion_id)
-    .single();
+    .maybeSingle();
+
+  if (sesionError) throw new Error(sesionError.message);
 
   const totalVentasEfectivo = (ventasEfectivo ?? []).reduce(
     (acc, v) => acc + v.total,

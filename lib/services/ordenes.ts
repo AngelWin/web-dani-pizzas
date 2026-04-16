@@ -168,11 +168,13 @@ export async function cancelarOrdenConMotivo(
   const supabase = await createClient();
 
   // Obtener mesa_id antes de cancelar para poder liberarla después
-  const { data: ordenPrevia } = await supabase
+  const { data: ordenPrevia, error: ordenPreviaError } = await supabase
     .from("ordenes")
     .select("mesa_id")
     .eq("id", ordenId)
-    .single();
+    .maybeSingle();
+
+  if (ordenPreviaError) throw new Error(ordenPreviaError.message);
 
   // 1. Actualizar estado → el trigger creará la entrada del historial
   const { error: updateError } = await supabase
