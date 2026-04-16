@@ -2660,6 +2660,27 @@ Archivos adicionales modificados en R38.1:
 
 ---
 
+## Version Code v1.0.0 — 2026-04-16
+
+**Estado:** [x] Completado
+**Objetivo:** Primera versión estable del sistema con mejoras visuales, changelog y versión visible en UI.
+
+### Commits esperados:
+- [x] Cambiar color al botón Guardar
+- [x] Rediseño de Dialog Abrir Caja
+- [x] Cambio de fuente de letra
+- [x] Crear CHANGELOG.md con historial de versiones desde v1.0.0
+- [x] Mostrar versión (v1.0.0) en la página de login
+- [x] Mostrar versión (v1.0.0) al final del sidebar (después de Configuración)
+
+### Criterio de éxito:
+- La versión `v1.0.0` se muestra en el footer del login
+- La versión `v1.0.0` se muestra al final del sidebar
+- CHANGELOG.md existe en la raíz del proyecto
+- Build pasa sin errores
+
+---
+
 ## Sub-Agentes del Proyecto
 
 | Agente | Responsabilidad | Directorios |

@@ -36,6 +36,7 @@ export default async function LoginPage({
           reservados.
         </p>
         <p className="mt-0.5">Desarrollado por Angel Abad</p>
+        <p className="mt-1 font-mono text-muted-foreground/40">v1.0.0</p>
       </footer>
     </div>
   );

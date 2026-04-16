@@ -117,6 +117,9 @@ export function AppSidebar() {
             )}
           </div>
         </div>
+        <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground/40">
+          v1.0.0
+        </p>
       </SidebarFooter>
     </Sidebar>
   );
