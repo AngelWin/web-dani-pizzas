@@ -2558,6 +2558,39 @@ El componente `Skeleton` existe en `components/ui/skeleton.tsx` pero las seccion
 
 ---
 
+## Release 37: POS — Multi-Orden por Mesa (Mesas Ocupadas Seleccionables)
+
+**Estado:** [x] Completado
+**Dependencia:** Release 15 (Mesas), Release 5a (POS)
+**Prioridad:** 🔴 CRÍTICO — bloquea flujo real de operación en local
+
+### Contexto del problema:
+En un restaurante es normal que una mesa haga varios pedidos durante el turno: primero pizzas, luego bebidas adicionales, luego postres. El sistema anterior mostraba las mesas ocupadas en **rojo bloqueado** (cursor-not-allowed), impidiendo asignar una nueva orden a una mesa que ya tenía una orden activa. Esto obligaba al cajero/mesero a crear la orden con referencia manual en lugar de asignarla a la mesa correcta.
+
+### Decisión de diseño:
+- **Mesa LIBRE** → verde, seleccionable normalmente
+- **Mesa OCUPADA** → ámbar, **seleccionable** con aviso visual (se añadirá a la cuenta existente)
+- **Mesa RESERVADA** → ámbar claro, seleccionable
+- El botón "Cobrar mesa" en `/ordenes` ya agrupa todas las órdenes activas de una mesa, por lo que añadir una orden nueva es transparente para el flujo de cobro
+
+### Archivos modificados:
+- `components/pos/selector-mesa.tsx`
+
+### Commits esperados:
+- [x] Cambiar mesas ocupadas de rojo-bloqueado a ámbar-seleccionable
+- [x] Mostrar badge "Ocupada" en mesas con órdenes activas
+- [x] Al seleccionar mesa ocupada: aviso informativo "Se añadirá a la cuenta de esta mesa"
+- [x] Mantener check de selección y ring de primary igual que mesas libres
+
+### Criterio de éxito:
+- Mesas 1, 2, 4 (ocupadas) se muestran en ámbar y son clickeables
+- Al seleccionar una mesa ocupada aparece un aviso claro
+- El cajero puede confirmar la orden y se añade a la cuenta de esa mesa
+- Mesas libres siguen siendo verdes
+- Build pasa sin errores
+
+---
+
 ## Sub-Agentes del Proyecto
 
 | Agente | Responsabilidad | Directorios |
