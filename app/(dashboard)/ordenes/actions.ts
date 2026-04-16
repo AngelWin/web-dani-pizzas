@@ -21,39 +21,99 @@ import type { ActionResult } from "@/types";
 export async function cambiarEstadoOrdenAction(
   ordenId: string,
   estado: EstadoOrden,
-): Promise<{ error?: string }> {
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const [
+    { data: rolNombre },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!["administrador", "cajero", "mesero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos para cambiar estado de orden" };
+  }
+
   try {
     await actualizarEstadoOrden(ordenId, estado);
     revalidatePath("/ordenes");
-    return {};
+    return { data: null, error: null };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Error desconocido" };
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error desconocido",
+    };
   }
 }
 
 export async function cancelarOrdenAction(
   ordenId: string,
   motivo: string,
-): Promise<{ error?: string }> {
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const [
+    { data: rolNombre },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos para cancelar órdenes" };
+  }
+
   try {
     await cancelarOrdenConMotivo(ordenId, motivo);
     revalidatePath("/ordenes");
-    return {};
+    return { data: null, error: null };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Error al cancelar" };
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error al cancelar",
+    };
   }
 }
 
 export async function cambiarEstadoDeliveryAction(
   ordenId: string,
   deliveryStatus: EstadoDelivery,
-): Promise<{ error?: string }> {
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const [
+    { data: rolNombre },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!["administrador", "cajero", "repartidor"].includes(rolNombre ?? "")) {
+    return {
+      data: null,
+      error: "Sin permisos para actualizar estado de delivery",
+    };
+  }
+
   try {
     await actualizarEstadoDelivery(ordenId, deliveryStatus);
     revalidatePath("/ordenes");
-    return {};
+    return { data: null, error: null };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Error desconocido" };
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error desconocido",
+    };
   }
 }
 

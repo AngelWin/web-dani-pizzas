@@ -1809,7 +1809,7 @@ if (!data) {
 
 ## Release 27: Seguridad — Auth y Rol en Server Actions de Estado de Orden
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5b (Gestión de Órdenes)
 **Prioridad:** 🔴 BLOQUEANTE — corrección de seguridad
 **Objetivo:** Agregar verificación de autenticación y rol a los tres Server Actions que gestionan el estado de las órdenes. Actualmente cualquier llamada HTTP puede ejecutarlos sin control de acceso.
@@ -1865,11 +1865,11 @@ export async function cambiarEstadoOrdenAction(
 | `cambiarEstadoDeliveryAction` | administrador, cajero, repartidor |
 
 ### Commits esperados:
-- [ ] Agregar auth + rol a `cambiarEstadoOrdenAction`
-- [ ] Agregar auth + rol a `cancelarOrdenAction`
-- [ ] Agregar auth + rol a `cambiarEstadoDeliveryAction`
-- [ ] Cambiar tipo de retorno de `{ error?: string }` a `ActionResult<void>` en los 3 actions
-- [ ] Actualizar componentes consumidores si el cambio de tipo rompe algo
+- [x] Agregar auth + rol a `cambiarEstadoOrdenAction`
+- [x] Agregar auth + rol a `cancelarOrdenAction`
+- [x] Agregar auth + rol a `cambiarEstadoDeliveryAction`
+- [x] Cambiar tipo de retorno de `{ error?: string }` a `ActionResult<void>` en los 3 actions
+- [x] Actualizar componentes consumidores si el cambio de tipo rompe algo
 
 ### Criterio de éxito:
 - Un usuario no autenticado que llame directamente a los actions recibe "No autenticado"
