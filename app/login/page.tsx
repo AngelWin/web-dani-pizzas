@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { LoginForm } from "./login-form";
 import { LoginAlerts } from "./login-alerts";
+import { getAppVersion } from "@/lib/version";
 
 export default async function LoginPage({
   searchParams,
@@ -8,6 +9,7 @@ export default async function LoginPage({
   searchParams: Promise<{ expired?: string; message?: string }>;
 }) {
   const params = await searchParams;
+  const version = getAppVersion();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 relative">
@@ -31,7 +33,7 @@ export default async function LoginPage({
       </div>
 
       <span className="absolute top-4 left-4 font-mono text-sm font-semibold text-muted-foreground/50">
-        v1.0.0
+        {version}
       </span>
 
       <footer className="py-4 text-center text-xs text-muted-foreground/60">
