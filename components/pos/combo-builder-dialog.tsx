@@ -300,23 +300,26 @@ export function ComboBuilderDialog({
       (acc, p) => acc + p.precio_unitario,
       0,
     );
-    // Extras opcionales se suman al precio del combo
-    const totalExtras = productosConfig.reduce(
-      (acc, p) => acc + p.precio_extras,
-      0,
-    );
-    // Precio base del combo (sin extras)
     const esDinamico =
       promo.precio_dinamico || promo.tipo_promocion === "combo_precio_producto";
+    const anclaIdx = pasosCombo.findIndex((p) => p.es_ancla);
+    const anclaRealIdx = anclaIdx >= 0 ? anclaIdx : 0;
+    // Precio base del combo:
+    // - Dinámico: precio del item ancla (ya incluye sus propios extras)
+    // - Fijo: precio_combo de la promo
     const precioBase = esDinamico
-      ? (() => {
-          const anclaIdx = pasosCombo.findIndex((p) => p.es_ancla);
-          return (
-            productosConfig[anclaIdx >= 0 ? anclaIdx : 0]?.precio_unitario ??
-            precioOriginal
-          );
-        })()
+      ? (productosConfig[anclaRealIdx]?.precio_unitario ?? precioOriginal)
       : (promo.precio_combo ?? precioOriginal);
+    // Extras de items NO-ancla se suman siempre.
+    // Los extras del ancla ya están incluidos en su precio_unitario (no sumar dos veces).
+    const totalExtrasNoAncla = productosConfig.reduce(
+      (acc, p, i) => acc + (i !== anclaRealIdx ? p.precio_extras : 0),
+      0,
+    );
+    // Para precio fijo: sumar extras de TODOS los items
+    const totalExtras = esDinamico
+      ? totalExtrasNoAncla
+      : productosConfig.reduce((acc, p) => acc + p.precio_extras, 0);
     // Precio final = base del combo + extras adicionales
     const precioPromo = precioBase + totalExtras;
     const descuento = Math.max(0, precioOriginal - precioPromo);
@@ -452,25 +455,25 @@ export function ComboBuilderDialog({
                   <span className="text-primary">
                     {formatCurrency(
                       (() => {
-                        const totalExtras = productosConfig.reduce(
-                          (acc, p) => acc + p.precio_extras,
-                          0,
-                        );
                         const esDinamico =
                           promo.precio_dinamico ||
                           promo.tipo_promocion === "combo_precio_producto";
+                        const aIdx = pasosCombo.findIndex((p) => p.es_ancla);
+                        const aRealIdx = aIdx >= 0 ? aIdx : 0;
                         const precioBase = esDinamico
-                          ? (() => {
-                              const anclaIdx = pasosCombo.findIndex(
-                                (p) => p.es_ancla,
-                              );
-                              return (
-                                productosConfig[anclaIdx >= 0 ? anclaIdx : 0]
-                                  ?.precio_unitario ?? 0
-                              );
-                            })()
+                          ? (productosConfig[aRealIdx]?.precio_unitario ?? 0)
                           : (promo.precio_combo ?? 0);
-                        return precioBase + totalExtras;
+                        const extras = esDinamico
+                          ? productosConfig.reduce(
+                              (acc, p, i) =>
+                                acc + (i !== aRealIdx ? p.precio_extras : 0),
+                              0,
+                            )
+                          : productosConfig.reduce(
+                              (acc, p) => acc + p.precio_extras,
+                              0,
+                            );
+                        return precioBase + extras;
                       })(),
                     )}
                   </span>
