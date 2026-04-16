@@ -138,7 +138,7 @@ export async function getRepartidoresSucursal(
     .from("roles")
     .select("id")
     .eq("nombre", "repartidor")
-    .single();
+    .maybeSingle();
 
   if (!rol) return [];
 

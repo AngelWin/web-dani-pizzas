@@ -33,7 +33,7 @@ export async function getMonedaActiva(): Promise<MonedaActiva> {
     .select(
       "moneda_activa_id, monedas!configuracion_negocio_moneda_activa_id_fkey(id, codigo, simbolo, nombre)",
     )
-    .single();
+    .maybeSingle();
 
   if (error || !data?.monedas) {
     return { id: "", codigo: "PEN", simbolo: "S/.", nombre: "Sol Peruano" };
@@ -99,7 +99,7 @@ export async function deleteMoneda(id: string): Promise<void> {
   const { data: config } = await supabase
     .from("configuracion_negocio")
     .select("moneda_activa_id")
-    .single();
+    .maybeSingle();
 
   if (config?.moneda_activa_id === id) {
     throw new Error("No se puede eliminar la moneda activa");

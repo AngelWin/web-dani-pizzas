@@ -103,7 +103,7 @@ export default async function PosPage({
       sucursalId={sucursalId}
       sucursales={esAdmin ? sucursales : []}
       rol={rol}
-      modeloNegocio={config.modelo_negocio}
+      modeloNegocio={config?.modelo_negocio ?? "simple"}
       promociones={promociones}
       saboresPorCategoria={saboresPorCategoria}
       extrasPorCategoria={extrasPorCategoria}

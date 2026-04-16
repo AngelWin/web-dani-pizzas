@@ -103,13 +103,13 @@ export async function cobrarOrdenAction(
   // Modo simple → cobra desde en_preparacion (salta el estado "lista")
   // Modo cocina_independiente → requiere estado "lista"
   const estadosCobrables =
-    config.modelo_negocio === "simple"
+    (config?.modelo_negocio ?? "simple") === "simple"
       ? ["en_preparacion", "lista"]
       : ["lista"];
 
   if (!estadosCobrables.includes(orden.estado)) {
     const mensaje =
-      config.modelo_negocio === "simple"
+      (config?.modelo_negocio ?? "simple") === "simple"
         ? "La orden debe estar en preparación para cobrar"
         : "La orden debe estar en estado 'lista' para cobrar";
     return { data: null, error: mensaje };
@@ -223,7 +223,7 @@ export async function cobrarMesaAction(
     getSesionActivaPorSucursal(sucursalId).catch(() => null),
   ]);
   const estadosCobrablesMesa =
-    config.modelo_negocio === "simple"
+    (config?.modelo_negocio ?? "simple") === "simple"
       ? (["en_preparacion", "lista"] as const)
       : (["lista"] as const);
 

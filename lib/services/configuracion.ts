@@ -18,13 +18,13 @@ export type DeliveryFeesPorSucursal = {
 
 // ─── Modelo de negocio ────────────────────────────────────────────────────────
 
-export async function getConfiguracionNegocio(): Promise<ConfiguracionNegocio> {
+export async function getConfiguracionNegocio(): Promise<ConfiguracionNegocio | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("configuracion_negocio")
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) throw new Error(error.message);
   return data;

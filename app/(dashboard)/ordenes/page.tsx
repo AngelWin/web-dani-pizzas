@@ -80,7 +80,7 @@ export default async function OrdenesPage({
       <ListaOrdenes
         ordenes={ordenes}
         rol={rolNombre}
-        modeloNegocio={config.modelo_negocio}
+        modeloNegocio={config?.modelo_negocio ?? "simple"}
         fechaFiltro={fechaFiltro}
         hoy={hoy}
         minFecha={minFecha}

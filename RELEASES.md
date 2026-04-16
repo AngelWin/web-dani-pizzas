@@ -1719,7 +1719,7 @@ Cancelar manualmente las órdenes atascadas desde `/ordenes` usando el botón "C
 
 ## Release 26: Resiliencia ante Base de Datos Vacía (Clean Install)
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Ninguna (transversal)
 **Objetivo:** Que la aplicación arranque sin errores cuando la base de datos está vacía (entrega a cliente nuevo, entorno de prueba limpio). Actualmente varias queries usan `.single()` que lanza excepción si la tabla devuelve 0 filas, bloqueando el POS y otras secciones.
 
