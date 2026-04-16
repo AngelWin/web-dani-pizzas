@@ -83,7 +83,12 @@ export function CobroDialog({
   const esEfectivo = metodoPago === METODO_PAGO.EFECTIVO;
 
   // El descuento de membresía ya viene aplicado en orden.descuento (desde R21)
-  const totalFinal = orden.total;
+  // Guard: si orden.total está en 0 pero hay subtotal, recalcular para evitar
+  // mostrar S/.0.00 por órdenes con descuento mal calculado
+  const totalFinal =
+    orden.total === 0 && orden.subtotal > 0
+      ? Math.max(0, orden.subtotal + orden.delivery_fee - orden.descuento)
+      : orden.total;
   const vuelto =
     esEfectivo && montoRecibido ? montoRecibido - totalFinal : null;
 
