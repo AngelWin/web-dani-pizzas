@@ -30,6 +30,7 @@ import { InputNumerico } from "@/components/ui/input-numerico";
 import { useCurrency } from "@/hooks/use-currency";
 import { cobrarMesaAction } from "@/app/(dashboard)/ordenes/actions";
 import { METODO_PAGO } from "@/lib/constants";
+import { BotonLiberarMesa } from "@/components/mesas/boton-liberar-mesa";
 import { TarjetaOrden } from "./tarjeta-orden";
 import type { OrdenConItems, FiltroEstadoOrden } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
@@ -192,6 +193,14 @@ export function ListaOrdenes({
                 Cobrar mesa
               </Button>
             )}
+            {ordenesActivasMesa > 0 &&
+              (rol === "administrador" || rol === "cajero") && (
+                <BotonLiberarMesa
+                  mesaId={mesaFiltro}
+                  mesaReferencia={mesaReferencia ?? "Mesa"}
+                  ordenesActivas={ordenesActivasMesa}
+                />
+              )}
             <Button
               variant="ghost"
               size="sm"

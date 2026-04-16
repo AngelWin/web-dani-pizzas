@@ -8,6 +8,7 @@ import {
   updateMesa,
   deleteMesa,
   updateEstadoMesa,
+  liberarMesaForzado,
 } from "@/lib/services/mesas";
 import type { EstadoMesa } from "@/lib/services/mesas";
 import type { ActionResult } from "@/types";
@@ -104,6 +105,37 @@ export async function deleteMesaAction(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Error al eliminar mesa",
+    };
+  }
+}
+
+/** Libera una mesa a la fuerza cancelando todas sus órdenes activas. Accesible para cajero y admin. */
+export async function liberarMesaForzadoAction(
+  mesaId: string,
+): Promise<ActionResult<{ canceladas: number }>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: "No autenticado" };
+
+  const { data: rol } = await supabase.rpc("get_user_role");
+  if (!["administrador", "cajero"].includes(rol ?? "")) {
+    return { data: null, error: "Sin permiso para liberar mesas" };
+  }
+
+  try {
+    const canceladas = await liberarMesaForzado(
+      mesaId,
+      "Liberación administrativa — órdenes canceladas sin cobrar",
+    );
+    revalidatePath("/ordenes");
+    revalidatePath("/pos");
+    return { data: { canceladas }, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error al liberar mesa",
     };
   }
 }

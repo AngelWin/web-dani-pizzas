@@ -76,6 +76,55 @@ export async function updateEstadoMesa(
 }
 
 /**
+ * Libera una mesa a la fuerza: cancela todas sus órdenes activas y la pone libre.
+ * Usar solo cuando la mesa quedó bloqueada por órdenes sin atender.
+ * Devuelve la cantidad de órdenes canceladas.
+ */
+export async function liberarMesaForzado(
+  mesaId: string,
+  motivo: string,
+): Promise<number> {
+  const supabase = await createClient();
+
+  // Traer todas las órdenes activas de la mesa
+  const { data: ordenes, error: fetchError } = await supabase
+    .from("ordenes")
+    .select("id")
+    .eq("mesa_id", mesaId)
+    .in("estado", ESTADOS_ORDEN_ACTIVA);
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!ordenes || ordenes.length === 0) {
+    // No hay órdenes activas, solo liberar la mesa
+    await updateEstadoMesa(mesaId, "libre");
+    return 0;
+  }
+
+  const ids = ordenes.map((o) => o.id);
+
+  // Cancelar todas las órdenes activas
+  const { error: cancelError } = await supabase
+    .from("ordenes")
+    .update({ estado: "cancelada", updated_at: new Date().toISOString() })
+    .in("id", ids);
+
+  if (cancelError) throw new Error(cancelError.message);
+
+  // Registrar el motivo en el historial de la última orden (best-effort)
+  await supabase
+    .from("orden_estado_historial")
+    .update({ notas: motivo })
+    .in("orden_id", ids)
+    .eq("estado_hasta", "cancelada")
+    .order("cambiado_at", { ascending: false });
+
+  // Liberar la mesa
+  await updateEstadoMesa(mesaId, "libre");
+
+  return ids.length;
+}
+
+/**
  * Liberar mesa solo si no tiene más órdenes activas.
  * Se usa al cobrar o cancelar una orden.
  */
