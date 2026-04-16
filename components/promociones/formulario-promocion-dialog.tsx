@@ -309,6 +309,13 @@ export function FormularioPromocionDialog({
 
   const esCombo = TIPOS_COMBO.includes(tipoPromocion as string);
 
+  // Cuando el tipo es combo_precio_producto, precio_dinamico debe ser siempre true
+  useEffect(() => {
+    if (tipoPromocion === "combo_precio_producto") {
+      form.setValue("precio_dinamico", true);
+    }
+  }, [tipoPromocion, form]);
+
   // Botón crear deshabilitado hasta que los campos requeridos estén llenos
   const crearDeshabilitado = (() => {
     if (isSubmitting) return true;
@@ -1156,6 +1163,7 @@ export function FormularioPromocionDialog({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={tipoPromocion === "combo_precio_producto"}
                       />
                     </FormControl>
                   </FormItem>

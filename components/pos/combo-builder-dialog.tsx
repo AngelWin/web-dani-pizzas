@@ -306,7 +306,9 @@ export function ComboBuilderDialog({
       0,
     );
     // Precio base del combo (sin extras)
-    const precioBase = promo.precio_dinamico
+    const esDinamico =
+      promo.precio_dinamico || promo.tipo_promocion === "combo_precio_producto";
+    const precioBase = esDinamico
       ? (() => {
           const anclaIdx = pasosCombo.findIndex((p) => p.es_ancla);
           return (
@@ -454,7 +456,10 @@ export function ComboBuilderDialog({
                           (acc, p) => acc + p.precio_extras,
                           0,
                         );
-                        const precioBase = promo.precio_dinamico
+                        const esDinamico =
+                          promo.precio_dinamico ||
+                          promo.tipo_promocion === "combo_precio_producto";
+                        const precioBase = esDinamico
                           ? (() => {
                               const anclaIdx = pasosCombo.findIndex(
                                 (p) => p.es_ancla,
