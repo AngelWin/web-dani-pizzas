@@ -7,6 +7,7 @@ import { getNivelesMembresia } from "@/lib/services/membresias";
 import { getSucursales } from "@/lib/services/sucursales";
 import { getSesionActivaPorSucursal } from "@/lib/services/caja-sesiones";
 import { FiltroSucursalOrdenes } from "@/components/ordenes/filtro-sucursal-ordenes";
+import { RealtimeRefresh } from "@/components/shared/realtime-refresh";
 import { getHoyLima, getDiasAtrasLima } from "@/lib/utils/fecha";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,7 @@ export default async function OrdenesPage({
 
   return (
     <div className="space-y-6">
+      <RealtimeRefresh tablas={[{ tabla: "ordenes", sucursalId }]} />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <PageHeader
           title="Órdenes"

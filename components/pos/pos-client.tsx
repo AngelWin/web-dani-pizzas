@@ -28,6 +28,7 @@ const ComboBuilderDialog = dynamic(
   { ssr: false },
 );
 import { useCarrito } from "@/hooks/use-carrito";
+import { useRealtimeRefresh } from "@/hooks/use-realtime-refresh";
 import type { DeliveryServicio } from "@/lib/services/delivery-servicios";
 import { crearOrdenAction } from "@/actions/ordenes";
 import {
@@ -96,6 +97,12 @@ export function PosClient({
   const { formatCurrency } = useCurrency();
   const router = useRouter();
   const carrito = useCarrito();
+
+  useRealtimeRefresh([
+    { tabla: "mesas", sucursalId },
+    { tabla: "productos", sucursalId },
+    { tabla: "caja_sesiones", sucursalId },
+  ]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ordenConfirmada, setOrdenConfirmada] = useState<Orden | null>(null);

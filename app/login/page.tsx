@@ -10,7 +10,7 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 relative">
       <div className="w-full max-w-md flex-1 flex flex-col justify-center">
         <div className="mb-8 flex flex-col items-center text-center">
           <Image
@@ -30,13 +30,16 @@ export default async function LoginPage({
         <LoginForm />
       </div>
 
+      <span className="absolute top-4 left-4 font-mono text-sm font-semibold text-muted-foreground/50">
+        v1.0.0
+      </span>
+
       <footer className="py-4 text-center text-xs text-muted-foreground/60">
         <p>
           &copy; {new Date().getFullYear()} DANI PIZZAS - QA. Todos los derechos
           reservados.
         </p>
         <p className="mt-0.5">Desarrollado por Angel Abad</p>
-        <p className="mt-1 font-mono text-muted-foreground/40">v1.0.0</p>
       </footer>
     </div>
   );

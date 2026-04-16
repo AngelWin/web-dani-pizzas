@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { FiltrosEntregas } from "@/components/entregas/filtros-entregas";
 import { ResumenEntregasCards } from "@/components/entregas/resumen-entregas";
 import { TablaEntregas } from "@/components/entregas/tabla-entregas";
+import { RealtimeRefresh } from "@/components/shared/realtime-refresh";
 import { getEntregasPorRepartidor } from "@/lib/services/entregas";
 import { getSucursalesActivas } from "@/lib/services/usuarios";
 import { getHoyLima } from "@/lib/utils/fecha";
@@ -56,6 +57,9 @@ export default async function EntregasPage({
 
   return (
     <div className="space-y-6">
+      <RealtimeRefresh
+        tablas={[{ tabla: "ordenes", sucursalId: sucursalParam }]}
+      />
       <PageHeader
         title="Entregas"
         description="Contabilidad de entregas por repartidor para liquidación diaria"

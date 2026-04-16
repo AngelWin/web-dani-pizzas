@@ -2660,6 +2660,67 @@ Archivos adicionales modificados en R38.1:
 
 ---
 
+## Release 39: Realtime — Sincronización Automática entre Dispositivos
+
+**Estado:** [x] Completado
+**Dependencia:** R38 (Mesas), R23 (Caja), R5b (Órdenes)
+**Objetivo:** Que meseros, cajeros y admin vean los cambios en tiempo real sin recargar la página cuando otro dispositivo hace una acción.
+
+### Contexto
+El sistema es usado simultáneamente desde múltiples dispositivos:
+- Mesero en tablet → toma orden
+- Cajero en PC → debe ver la orden al instante
+- Admin en otro PC → monitorea todo en el dashboard
+
+Sin realtime, cada pantalla muestra una foto congelada del momento en que cargó. Con realtime, los cambios de un dispositivo se propagan automáticamente a todos los demás.
+
+### Estrategia técnica
+Usar **Supabase Realtime (postgres_changes)** con un hook genérico `use-realtime-refresh` que escucha cambios en una tabla y llama a `router.refresh()` para que los Server Components re-fetchen datos frescos. Filtrar siempre por `sucursal_id` para no recibir eventos de otras sucursales.
+
+### Tablas a activar en Supabase Realtime
+- `ordenes` — cambios de estado, delivery_status, nueva orden
+- `ventas` — nueva venta afecta caja y dashboard
+- `caja_sesiones` — apertura/cierre visible en POS y caja
+- `mesas` — estado libre/ocupada visible en POS y selector
+- `productos` — disponibilidad en POS
+
+### Commits esperados:
+- [x] Habilitar Realtime en tablas afectadas desde Supabase dashboard
+- [x] Crear hook genérico `hooks/use-realtime-refresh.ts`
+- [x] Aplicar realtime en `/ordenes` (tabla `ordenes`)
+- [x] Aplicar realtime en `/caja` (tablas `caja_sesiones` + `ventas`)
+- [x] Aplicar realtime en `/pos` — selector de mesas (tabla `mesas`)
+- [x] Aplicar realtime en `/pos` — catálogo (tabla `productos`)
+- [x] Aplicar realtime en `/pos` — estado de caja (tabla `caja_sesiones`)
+- [x] Aplicar realtime en `/dashboard` (tablas `ordenes` + `ventas`)
+- [x] Aplicar realtime en `/entregas` (tabla `ordenes`)
+- [x] Corregir posición de versión en login (arriba a la izquierda, letra más grande)
+- [x] Corregir visibilidad de versión en sidebar (color más visible)
+
+### Archivos a crear/modificar:
+- `hooks/use-realtime-refresh.ts` — hook genérico (CREAR)
+- `components/ordenes/lista-ordenes.tsx` — agregar hook
+- `app/(dashboard)/caja/caja-client.tsx` — agregar hook
+- `components/pos/selector-mesa.tsx` — agregar hook
+- `components/pos/catalogo-productos.tsx` — agregar hook
+- `components/pos/pos-client.tsx` — agregar hook (caja_sesiones)
+- `components/dashboard/pedidos-recientes.tsx` — agregar hook
+- `app/(dashboard)/entregas/page.tsx` o cliente — agregar hook
+- `app/login/page.tsx` — corrección visual de versión
+- `components/layout/app-sidebar.tsx` — corrección visual de versión
+
+### Criterio de éxito:
+- Mesero crea orden → aparece en `/ordenes` del cajero sin recargar
+- Cajero cobra orden → el resumen de caja se actualiza automáticamente
+- Cajero cierra caja → el POS muestra "caja cerrada" sin recargar
+- Dos meseros no ven la misma mesa como libre al mismo tiempo
+- Admin desactiva producto → desaparece del POS en todos los dispositivos
+- `v1.0.0` visible arriba a la izquierda en el login con buen tamaño
+- `v1.0.0` visible con buen contraste al final del sidebar
+- Build pasa sin errores
+
+---
+
 ## Version Code v1.0.0 — 2026-04-16
 
 **Estado:** [x] Completado
