@@ -178,7 +178,7 @@ export function FormularioPedidoDialog({
           ),
         ],
         promocion_id: null,
-        descuento: carrito.totalDescuentoPromos,
+        descuento: 0,
         entrega_programada_at: null,
       });
       setClienteSeleccionado(null);
@@ -359,8 +359,9 @@ export function FormularioPedidoDialog({
   );
 
   useEffect(() => {
-    const descuentoPromoCarrito = carrito.totalDescuentoPromos;
-    let descuentoTotal = descuentoPromoCarrito + descuentoMembresia;
+    // Los combos (promoItems) ya tienen el precio descontado incrustado en los subtotales
+    // de los items. No sumar totalDescuentoPromos aquí para evitar doble conteo.
+    let descuentoTotal = descuentoMembresia;
 
     if (!promocionSeleccionada) {
       form.setValue("promocion_id", null);
@@ -380,7 +381,6 @@ export function FormularioPedidoDialog({
   }, [
     promocionSeleccionada,
     carrito.subtotal,
-    carrito.totalDescuentoPromos,
     descuentoMembresia,
     deliveryFee,
     form,
