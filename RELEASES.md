@@ -31,6 +31,20 @@ R8 (Membresias) + R17 -> R21 (Membresia Auto al Crear Orden)
 R8 (Membresias) -> R22 (Sistema de Membresias Completo)
 R15 (Mesas) + R5b/R5c (Ordenes/Cobro) -> R20 (Cuenta de Mesa y Cobro Agrupado)
 R5c (Cobro) + R9 (Sucursales) + R11 (Usuarios) -> R23 (Sesiones de Caja + Pedidos Programados) [pendiente]
+
+[Auditoría de Código — sin dependencias funcionales, pueden ejecutarse en cualquier orden]
+R27 (Seguridad Actions) -> BLOQUEANTE, ejecutar primero
+R28 (Calidad Servicios) [transversal]
+R29 (Arquitectura Capas) [transversal]
+R30 (Refactor Componentes) [transversal]
+R31 (Tipos y Dominio) [transversal, post-R27]
+
+[Auditoría UI/UX — ejecutar por prioridad, todos son transversales]
+R32 (Touch Targets + Tablas) -> CRÍTICO, ejecutar primero
+R33 (Touch-Friendly Controls) -> post-R32
+R34 (Design Tokens) [transversal]
+R35 (Atomic Design) [transversal]
+R36 (Refinamientos Layout) [transversal, bajo riesgo]
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -1789,6 +1803,757 @@ if (!data) {
 ### Criterio de éxito:
 - Clonar el proyecto, apuntar a una BD vacía (solo con schema), y poder navegar todas las rutas sin que lance un error 500
 - El POS muestra un estado vacío o advertencia si no hay productos/sucursales configurados
+- Build pasa sin errores
+
+---
+
+## Release 27: Seguridad — Auth y Rol en Server Actions de Estado de Orden
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5b (Gestión de Órdenes)
+**Prioridad:** 🔴 BLOQUEANTE — corrección de seguridad
+**Objetivo:** Agregar verificación de autenticación y rol a los tres Server Actions que gestionan el estado de las órdenes. Actualmente cualquier llamada HTTP puede ejecutarlos sin control de acceso.
+
+### Contexto del problema:
+- `cambiarEstadoOrdenAction`, `cancelarOrdenAction` y `cambiarEstadoDeliveryAction` en `app/(dashboard)/ordenes/actions.ts` no verifican quién llama ni qué rol tiene.
+- A diferencia de `cobrarOrdenAction` y `cobrarMesaAction` (que sí verifican auth + rol), estos tres actions ejecutan directamente contra la DB sin ningún control.
+- Un usuario no autenticado o con rol incorrecto (ej: repartidor) podría cancelar órdenes o cambiar su estado.
+
+### Archivos a modificar:
+- `app/(dashboard)/ordenes/actions.ts` — los 3 actions afectados
+
+### Cambios esperados:
+
+**1. Agregar verificación auth + rol a los 3 actions:**
+```ts
+// Patrón a aplicar en cambiarEstadoOrdenAction, cancelarOrdenAction, cambiarEstadoDeliveryAction
+export async function cambiarEstadoOrdenAction(
+  ordenId: string,
+  estado: EstadoOrden,
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const [{ data: rolNombre }, { data: { user } }] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!["administrador", "cajero", "mesero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos para cambiar estado de orden" };
+  }
+
+  try {
+    await actualizarEstadoOrden(ordenId, estado);
+    revalidatePath("/ordenes");
+    return { data: null, error: null };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Error desconocido" };
+  }
+}
+```
+
+**2. Estandarizar tipo de retorno a `ActionResult<void>`:**
+- Los 3 actions actualmente retornan `{ error?: string }` — inconsistente con el resto del codebase que usa `ActionResult<T>`.
+- Cambiar a `ActionResult<void>` y actualizar los componentes que los consumen.
+
+**3. Roles permitidos por action:**
+| Action | Roles permitidos |
+|--------|-----------------|
+| `cambiarEstadoOrdenAction` | administrador, cajero, mesero |
+| `cancelarOrdenAction` | administrador, cajero |
+| `cambiarEstadoDeliveryAction` | administrador, cajero, repartidor |
+
+### Commits esperados:
+- [ ] Agregar auth + rol a `cambiarEstadoOrdenAction`
+- [ ] Agregar auth + rol a `cancelarOrdenAction`
+- [ ] Agregar auth + rol a `cambiarEstadoDeliveryAction`
+- [ ] Cambiar tipo de retorno de `{ error?: string }` a `ActionResult<void>` en los 3 actions
+- [ ] Actualizar componentes consumidores si el cambio de tipo rompe algo
+
+### Criterio de éxito:
+- Un usuario no autenticado que llame directamente a los actions recibe "No autenticado"
+- Un repartidor no puede cancelar órdenes
+- Build pasa sin errores
+- Los componentes que usan los 3 actions siguen funcionando correctamente
+
+---
+
+## Release 28: Correcciones de Calidad en Capa de Servicios
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5b, Release 17, Release 23
+**Prioridad:** 🟠 Importante
+**Objetivo:** Corregir varios problemas puntuales en `lib/services/` detectados en auditoría: guards tardíos de `.single()`, deletes secuenciales sin paralelizar, `any` en componente de formulario, y fetch secuencial en página de perfil.
+
+### Hallazgos a corregir:
+
+**1. `caja-sesiones.ts` — `.single()` sin verificación inmediata**
+- Línea ~100: se llama `.single()` y luego se usa `sesion?.monto_inicial` como guardia tardía. Si hay error de DB, `sesion` queda `undefined` y no se lanza excepción clara.
+- Fix: verificar `if (error)` justo después del `.single()`, consistente con el resto del codebase.
+
+**2. `ordenes.ts` — `.single()` sin verificación inmediata**
+- Línea ~173: `.select("mesa_id").single()` seguido de uso en línea ~203 sin verificar error.
+- Fix: mismo patrón — verificar error inmediatamente después del query.
+
+**3. `promociones.ts` — 5 DELETEs secuenciales en `updatePromocion`**
+- Líneas ~407–411: 5 operaciones de delete ejecutadas una tras otra.
+- Fix: `await Promise.all([delete1, delete2, delete3, delete4, delete5])`.
+- Impacto: reduce tiempo de actualización de promoción de ~5 round-trips a 1.
+
+**4. `usuario-form.tsx` — `any` en props de `control`**
+- Línea ~55: `function RepartidorDetallesFields({ control }: { control: any })` con supresión explícita de ESLint.
+- Fix: usar el tipo genérico de react-hook-form:
+```ts
+import type { Control } from "react-hook-form";
+import type { UsuarioFormValues } from "@/lib/validations/usuarios";
+
+function RepartidorDetallesFields({ control }: { control: Control<UsuarioFormValues> })
+```
+
+**5. `perfil/page.tsx` — fetches secuenciales sin `Promise.all`**
+- `auth.getUser()` y la query a `profiles` se ejecutan en secuencia.
+- Fix: `Promise.all([supabase.auth.getUser(), supabase.from("profiles")...])`.
+
+### Archivos a modificar:
+- `lib/services/caja-sesiones.ts`
+- `lib/services/ordenes.ts`
+- `lib/services/promociones.ts`
+- `components/usuarios/usuario-form.tsx`
+- `app/(dashboard)/perfil/page.tsx`
+
+### Commits esperados:
+- [ ] Fix guard inmediato en `caja-sesiones.ts` línea ~100
+- [ ] Fix guard inmediato en `ordenes.ts` línea ~173
+- [ ] Paralelizar 5 DELETEs en `promociones.ts` `updatePromocion()`
+- [ ] Reemplazar `any` por `Control<UsuarioFormValues>` en `usuario-form.tsx`
+- [ ] Paralelizar fetches en `perfil/page.tsx`
+
+### Criterio de éxito:
+- Build pasa sin errores
+- TypeScript no reporta `any` en ningún archivo de componentes
+- `npm run build` con `strict: true` sin advertencias nuevas
+
+---
+
+## Release 29: Arquitectura — Separación de Capas y Utilidad de Fechas
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Ninguna (transversal)
+**Prioridad:** 🟠 Importante
+**Objetivo:** Corregir dos violaciones a la arquitectura de capas detectadas en auditoría: (1) páginas que llaman directamente a Supabase sin pasar por `lib/services/`, y (2) funciones de cálculo de fecha con timezone Lima duplicadas en múltiples páginas.
+
+### Hallazgo 1: Queries directas a Supabase en pages
+
+Las siguientes páginas llaman a `supabase.from(...)` directamente para datos de negocio, saltando la capa de servicios:
+
+| Archivo | Tabla consultada | Línea aprox. |
+|---------|-----------------|--------------|
+| `app/(dashboard)/caja/page.tsx` | `sucursales` | ~34 |
+| `app/(dashboard)/dashboard/page.tsx` | `sucursales`, `profiles` | ~63–76 |
+| `app/(dashboard)/pos/page.tsx` | `sucursales` | ~39 |
+| `app/(dashboard)/reportes/page.tsx` | `sucursales` | ~73 |
+| `app/(dashboard)/reportes/cierres/page.tsx` | `sucursales` | ~51 |
+| `app/(dashboard)/promociones/page.tsx` | Múltiples tablas en funciones auxiliares internas | ~9–88 |
+
+**Fix:** Verificar si `lib/services/sucursales.ts` ya tiene una función `getSucursales()` o `getSucursalesActivas()` y usarla. Si no cubre el caso de uso, extenderla antes de reemplazar las queries directas.
+
+### Hallazgo 2: Funciones de fecha duplicadas
+
+Las siguientes funciones están definidas localmente en múltiples páginas:
+
+| Función | Páginas donde se duplica |
+|---------|--------------------------|
+| `getHoyLima()` | `ordenes/page.tsx`, `reportes/page.tsx`, `entregas/page.tsx` |
+| `getMinFechaLima()` | `ordenes/page.tsx` |
+| `hace7DiasLima()` | `reportes/page.tsx` |
+| `hace30DiasLima()` | `reportes/cierres/page.tsx` |
+
+**Fix:** Crear `lib/utils/fecha.ts` con todas estas funciones exportadas y reemplazar las definiciones locales por imports.
+
+```ts
+// lib/utils/fecha.ts
+/** Retorna la fecha actual en Lima (UTC-5) como string YYYY-MM-DD */
+export function getHoyLima(): string {
+  const now = new Date(Date.now() - 5 * 60 * 60 * 1000);
+  return now.toISOString().split("T")[0];
+}
+
+export function getDiasAtrasLima(dias: number): string {
+  const d = new Date(Date.now() - 5 * 60 * 60 * 1000);
+  d.setDate(d.getDate() - dias);
+  return d.toISOString().split("T")[0];
+}
+// getMinFechaLima, hace7DiasLima, hace30DiasLima → usar getDiasAtrasLima(7), etc.
+```
+
+### Archivos a crear:
+- `lib/utils/fecha.ts` (nuevo)
+
+### Archivos a modificar:
+- `app/(dashboard)/ordenes/page.tsx`
+- `app/(dashboard)/reportes/page.tsx`
+- `app/(dashboard)/reportes/cierres/page.tsx`
+- `app/(dashboard)/entregas/page.tsx`
+- `app/(dashboard)/caja/page.tsx`
+- `app/(dashboard)/dashboard/page.tsx`
+- `app/(dashboard)/pos/page.tsx`
+- `app/(dashboard)/promociones/page.tsx`
+
+### Commits esperados:
+- [ ] Crear `lib/utils/fecha.ts` con funciones de timezone Lima
+- [ ] Reemplazar definiciones duplicadas en las 4 páginas que tienen `getHoyLima()` y similares
+- [ ] Mover queries directas de `sucursales` a llamadas vía `lib/services/sucursales.ts`
+- [ ] Extraer funciones auxiliares de `promociones/page.tsx` que usan Supabase directamente hacia `lib/services/`
+
+### Criterio de éxito:
+- No existe ninguna definición local de `getHoyLima()` en páginas
+- No hay `supabase.from(...)` directo en archivos `page.tsx` para consultas de datos de negocio (solo se permiten `.rpc()` de auth)
+- Build pasa sin errores
+
+---
+
+## Release 30: Refactorización de Componentes — useEffect y Lógica Compleja
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5b, Release 11, Release 15
+**Prioridad:** 🟠 Importante / 🟡 Sugerencia
+**Objetivo:** Eliminar el único `useEffect` para fetch de datos en componentes y extraer lógica de negocio compleja del POS a custom hooks o utilidades, mejorando la mantenibilidad y consistencia con el patrón del proyecto.
+
+### Hallazgo 1: `useEffect` para fetch en `usuarios-tabla.tsx`
+
+**Archivo:** `components/usuarios/usuarios-tabla.tsx` líneas ~74–86
+
+```ts
+// ❌ Anti-patrón — fetch de datos en Client Component con useEffect
+useEffect(() => {
+  const supabase = createClient();
+  supabase.from("repartidor_detalles").select(...).eq("id", editando.id)
+    .maybeSingle().then(({ data }) => setRepartidorDetalles(data ?? null));
+}, [editando]);
+```
+
+**Fix:** Al abrir el dialog de edición de un usuario repartidor, cargar los detalles mediante una Server Action en lugar de llamar a Supabase desde el cliente.
+
+```ts
+// ✅ Alternativa — Server Action para cargar detalles al abrir dialog
+async function handleEditarUsuario(usuario: Usuario) {
+  if (usuario.rol_nombre === "repartidor") {
+    const result = await getRepartidorDetallesAction(usuario.id);
+    setRepartidorDetalles(result.data);
+  }
+  setEditando(usuario);
+}
+```
+
+### Hallazgo 2: Lógica compleja en `configurador-producto-dialog.tsx`
+
+**Archivo:** `components/pos/configurador-producto-dialog.tsx` líneas ~59–132
+
+Contiene funciones de cálculo de proporciones, detección de límites por categoría de sabores, validaciones de combinaciones. Esta lógica no es de UI y es difícil de testear embebida en el componente.
+
+**Fix:** Extraer a un custom hook `hooks/use-configurador-producto.ts` que reciba el producto, sabores disponibles y extras, y exponga los cálculos ya hechos al componente.
+
+### Hallazgo 3: Funciones de parseo JSON en `tarjeta-orden.tsx`
+
+**Archivo:** `components/ordenes/tarjeta-orden.tsx` líneas ~58–99
+
+Funciones `parseSabores()`, `parseExtras()`, `parseAcompanante()` y `formatEntregaProgramada()` embebidas en el componente.
+
+**Fix:** Mover a `lib/utils/orden-formatters.ts` — son utilidades puras y testables.
+
+### Archivos a crear:
+- `lib/utils/orden-formatters.ts` (nuevo)
+- `hooks/use-configurador-producto.ts` (nuevo, opcional según complejidad)
+
+### Archivos a modificar:
+- `components/usuarios/usuarios-tabla.tsx`
+- `components/ordenes/tarjeta-orden.tsx`
+- `components/pos/configurador-producto-dialog.tsx` (refactorización progresiva)
+
+### Commits esperados:
+- [ ] Reemplazar `useEffect` de fetch en `usuarios-tabla.tsx` por Server Action
+- [ ] Crear `lib/utils/orden-formatters.ts` con `parseSabores`, `parseExtras`, `parseAcompanante`, `formatEntregaProgramada`
+- [ ] Actualizar `tarjeta-orden.tsx` para importar desde `orden-formatters.ts`
+- [ ] (Opcional) Extraer lógica de cálculo de `configurador-producto-dialog.tsx` a hook
+
+### Criterio de éxito:
+- No hay llamadas directas a `createClient()` del cliente en componentes de tabla o listados (excepto casos justificados con realtime)
+- `tarjeta-orden.tsx` no tiene funciones de parseo embebidas
+- Build pasa sin errores
+
+---
+
+## Release 31: Estandarización de Tipos y Centralización de Dominio
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Ninguna (transversal, bajo riesgo)
+**Prioridad:** 🟡 Sugerencia
+**Objetivo:** Centralizar los tipos de dominio dispersos en `lib/services/` hacia `types/`, estandarizar el uso de `ActionResult<T>` en todos los Server Actions, y reducir castings dobles `as unknown as T`.
+
+### Hallazgo 1: Tipos de dominio dispersos
+
+`EstadoOrden`, `OrdenConItems`, `NivelMembresia`, `UsuarioCompleto`, `PizzaSaborConIngredientes`, etc. están definidos en sus respectivos archivos de servicio. Cuando un componente necesita el tipo de `EstadoOrden`, debe importar desde `lib/services/ordenes` en lugar de desde `types/`.
+
+**Fix:** Crear `types/domain.ts` y reexportar desde ahí los tipos de dominio principales. Los servicios siguen siendo la fuente de verdad pero reexportan desde `types/domain.ts`.
+
+### Hallazgo 2: ActionResult inconsistente
+
+`cambiarEstadoOrdenAction`, `cancelarOrdenAction` y `cambiarEstadoDeliveryAction` retornan `{ error?: string }` (este punto se resuelve en R27 como parte de la corrección de seguridad). Este release documenta la verificación final de que todos los actions usen `ActionResult<T>`.
+
+### Hallazgo 3: Castings dobles `as unknown as T`
+
+Presentes en `reportes.ts`, `ordenes.ts`, `clientes.ts`, `ventas.ts`. Indican divergencia entre los tipos generados por Supabase y los tipos de dominio locales. Considerar regenerar `types/database.ts` desde Supabase CLI o crear mappers explícitos.
+
+### Archivos a crear:
+- `types/domain.ts` (nuevo) — reexportaciones de tipos de dominio
+
+### Archivos a modificar:
+- `types/index.ts` — agregar export de `domain.ts`
+- Servicios que definen tipos de dominio: reexportar desde `types/domain.ts`
+- Server Actions que no usen `ActionResult<T>`: estandarizar (verificar post-R27)
+
+### Commits esperados:
+- [ ] Crear `types/domain.ts` con tipos de dominio principales
+- [ ] Actualizar imports en componentes y pages que usen tipos desde servicios
+- [ ] Verificar que todos los Server Actions usen `ActionResult<T>` (audit post-R27)
+- [ ] Reducir castings `as unknown as T` creando mappers donde sea posible
+
+### Criterio de éxito:
+- Un componente puede importar `EstadoOrden` desde `@/types` en lugar de `@/lib/services/ordenes`
+- No hay Server Actions con tipo de retorno `{ error?: string }` suelto
+- Build pasa sin errores
+
+---
+
+## Release 32: UI Crítico — Touch Targets del Carrito y Tablas sin Scroll
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5a (POS), Release 4 (Productos), Release 11 (Usuarios)
+**Prioridad:** 🔴 CRÍTICO — afecta operación diaria en dispositivo táctil
+**Objetivo:** Corregir los dos problemas críticos de usabilidad detectados en auditoría: los botones del carrito son demasiado pequeños para operar con los dedos (28px vs mínimo 44px), y las tablas de productos/usuarios no tienen scroll horizontal en móvil.
+
+### Contexto del problema:
+- El POS se opera en tablet táctil. Los botones +/- y eliminar del carrito son `h-7 w-7` (28px) y `p-1` (~14px), causando errores de toque frecuentes
+- WCAG 2.5.5 e iOS HIG exigen mínimo 44×44px para elementos interactivos táctiles
+- Las tablas de Productos y Usuarios no tienen `overflow-x-auto`, lo que hace que el contenido quede cortado o rompa el layout en pantallas < 768px
+
+### Hallazgo 1: Botones del carrito — `components/pos/carrito.tsx`
+
+```tsx
+// ❌ Actual — líneas 96-128
+// Botones +/-: h-7 w-7 = 28px
+<Button size="icon" variant="outline" className="h-7 w-7">
+// Botón eliminar: p-1 = ~14px
+<button className="p-1"><Trash2 className="h-3.5 w-3.5" /></button>
+
+// ✅ Corregir a mínimo táctil
+<Button size="icon" variant="outline" className="h-10 w-10">
+  <Minus className="h-4 w-4" />
+</Button>
+<Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-destructive shrink-0">
+  <Trash2 className="h-4 w-4" />
+</Button>
+```
+
+### Hallazgo 2: Tablas sin scroll horizontal
+
+```tsx
+// ❌ productos-table.tsx ~línea 144 y usuarios-tabla.tsx ~línea 116
+<div className="rounded-xl border overflow-hidden">
+  <Table>...
+
+// ✅ Agregar wrapper con scroll
+<div className="rounded-xl border overflow-x-auto">
+  <Table className="min-w-[640px]">...
+```
+
+### Archivos a modificar:
+- `components/pos/carrito.tsx` — botones +/- y eliminar
+- `components/productos/productos-table.tsx` — wrapper con overflow-x-auto
+- `components/usuarios/usuarios-tabla.tsx` — wrapper con overflow-x-auto
+
+### Commits esperados:
+- [ ] Aumentar botones +/- del carrito a `h-10 w-10` (de `h-7 w-7`)
+- [ ] Aumentar botón eliminar item del carrito a `h-10 w-10` (de `p-1`)
+- [ ] Agregar `overflow-x-auto` + `min-w-[640px]` en tabla de productos
+- [ ] Agregar `overflow-x-auto` + `min-w-[640px]` en tabla de usuarios
+
+### Criterio de éxito:
+- En tablet (768px), los botones del carrito se pueden tocar sin error en el primer intento
+- En móvil (375px), las tablas de productos y usuarios tienen scroll horizontal y no rompen el layout
+- Los botones miden mínimo 40×40px (idealmente 44×44px)
+- Build pasa sin errores
+
+---
+
+## Release 33: UI Importante — Estandarización Touch-Friendly de Controles
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 32 (touch targets críticos)
+**Prioridad:** 🟠 Importante
+**Objetivo:** Estandarizar todos los controles interactivos a los tamaños táctiles correctos: inputs a `h-11 text-base`, botones de filtro/categoría a `h-10`, y verificar que ningún input dispare zoom automático en iOS Safari.
+
+### Hallazgo 1: Botones de categorías en catálogo — `catalogo-productos.tsx` líneas ~159-201
+
+Los filtros de categoría y el botón de promos se tocan decenas de veces por turno con `h-9` (36px).
+
+```tsx
+// ❌ Actual
+<Button variant="..." size="sm" className="h-9 shrink-0">Pizzas</Button>
+
+// ✅
+<Button variant="..." size="sm" className="h-10 shrink-0">Pizzas</Button>
+```
+
+### Hallazgo 2: Input de fecha sin altura ni text-base — `lista-ordenes.tsx` línea ~229
+
+iOS Safari hace zoom automático en inputs con `font-size < 16px`. El input de fecha tiene `h-9` y no declara `text-base`.
+
+```tsx
+// ❌ Actual
+<input type="date" className="h-9 rounded-lg border ...">
+
+// ✅
+<input type="date" className="h-11 text-base rounded-lg border ...">
+```
+
+### Hallazgo 3: Inputs del formulario de pedido sin `text-base` explícito — `formulario-pedido-dialog.tsx`
+
+Los `SelectTrigger` e `Input` tienen `h-12` (correcto en altura) pero no declaran `text-base`. Si el tema base de shadcn no lo incluye por defecto, iOS hará zoom al enfocar.
+
+Afecta líneas: ~540, ~633, ~674, ~717, ~743, ~759
+
+```tsx
+// ✅ Agregar a todos los controles de entrada del formulario
+<SelectTrigger className="h-12 text-base">
+<Input className="h-12 text-base" />
+<Textarea className="text-base" />
+```
+
+### Hallazgo 4: Altura de inputs inconsistente en formularios
+
+`usuario-form.tsx` línea ~76 usa `h-10` (40px) en lugar de `h-11` (44px). Estandarizar todo el proyecto a `h-11` como mínimo para formularios de escritorio, `h-12` para POS.
+
+| Componente | Actual | Correcto |
+|------------|--------|----------|
+| `usuario-form.tsx` inputs | `h-10` | `h-11` |
+| `formulario-pedido-dialog.tsx` inputs | `h-12` ✅ | `h-12` |
+| `lista-ordenes.tsx` date input | `h-9` | `h-11` |
+| `catalogo-productos.tsx` búsqueda | `h-11` ✅ | `h-11` |
+
+### Archivos a modificar:
+- `components/pos/catalogo-productos.tsx`
+- `components/ordenes/lista-ordenes.tsx`
+- `components/pos/formulario-pedido-dialog.tsx`
+- `components/usuarios/usuario-form.tsx`
+
+### Commits esperados:
+- [ ] Subir botones de categoría de `h-9` a `h-10` en `catalogo-productos.tsx`
+- [ ] Corregir input de fecha a `h-11 text-base` en `lista-ordenes.tsx`
+- [ ] Agregar `text-base` a todos los `SelectTrigger` e `Input` en `formulario-pedido-dialog.tsx`
+- [ ] Estandarizar inputs de `usuario-form.tsx` a `h-11`
+
+### Criterio de éxito:
+- Ningún input tiene `font-size < 16px` (verificar en DevTools > Elements > Computed Styles en iOS)
+- Todos los botones de filtro/categoría del POS tienen mínimo `h-10`
+- Build pasa sin errores
+
+---
+
+## Release 34: Design Tokens — Colores Hardcodeados a Variables Semánticas
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Ninguna (transversal)
+**Prioridad:** 🟠 Importante
+**Objetivo:** Reemplazar los 43+ usos de colores utilitarios Tailwind hardcodeados (`bg-green-100`, `text-blue-700`) por los tokens semánticos del design system (`bg-success/10`, `text-info`). Esto garantiza que al cambiar la paleta del negocio todos los estados de color actualicen automáticamente.
+
+### Contexto:
+El design system en `globals.css` ya define variables semánticas: `--success`, `--warning`, `--info`, `--destructive`, `--primary`. Pero 43+ líneas en componentes usan colores Tailwind estáticos que no respetan el sistema de tokens ni el dark mode de forma consistente.
+
+### Mapeo de colores de estado de órdenes
+
+**Archivo:** `components/ordenes/estado-badge.tsx` líneas 9–32
+
+```tsx
+// ❌ Actual — colores hardcodeados que no cambian con la paleta
+const ESTADO_ORDEN_CONFIG = {
+  borrador:       { className: "bg-gray-100 text-gray-700 border-gray-200" },
+  confirmada:     { className: "bg-blue-100 text-blue-700 border-blue-200" },
+  en_preparacion: { className: "bg-amber-100 text-amber-700 border-amber-200" },
+  lista:          { className: "bg-green-100 text-green-700 border-green-200" },
+  entregada:      { className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  cancelada:      { className: "bg-red-100 text-red-700 border-red-200" },
+};
+
+// ✅ Con tokens semánticos
+const ESTADO_ORDEN_CONFIG = {
+  borrador:       { className: "bg-muted text-muted-foreground border-border" },
+  confirmada:     { className: "bg-info/10 text-info border-info/30" },
+  en_preparacion: { className: "bg-warning/10 text-warning border-warning/30" },
+  lista:          { className: "bg-success/10 text-success border-success/30" },
+  entregada:      { className: "bg-success/15 text-success border-success/40" },
+  cancelada:      { className: "bg-destructive/10 text-destructive border-destructive/30" },
+};
+```
+
+### Archivos afectados con colores hardcodeados:
+
+| Archivo | Líneas | Colores a reemplazar |
+|---------|--------|----------------------|
+| `ordenes/estado-badge.tsx` | 9–35 | gray, blue, amber, green, emerald, red → tokens semánticos |
+| `dashboard/resumen-ventas.tsx` | 35–44 | text-blue-600, text-orange-600, text-indigo-600, text-purple-600 |
+| `dashboard/pedidos-recientes.tsx` | 43–68 | bg-yellow-100, bg-blue-100, bg-green-100 |
+| `caja/sesion-activa.tsx` | 54–58 | bg-green-50, border-green-200, bg-green-500 |
+| `ordenes/tarjeta-orden.tsx` | ~179 | bg-purple-100 text-purple-700 |
+| `reportes/tabla-cierres-caja.tsx` | ~80 | bg-green-100 text-green-700 |
+| `dashboard/pedidos-programados.tsx` | varios | bg-purple-100 text-purple-700 |
+
+### Variable a eliminar en `globals.css`:
+- Línea ~16: `--color-primary-dark: #c62828;` — único color hex hardcodeado, nunca se usa
+- Eliminar o convertir a HSL: `--primary-dark: 4 78% 37%;`
+
+### Archivos a modificar:
+- `app/globals.css` — eliminar variable hex sin usar
+- `components/ordenes/estado-badge.tsx`
+- `components/dashboard/resumen-ventas.tsx`
+- `components/dashboard/pedidos-recientes.tsx`
+- `components/caja/sesion-activa.tsx`
+- `components/ordenes/tarjeta-orden.tsx`
+- `components/reportes/tabla-cierres-caja.tsx`
+- `components/dashboard/pedidos-programados.tsx`
+
+### Commits esperados:
+- [ ] Eliminar `--color-primary-dark: #c62828` de `globals.css`
+- [ ] Reemplazar colores en `estado-badge.tsx` con tokens semánticos
+- [ ] Reemplazar colores en `resumen-ventas.tsx` y `pedidos-recientes.tsx`
+- [ ] Reemplazar colores en `sesion-activa.tsx` y `tarjeta-orden.tsx`
+- [ ] Reemplazar colores en `tabla-cierres-caja.tsx` y `pedidos-programados.tsx`
+- [ ] Verificar que dark mode sigue funcionando correctamente en todos los componentes
+
+### Criterio de éxito:
+- Ningún componente usa `bg-[color]-[shade]` o `text-[color]-[shade]` para estados semánticos (solo para decorativos justificados)
+- Al cambiar a paleta `enterprise` en `globals.css`, todos los badges de estado actualizan su color automáticamente
+- Build pasa sin errores
+
+---
+
+## Release 35: Arquitectura UI — Atomic Design y Componentes Compartidos
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Ninguna (transversal, bajo riesgo)
+**Prioridad:** 🟡 Sugerencia
+**Objetivo:** Corregir la jerarquía de componentes según Atomic Design: mover el componente mal ubicado en `shared/`, consolidar el patrón de badge de estado duplicado en 6+ lugares, mover `stats-card` a `shared/` y hacer que los estados vacíos usen el componente `EmptyState` ya existente.
+
+### Hallazgo 1: `sucursal-selector.tsx` en `shared/` con lógica de negocio
+
+`components/shared/sucursal-selector.tsx` línea ~4 importa `useSucursal()` hook con estado global de negocio. No cumple el criterio de molécula genérica.
+
+```
+De: components/shared/sucursal-selector.tsx
+A:  components/layout/sucursal-selector.tsx
+```
+
+Actualizar todos los imports en `app-header.tsx` y otros consumidores.
+
+### Hallazgo 2: Patrón de badge de estado duplicado 6+ veces
+
+El mismo patrón `inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium` se reimplementa en:
+- `ordenes/tarjeta-orden.tsx` línea ~179
+- `dashboard/pedidos-recientes.tsx` líneas 43–68
+- `reportes/tabla-cierres-caja.tsx` línea ~80
+- `dashboard/pedidos-programados.tsx` varios
+- Y otros
+
+**Fix:** Crear `components/shared/status-badge.tsx` parametrizable:
+
+```tsx
+// components/shared/status-badge.tsx
+interface StatusBadgeProps {
+  label: string;
+  className?: string;
+  icon?: React.ReactNode;
+  size?: "sm" | "md";
+}
+
+export function StatusBadge({ label, className, icon, size = "sm" }: StatusBadgeProps) {
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium",
+      size === "sm" ? "text-xs" : "text-sm",
+      className
+    )}>
+      {icon}
+      {label}
+    </span>
+  );
+}
+```
+
+`estado-badge.tsx` pasa a usar `StatusBadge` internamente, manteniendo su interfaz actual.
+
+### Hallazgo 3: `stats-card.tsx` es suficientemente genérico para `shared/`
+
+`components/dashboard/stats-card.tsx` es un componente puramente presentacional (título + valor + ícono + tendencia) sin ningún conocimiento del dominio. El mismo patrón se reimplementa en `caja/sesion-activa.tsx` (~línea 157) y `reportes/resumen-cards.tsx`.
+
+```
+De: components/dashboard/stats-card.tsx
+A:  components/shared/metric-card.tsx
+```
+
+Actualizar imports en `dashboard/resumen-ventas.tsx`, `caja/sesion-activa.tsx` y `reportes/resumen-cards.tsx`.
+
+### Hallazgo 4: 20+ estados vacíos inline que ignoran `EmptyState` shared
+
+`components/shared/empty-state.tsx` existe pero los componentes implementan su propio estado vacío. Archivos que deben actualizarse:
+- `components/dashboard/pedidos-recientes.tsx` línea ~82
+- `components/dashboard/grafico-ventas-tipo.tsx` línea ~76
+- `components/reportes/tabla-ventas-detalle.tsx` línea ~37
+- `components/reportes/tabla-top-productos.tsx` línea ~25
+- `components/productos/productos-table.tsx` línea ~156
+- `components/usuarios/usuarios-tabla.tsx` línea ~129
+- Y ~14 más
+
+### Archivos a crear:
+- `components/shared/status-badge.tsx` (nuevo)
+
+### Archivos a mover/renombrar:
+- `components/shared/sucursal-selector.tsx` → `components/layout/sucursal-selector.tsx`
+- `components/dashboard/stats-card.tsx` → `components/shared/metric-card.tsx`
+
+### Archivos a modificar:
+- `components/layout/app-header.tsx` — actualizar import de sucursal-selector
+- `components/dashboard/resumen-ventas.tsx` — usar metric-card desde shared
+- `components/caja/sesion-activa.tsx` — usar metric-card desde shared
+- `components/ordenes/estado-badge.tsx` — usar StatusBadge internamente
+- `components/dashboard/pedidos-recientes.tsx` — usar StatusBadge + EmptyState
+- Los ~20 componentes con estados vacíos inline → usar `<EmptyState>`
+
+### Commits esperados:
+- [ ] Mover `sucursal-selector.tsx` de `shared/` a `layout/`, actualizar imports
+- [ ] Crear `components/shared/status-badge.tsx`
+- [ ] Actualizar `estado-badge.tsx` para usar `StatusBadge` internamente
+- [ ] Reemplazar badges duplicados en dashboard y reportes por `StatusBadge`
+- [ ] Mover `stats-card.tsx` a `shared/metric-card.tsx`, actualizar los 3 consumidores
+- [ ] Reemplazar estados vacíos inline por `<EmptyState>` en los 20+ componentes
+
+### Criterio de éxito:
+- No existe `components/shared/sucursal-selector.tsx` (movido a layout)
+- `components/shared/status-badge.tsx` existe y es usado por `estado-badge.tsx` y otros
+- `components/shared/metric-card.tsx` existe y reemplaza `dashboard/stats-card.tsx`
+- No hay implementaciones inline de estado vacío que no usen `<EmptyState>`
+- Build pasa sin errores
+
+---
+
+## Release 36: Refinamientos de Layout, Tipografía y UX General
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Ninguna (transversal, riesgo mínimo)
+**Prioridad:** 🟡 Sugerencia / ⚪ Nit
+**Objetivo:** Corregir una serie de detalles menores de layout, tipografía y UX detectados en auditoría: padding del header sin breakpoint, ancho fijo del dropdown, posición del toaster en móvil, `tabular-nums` en stats cards, exceso de texto `text-xs` en tarjeta de orden, logo sin tipografía escalable, y agregar skeletons de carga donde falten.
+
+### Hallazgo 1: Header padding sin breakpoint — `app-header.tsx` línea ~36
+
+```tsx
+// ❌ Actual — padding fijo para todos los tamaños
+<header className="flex h-14 items-center gap-4 border-b bg-card px-4">
+
+// ✅ Escala con el viewport
+<header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6">
+```
+
+### Hallazgo 2: Dropdown ancho fijo en viewport < 320px — `app-header.tsx` línea ~84
+
+```tsx
+// ❌ Puede salir del viewport en pantallas muy pequeñas
+<DropdownMenuContent align="end" className="w-56">
+
+// ✅
+<DropdownMenuContent align="end" className="w-48 sm:w-56">
+```
+
+### Hallazgo 3: Toaster position fija en `top-right` — `app/layout.tsx` línea ~49
+
+En móvil el toast puede solaparse con el botón hamburguesa del sidebar.
+
+```tsx
+// ❌ Actual
+<Toaster position="top-right" />
+
+// ✅ Bottom en móvil, top-right en desktop
+<Toaster position="bottom-right" toastOptions={{ className: "md:top-right" }} />
+// O simplemente:
+<Toaster position="bottom-center" />
+```
+
+### Hallazgo 4: Stats cards sin `tabular-nums` — `stats-card.tsx` línea ~28
+
+Los valores monetarios del dashboard "saltan" visualmente cuando cambian entre filtros porque los dígitos no tienen ancho fijo.
+
+```tsx
+// ❌ Actual
+<p className="text-2xl font-bold tracking-tight">{value}</p>
+
+// ✅
+<p className="text-2xl font-bold tracking-tight tabular-nums">{value}</p>
+```
+
+### Hallazgo 5: Texto `text-xs` excesivo en `tarjeta-orden.tsx` líneas 188–344
+
+Los metadatos de hora/cajero/mesa/sucursal (línea ~188), información de delivery (línea ~295) y descuentos con `text-[11px]` (línea ~344) usan tamaños difíciles de leer en móvil. Subir metadatos principales a `text-sm`.
+
+```tsx
+// ❌ text-[11px] para precios y descuentos
+<span className="text-[11px] text-muted-foreground">
+
+// ✅ text-xs como mínimo, text-sm para datos operativos
+<span className="text-xs text-muted-foreground">
+// Para precios con descuento — siempre legible
+<span className="text-sm text-muted-foreground tabular-nums">
+```
+
+### Hallazgo 6: Logo "DANI PIZZAS" sin tipografía responsive — `app-sidebar.tsx` línea ~54
+
+```tsx
+// ❌ Tamaño fijo
+<span className="text-lg font-bold text-primary">DANI PIZZAS</span>
+
+// ✅ Responsive
+<span className="text-base sm:text-lg font-bold text-primary">DANI PIZZAS</span>
+```
+
+### Hallazgo 7: Skeletons de carga poco utilizados
+
+El componente `Skeleton` existe en `components/ui/skeleton.tsx` pero las secciones principales del dashboard y la lista de órdenes no los usan mientras cargan datos. Para un POS con UX percibida rápida, implementar skeletons en al menos:
+- `components/dashboard/resumen-ventas.tsx` — skeleton de las 4 stats cards
+- `components/ordenes/lista-ordenes.tsx` — skeleton de tarjetas de orden
+- `app/(dashboard)/dashboard/loading.tsx` — archivo de loading de Next.js
+
+### Archivos a modificar:
+- `components/layout/app-header.tsx` — padding y dropdown
+- `app/layout.tsx` — posición del toaster
+- `components/shared/metric-card.tsx` (o `dashboard/stats-card.tsx`) — tabular-nums
+- `components/ordenes/tarjeta-orden.tsx` — escalar text-xs a text-sm donde corresponda
+- `components/layout/app-sidebar.tsx` — logo responsive
+- `components/dashboard/resumen-ventas.tsx` — agregar skeleton state
+- `app/(dashboard)/dashboard/loading.tsx` (nuevo)
+
+### Commits esperados:
+- [ ] Agregar `md:px-6` al header y `w-48 sm:w-56` al dropdown
+- [ ] Cambiar posición del Toaster para mejor UX en móvil
+- [ ] Agregar `tabular-nums` a valores numéricos en stats cards
+- [ ] Subir metadatos de `tarjeta-orden.tsx` de `text-[11px]`/`text-xs` a `text-xs`/`text-sm`
+- [ ] Escalar logo del sidebar con `text-base sm:text-lg`
+- [ ] Crear `app/(dashboard)/dashboard/loading.tsx` con skeleton de stats cards
+- [ ] Agregar skeletons al menos en lista de órdenes
+
+### Criterio de éxito:
+- El header tiene padding adecuado en desktop (md:px-6)
+- Los toasts no se solapan con el botón hamburguesa en móvil
+- Los números del dashboard no "saltan" al cambiar de filtro
+- Metadatos de tarjeta de orden son legibles en 375px
+- Al navegar al dashboard hay un skeleton visible antes de los datos
 - Build pasa sin errores
 
 ---
