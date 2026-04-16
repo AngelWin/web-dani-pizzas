@@ -25,6 +25,7 @@ import { InputNumerico } from "@/components/ui/input-numerico";
 import { abrirSesionAction } from "@/actions/caja-sesiones";
 import { useCurrency } from "@/hooks/use-currency";
 import { Vault } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const schema = z.object({
   monto_inicial: z
@@ -44,6 +45,7 @@ type Props = {
 export function AbrirCajaDialog({ open, sucursalId, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const { simbolo } = useCurrency();
+  const router = useRouter();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -77,6 +79,7 @@ export function AbrirCajaDialog({ open, sucursalId, onSuccess }: Props) {
       <DialogContent
         className="sm:max-w-md"
         onPointerDownOutside={(e) => e.preventDefault()}
+        showCloseButton={false}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -133,6 +136,16 @@ export function AbrirCajaDialog({ open, sucursalId, onSuccess }: Props) {
               disabled={loading}
             >
               {loading ? "Abriendo..." : "Abrir caja"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full h-10 text-sm text-muted-foreground"
+              disabled={loading}
+              onClick={() => router.push("/dashboard")}
+            >
+              Ir al dashboard sin abrir caja
             </Button>
           </form>
         </Form>
