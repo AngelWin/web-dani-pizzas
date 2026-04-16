@@ -28,7 +28,7 @@ function TipoBadge({ tipo }: { tipo: string }) {
     "default" | "secondary" | "outline" | "destructive"
   > = {
     [TIPO_PEDIDO.EN_LOCAL]: "default",
-    [TIPO_PEDIDO.PARA_LLEVAR]: "secondary",
+    [TIPO_PEDIDO.RECOJO]: "secondary",
     [TIPO_PEDIDO.DELIVERY]: "destructive",
   };
   return (

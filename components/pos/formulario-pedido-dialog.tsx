@@ -537,9 +537,9 @@ export function FormularioPedidoDialog({
                         </SelectItem>
                       )}
                       {tiposPedidoPermitidos.includes(
-                        TIPO_PEDIDO.PARA_LLEVAR,
+                        TIPO_PEDIDO.RECOJO,
                       ) && (
-                        <SelectItem value={TIPO_PEDIDO.PARA_LLEVAR}>
+                        <SelectItem value={TIPO_PEDIDO.RECOJO}>
                           Recojo
                         </SelectItem>
                       )}

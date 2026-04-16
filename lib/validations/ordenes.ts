@@ -40,7 +40,7 @@ export const crearOrdenSchema = z
     sucursal_id: z.string().uuid(),
     cliente_id: z.string().uuid().nullable().optional(),
     tipo_pedido: z.enum(
-      [TIPO_PEDIDO.EN_LOCAL, TIPO_PEDIDO.PARA_LLEVAR, TIPO_PEDIDO.DELIVERY],
+      [TIPO_PEDIDO.EN_LOCAL, TIPO_PEDIDO.RECOJO, TIPO_PEDIDO.DELIVERY],
       { required_error: "Selecciona un tipo de pedido" },
     ),
     mesa_id: z.string().uuid().nullable().optional(),

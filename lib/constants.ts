@@ -12,7 +12,7 @@ export const DEFAULT_USER_IMAGE = "/images/default-user-image.png";
 
 export const TIPO_PEDIDO = {
   EN_LOCAL: "local",
-  PARA_LLEVAR: "para_llevar",
+  RECOJO: "para_llevar",
   DELIVERY: "delivery",
 } as const;
 

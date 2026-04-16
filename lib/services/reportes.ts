@@ -222,7 +222,7 @@ export async function getReporteCompleto(
       (v) => v.ordenes?.tipo_pedido === TIPO_PEDIDO.EN_LOCAL,
     ).length,
     num_para_llevar: ventasFiltradas.filter(
-      (v) => v.ordenes?.tipo_pedido === TIPO_PEDIDO.PARA_LLEVAR,
+      (v) => v.ordenes?.tipo_pedido === TIPO_PEDIDO.RECOJO,
     ).length,
   };
 
