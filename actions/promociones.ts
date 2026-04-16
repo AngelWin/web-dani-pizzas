@@ -24,7 +24,12 @@ function buildPromoData(parsed: ReturnType<typeof promocionSchema.safeParse>) {
     descripcion: d.descripcion ?? null,
     tipo_promocion: d.tipo_promocion,
     tipo_descuento,
-    valor_descuento: d.valor_descuento ?? 0,
+    // Solo los tipos de descuento usan valor_descuento; para combos y otros se guarda 0
+    valor_descuento: ["descuento_porcentaje", "descuento_fijo", "2x1"].includes(
+      d.tipo_promocion,
+    )
+      ? (d.valor_descuento ?? 0)
+      : 0,
     fecha_inicio: d.fecha_inicio,
     fecha_fin: d.fecha_fin,
     activa: d.activa,

@@ -218,6 +218,8 @@ export function ListaPromociones({
         return "Lleva 2, paga 1";
       case "combo_precio_fijo":
         return `Combo por ${formatCurrency(promo.precio_combo ?? 0)}`;
+      case "combo_precio_producto":
+        return "Precio del producto";
       case "delivery_gratis":
         return `Delivery gratis${promo.pedido_minimo ? ` (mín. ${formatCurrency(promo.pedido_minimo)})` : ""}`;
       default:
