@@ -2015,7 +2015,7 @@ export function getDiasAtrasLima(dias: number): string {
 
 ## Release 30: Refactorización de Componentes — useEffect y Lógica Compleja
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5b, Release 11, Release 15
 **Prioridad:** 🟠 Importante / 🟡 Sugerencia
 **Objetivo:** Eliminar el único `useEffect` para fetch de datos en componentes y extraer lógica de negocio compleja del POS a custom hooks o utilidades, mejorando la mantenibilidad y consistencia con el patrón del proyecto.
@@ -2072,9 +2072,9 @@ Funciones `parseSabores()`, `parseExtras()`, `parseAcompanante()` y `formatEntre
 - `components/pos/configurador-producto-dialog.tsx` (refactorización progresiva)
 
 ### Commits esperados:
-- [ ] Reemplazar `useEffect` de fetch en `usuarios-tabla.tsx` por Server Action
-- [ ] Crear `lib/utils/orden-formatters.ts` con `parseSabores`, `parseExtras`, `parseAcompanante`, `formatEntregaProgramada`
-- [ ] Actualizar `tarjeta-orden.tsx` para importar desde `orden-formatters.ts`
+- [x] Reemplazar `useEffect` de fetch en `usuarios-tabla.tsx` por Server Action
+- [x] Crear `lib/utils/orden-formatters.ts` con `parseSabores`, `parseExtras`, `parseAcompanante`, `formatEntregaProgramada`
+- [x] Actualizar `tarjeta-orden.tsx` para importar desde `orden-formatters.ts`
 - [ ] (Opcional) Extraer lógica de cálculo de `configurador-producto-dialog.tsx` a hook
 
 ### Criterio de éxito:

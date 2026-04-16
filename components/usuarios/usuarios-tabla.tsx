@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2, UserPlus } from "lucide-react";
 import {
   Table,
@@ -32,7 +31,10 @@ const EditarUsuarioForm = dynamic(
   () => import("./usuario-form").then((mod) => mod.EditarUsuarioForm),
   { ssr: false },
 );
-import { eliminarUsuarioAction } from "@/actions/usuarios";
+import {
+  eliminarUsuarioAction,
+  getRepartidorDetallesAction,
+} from "@/actions/usuarios";
 import type { UsuarioCompleto, Rol, Sucursal } from "@/lib/services/usuarios";
 
 type Props = {
@@ -45,13 +47,11 @@ type Props = {
 const ESTADO_CONFIG: Record<string, { label: string; className: string }> = {
   activo: {
     label: "Activo",
-    className:
-      "border-green-300 text-green-700 dark:border-green-800 dark:text-green-400",
+    className: "border-success/30 text-success",
   },
   inactivo: {
     label: "Inactivo",
-    className:
-      "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400",
+    className: "border-warning/30 text-warning",
   },
 };
 
@@ -71,19 +71,18 @@ export function UsuariosTabla({
     notas: string | null;
   } | null>(null);
 
-  useEffect(() => {
-    if (!editando || editando.rol_nombre !== "repartidor") {
+  function handleEditarUsuario(usuario: UsuarioCompleto) {
+    if (usuario.rol_nombre !== "repartidor") {
       setRepartidorDetalles(null);
+      setEditando(usuario);
       return;
     }
-    const supabase = createClient();
-    supabase
-      .from("repartidor_detalles")
-      .select("direccion, tipo_vehiculo, notas")
-      .eq("id", editando.id)
-      .maybeSingle()
-      .then(({ data }) => setRepartidorDetalles(data ?? null));
-  }, [editando]);
+    startTransition(async () => {
+      const result = await getRepartidorDetallesAction(usuario.id);
+      setRepartidorDetalles(result.data ?? null);
+      setEditando(usuario);
+    });
+  }
 
   function handleEliminar() {
     if (!eliminando) return;
@@ -182,7 +181,7 @@ export function UsuariosTabla({
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0 rounded-lg"
-                        onClick={() => setEditando(u)}
+                        onClick={() => handleEditarUsuario(u)}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
