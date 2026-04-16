@@ -28,7 +28,7 @@ const ROLE_LABELS: Record<string, string> = {
   repartidor: "Repartidor",
 };
 
-export function AppSidebar() {
+export function AppSidebar({ version }: { version: string }) {
   const pathname = usePathname();
   const { role, nombreCompleto, fotoUrl, email } = useUser();
   const { setOpenMobile, isMobile } = useSidebar();
@@ -51,7 +51,9 @@ export function AppSidebar() {
             className="rounded-lg"
           />
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-primary">DANI PIZZAS</span>
+            <span className="text-base sm:text-lg font-bold text-primary">
+              DANI PIZZAS
+            </span>
             <span className="text-xs text-muted-foreground">
               Panel de Administración
             </span>
@@ -115,6 +117,9 @@ export function AppSidebar() {
             )}
           </div>
         </div>
+        <p className="mt-3 text-center font-mono text-xs font-medium text-muted-foreground/60">
+          {version}
+        </p>
       </SidebarFooter>
     </Sidebar>
   );

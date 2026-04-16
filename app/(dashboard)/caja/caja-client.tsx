@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Vault } from "lucide-react";
 import { AbrirCajaDialog } from "@/components/caja/abrir-caja-dialog";
 import { SesionActiva } from "@/components/caja/sesion-activa";
+import { useRealtimeRefresh } from "@/hooks/use-realtime-refresh";
 import type {
   CajaSesionConRelaciones,
   ResumenSesion,
@@ -26,6 +27,11 @@ export function CajaClient({
 }: Props) {
   const router = useRouter();
   const [abrirOpen, setAbrirOpen] = useState(!sesionActiva);
+
+  useRealtimeRefresh([
+    { tabla: "caja_sesiones", sucursalId },
+    { tabla: "ventas", sucursalId },
+  ]);
 
   function handleRefresh() {
     router.refresh();

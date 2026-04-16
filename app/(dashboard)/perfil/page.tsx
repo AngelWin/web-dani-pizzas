@@ -10,17 +10,22 @@ export const dynamic = "force-dynamic";
 export default async function PerfilPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [
+    {
+      data: { user },
+    },
+    profileResult,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("profiles")
+      .select(
+        "id, nombre, apellido_paterno, email, rol_id, roles!profiles_rol_id_fkey(nombre)",
+      )
+      .maybeSingle(),
+  ]);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "id, nombre, apellido_paterno, email, rol_id, roles!profiles_rol_id_fkey(nombre)",
-    )
-    .eq("id", user?.id ?? "")
-    .single();
+  const { data: profile } = profileResult;
 
   const rolNombre =
     (profile as unknown as { roles: { nombre: string } | null } | null)?.roles

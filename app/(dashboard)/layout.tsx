@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
 import { getMonedaActiva } from "@/lib/services/monedas";
+import { getAppVersion } from "@/lib/version";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
@@ -43,6 +44,7 @@ export default async function DashboardLayout({
   const sucursal: Sucursal | null = profileData?.sucursal ?? null;
 
   const monedaActiva = await getMonedaActiva();
+  const version = getAppVersion();
 
   return (
     <CurrencyProvider
@@ -57,7 +59,7 @@ export default async function DashboardLayout({
       >
         <TooltipProvider>
           <SidebarProvider>
-            <AppSidebar />
+            <AppSidebar version={version} />
             <div className="flex min-w-0 flex-1 flex-col">
               <AppHeader />
               <main className="flex-1 p-4 md:p-6">{children}</main>

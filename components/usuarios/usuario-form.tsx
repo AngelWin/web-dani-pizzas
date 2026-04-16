@@ -29,7 +29,9 @@ import {
   actualizarUsuarioSchema,
   type CrearUsuarioFormData,
   type ActualizarUsuarioFormData,
+  type RepartidorDetallesFormData,
 } from "@/lib/validations/usuarios";
+import type { Control } from "react-hook-form";
 import {
   crearUsuarioAction,
   actualizarUsuarioAction,
@@ -47,12 +49,16 @@ const TIPOS_VEHICULO_OPTIONS = Object.entries(TIPOS_VEHICULO_LABELS) as [
   string,
 ][];
 
+// Tipo mínimo compartido por ambos formularios (crear y actualizar)
+type FormWithRepartidor = {
+  repartidor_detalles?: RepartidorDetallesFormData | null;
+};
+
 /** Sección condicional con los campos de repartidor */
 function RepartidorDetallesFields({
   control,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: any;
+  control: Control<FormWithRepartidor>;
 }) {
   return (
     <div className="space-y-4 rounded-xl border border-border bg-surface/50 p-4">
@@ -73,7 +79,7 @@ function RepartidorDetallesFields({
                 value={field.value ?? ""}
                 maxLength={300}
                 placeholder="Av. Ejemplo 123, Casma"
-                className="h-10 rounded-xl"
+                className="h-11 rounded-xl"
               />
             </FormControl>
             <FormMessage />
@@ -193,7 +199,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
               <FormItem>
                 <FormLabel>Nombre</FormLabel>
                 <FormControl>
-                  <Input {...field} className="h-10 rounded-xl" />
+                  <Input {...field} className="h-11 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -206,7 +212,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
               <FormItem>
                 <FormLabel>Apellido paterno</FormLabel>
                 <FormControl>
-                  <Input {...field} className="h-10 rounded-xl" />
+                  <Input {...field} className="h-11 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -224,7 +230,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                 <Input
                   {...field}
                   value={field.value ?? ""}
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </FormControl>
               <FormMessage />
@@ -243,7 +249,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                   {...field}
                   type="email"
                   autoComplete="off"
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </FormControl>
               <FormMessage />
@@ -262,7 +268,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                   {...field}
                   type="password"
                   autoComplete="new-password"
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </FormControl>
               <FormMessage />
@@ -294,7 +300,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                   }}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl">
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona un rol" />
                     </SelectTrigger>
                   </FormControl>
@@ -322,7 +328,7 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
                   onValueChange={(v) => field.onChange(v === "none" ? null : v)}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl">
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Sin sucursal" />
                     </SelectTrigger>
                   </FormControl>
@@ -341,7 +347,11 @@ export function CrearUsuarioForm({ roles, sucursales, onSuccess }: CrearProps) {
           />
         </div>
 
-        {isRepartidor && <RepartidorDetallesFields control={form.control} />}
+        {isRepartidor && (
+          <RepartidorDetallesFields
+            control={form.control as unknown as Control<FormWithRepartidor>}
+          />
+        )}
 
         <div className="flex justify-end pt-2">
           <Button
@@ -427,7 +437,7 @@ export function EditarUsuarioForm({
               <FormItem>
                 <FormLabel>Nombre</FormLabel>
                 <FormControl>
-                  <Input {...field} className="h-10 rounded-xl" />
+                  <Input {...field} className="h-11 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -440,7 +450,7 @@ export function EditarUsuarioForm({
               <FormItem>
                 <FormLabel>Apellido paterno</FormLabel>
                 <FormControl>
-                  <Input {...field} className="h-10 rounded-xl" />
+                  <Input {...field} className="h-11 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -458,7 +468,7 @@ export function EditarUsuarioForm({
                 <Input
                   {...field}
                   value={field.value ?? ""}
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </FormControl>
               <FormMessage />
@@ -490,7 +500,7 @@ export function EditarUsuarioForm({
                   }}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl">
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Selecciona un rol" />
                     </SelectTrigger>
                   </FormControl>
@@ -518,7 +528,7 @@ export function EditarUsuarioForm({
                   onValueChange={(v) => field.onChange(v === "none" ? null : v)}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl">
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Sin sucursal" />
                     </SelectTrigger>
                   </FormControl>
@@ -545,7 +555,7 @@ export function EditarUsuarioForm({
               <FormLabel>Estado</FormLabel>
               <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="h-10 rounded-xl">
+                  <SelectTrigger className="h-11 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                 </FormControl>
@@ -562,7 +572,11 @@ export function EditarUsuarioForm({
           )}
         />
 
-        {isRepartidor && <RepartidorDetallesFields control={form.control} />}
+        {isRepartidor && (
+          <RepartidorDetallesFields
+            control={form.control as unknown as Control<FormWithRepartidor>}
+          />
+        )}
 
         <div className="flex justify-end pt-2">
           <Button

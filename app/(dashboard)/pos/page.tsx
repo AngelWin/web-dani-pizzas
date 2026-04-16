@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/server";
 import { PosClient } from "@/components/pos/pos-client";
 import {
@@ -103,7 +105,7 @@ export default async function PosPage({
       sucursalId={sucursalId}
       sucursales={esAdmin ? sucursales : []}
       rol={rol}
-      modeloNegocio={config.modelo_negocio}
+      modeloNegocio={config?.modelo_negocio ?? "simple"}
       promociones={promociones}
       saboresPorCategoria={saboresPorCategoria}
       extrasPorCategoria={extrasPorCategoria}

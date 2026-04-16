@@ -10,22 +10,12 @@ import {
   type ResumenSesion,
 } from "@/lib/services/caja-sesiones";
 import type { Database } from "@/types/database";
+import { getHoyLima, getDiasAtrasLima } from "@/lib/utils/fecha";
 
 export const dynamic = "force-dynamic";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
 type FiltrosDiferencia = "todas" | "con_diferencia" | "sin_diferencia";
-
-function getHoyLima(): string {
-  const now = new Date(Date.now() - 5 * 60 * 60 * 1000);
-  return now.toISOString().split("T")[0];
-}
-
-function hace30DiasLima(): string {
-  const now = new Date(Date.now() - 5 * 60 * 60 * 1000);
-  now.setDate(now.getDate() - 29);
-  return now.toISOString().split("T")[0];
-}
 
 export default async function CierresCajaPage({
   searchParams,
@@ -57,7 +47,7 @@ export default async function CierresCajaPage({
   }
 
   const hoy = getHoyLima();
-  const hace30 = hace30DiasLima();
+  const hace30 = getDiasAtrasLima(29);
 
   const fechaDesde = params.desde ?? hace30;
   const fechaHasta = params.hasta ?? hoy;

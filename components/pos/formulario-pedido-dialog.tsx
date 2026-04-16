@@ -537,7 +537,7 @@ export function FormularioPedidoDialog({
                     disabled={tipoPedidoBloqueado}
                   >
                     <FormControl>
-                      <SelectTrigger className="h-12">
+                      <SelectTrigger className="h-12 text-base">
                         <SelectValue placeholder="Selecciona tipo" />
                       </SelectTrigger>
                     </FormControl>
@@ -600,7 +600,7 @@ export function FormularioPedidoDialog({
                         <FormControl>
                           <Input
                             placeholder="Ej: Mesa 3"
-                            className="h-12"
+                            className="h-12 text-base"
                             {...field}
                           />
                         </FormControl>
@@ -630,7 +630,7 @@ export function FormularioPedidoDialog({
                         defaultValue={field.value ?? DELIVERY_METHOD.PROPIO}
                       >
                         <FormControl>
-                          <SelectTrigger className="h-12">
+                          <SelectTrigger className="h-12 text-base">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
@@ -671,7 +671,7 @@ export function FormularioPedidoDialog({
                           value={field.value ?? ""}
                         >
                           <FormControl>
-                            <SelectTrigger className="h-12">
+                            <SelectTrigger className="h-12 text-base">
                               <SelectValue placeholder="Selecciona servicio" />
                             </SelectTrigger>
                           </FormControl>
@@ -714,7 +714,7 @@ export function FormularioPedidoDialog({
                           value={field.value ?? ""}
                         >
                           <FormControl>
-                            <SelectTrigger className="h-12">
+                            <SelectTrigger className="h-12 text-base">
                               <SelectValue placeholder="Selecciona servicio" />
                             </SelectTrigger>
                           </FormControl>
@@ -743,7 +743,7 @@ export function FormularioPedidoDialog({
                       <FormControl>
                         <InputNumerico
                           variante="precio"
-                          className="h-12"
+                          className="h-12 text-base"
                           value={field.value}
                           onChange={(v) => field.onChange(v ?? 0)}
                         />
@@ -762,7 +762,7 @@ export function FormularioPedidoDialog({
                       <FormControl>
                         <Input
                           placeholder="Calle, número, distrito..."
-                          className="h-12"
+                          className="h-12 text-base"
                           {...field}
                           value={field.value ?? ""}
                         />
@@ -781,7 +781,7 @@ export function FormularioPedidoDialog({
                       <FormControl>
                         <Input
                           placeholder="Ej: Frente al parque"
-                          className="h-12"
+                          className="h-12 text-base"
                           {...field}
                           value={field.value ?? ""}
                         />
@@ -840,7 +840,7 @@ export function FormularioPedidoDialog({
                       <FormControl>
                         <Input
                           type="datetime-local"
-                          className="h-12"
+                          className="h-12 text-base"
                           min={new Date(Date.now() + 60_000)
                             .toISOString()
                             .slice(0, 16)}
@@ -1023,7 +1023,7 @@ export function FormularioPedidoDialog({
               <Button
                 type="button"
                 variant="outline"
-                className="h-12"
+                className="h-12 text-base"
                 onClick={handleClose}
                 disabled={isSubmitting}
               >

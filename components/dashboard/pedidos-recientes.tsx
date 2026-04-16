@@ -43,18 +43,15 @@ function DeliveryStatusBadge({ status }: { status: string | null }) {
   const map: Record<string, { label: string; className: string }> = {
     [DELIVERY_STATUS.PENDIENTE]: {
       label: "Pendiente",
-      className:
-        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      className: "bg-warning/10 text-warning",
     },
     [DELIVERY_STATUS.EN_CAMINO]: {
       label: "En camino",
-      className:
-        "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      className: "bg-info/10 text-info",
     },
     [DELIVERY_STATUS.ENTREGADO]: {
       label: "Entregado",
-      className:
-        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      className: "bg-success/10 text-success",
     },
   };
   const info = map[status];

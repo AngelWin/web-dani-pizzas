@@ -3,6 +3,7 @@ import {
   updateEstadoMesa,
   liberarMesaSiCorresponde,
 } from "@/lib/services/mesas";
+import { getHoyLima } from "@/lib/utils/fecha";
 import type { Database } from "@/types/database";
 
 export type Orden = Database["public"]["Tables"]["ordenes"]["Row"];
@@ -168,11 +169,13 @@ export async function cancelarOrdenConMotivo(
   const supabase = await createClient();
 
   // Obtener mesa_id antes de cancelar para poder liberarla después
-  const { data: ordenPrevia } = await supabase
+  const { data: ordenPrevia, error: ordenPreviaError } = await supabase
     .from("ordenes")
     .select("mesa_id")
     .eq("id", ordenId)
-    .single();
+    .maybeSingle();
+
+  if (ordenPreviaError) throw new Error(ordenPreviaError.message);
 
   // 1. Actualizar estado → el trigger creará la entrada del historial
   const { error: updateError } = await supabase
@@ -340,4 +343,107 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
   }
 
   return orden;
+}
+
+/**
+ * Retorna el número de órdenes activas (no entregadas, no canceladas) de una sucursal.
+ * Usado para mostrar advertencia antes de cerrar la sesión de caja.
+ */
+export async function contarOrdenesActivasSucursal(
+  sucursalId: string,
+): Promise<number> {
+  const supabase = await createClient();
+
+  const { count, error } = await supabase
+    .from("ordenes")
+    .select("id", { count: "exact", head: true })
+    .eq("sucursal_id", sucursalId)
+    .not("estado", "in", '("entregada","cancelada")');
+
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+/**
+ * Cancela TODAS las órdenes activas (no entregadas, no canceladas) de una sucursal,
+ * sin importar la fecha. Libera las mesas asociadas si corresponde.
+ * Se ejecuta al cerrar la sesión de caja para limpiar el estado al final del turno.
+ * Retorna la cantidad de órdenes canceladas.
+ */
+export async function cancelarTodasOrdenesActivasSucursal(
+  sucursalId: string,
+): Promise<number> {
+  const supabase = await createClient();
+
+  const { data: ordenes, error: queryError } = await supabase
+    .from("ordenes")
+    .select("id, mesa_id")
+    .eq("sucursal_id", sucursalId)
+    .not("estado", "in", '("entregada","cancelada")');
+
+  if (queryError) throw new Error(queryError.message);
+  if (!ordenes || ordenes.length === 0) return 0;
+
+  const ordenIds = ordenes.map((o) => o.id);
+
+  const { error: cancelError } = await supabase
+    .from("ordenes")
+    .update({ estado: "cancelada", updated_at: new Date().toISOString() })
+    .in("id", ordenIds);
+
+  if (cancelError) throw new Error(cancelError.message);
+
+  const mesaIds = [
+    ...new Set(
+      ordenes.filter((o) => o.mesa_id).map((o) => o.mesa_id as string),
+    ),
+  ];
+  await Promise.all(mesaIds.map((mesaId) => liberarMesaSiCorresponde(mesaId)));
+
+  return ordenes.length;
+}
+
+/**
+ * Cancela todas las órdenes activas (no entregadas, no canceladas) de una sucursal
+ * cuya fecha de creación sea anterior al día de hoy en Lima (UTC-5).
+ * Libera las mesas asociadas si corresponde.
+ * Retorna la cantidad de órdenes canceladas.
+ */
+export async function cancelarOrdenesAntiguasSucursal(
+  sucursalId: string,
+): Promise<number> {
+  const supabase = await createClient();
+
+  // Medianoche Lima de hoy = inicio del día actual en UTC-5
+  const hoy = getHoyLima();
+  const inicioDiaHoy = `${hoy}T00:00:00-05:00`;
+
+  const { data: ordenes, error: queryError } = await supabase
+    .from("ordenes")
+    .select("id, mesa_id")
+    .eq("sucursal_id", sucursalId)
+    .not("estado", "in", '("entregada","cancelada")')
+    .lt("created_at", inicioDiaHoy);
+
+  if (queryError) throw new Error(queryError.message);
+  if (!ordenes || ordenes.length === 0) return 0;
+
+  const ordenIds = ordenes.map((o) => o.id);
+
+  const { error: cancelError } = await supabase
+    .from("ordenes")
+    .update({ estado: "cancelada", updated_at: new Date().toISOString() })
+    .in("id", ordenIds);
+
+  if (cancelError) throw new Error(cancelError.message);
+
+  // Liberar mesas únicas que tenían órdenes canceladas
+  const mesaIds = [
+    ...new Set(
+      ordenes.filter((o) => o.mesa_id).map((o) => o.mesa_id as string),
+    ),
+  ];
+  await Promise.all(mesaIds.map((mesaId) => liberarMesaSiCorresponde(mesaId)));
+
+  return ordenes.length;
 }

@@ -317,7 +317,7 @@ export async function acumularPuntosCliente(
     .eq("cliente_id", clienteId)
     .eq("activa", true)
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!membresia) return { puntosGanados: 0, nuevoNivel: null };
 

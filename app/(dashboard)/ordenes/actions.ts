@@ -6,6 +6,9 @@ import {
   actualizarEstadoOrden,
   actualizarEstadoDelivery,
   cancelarOrdenConMotivo,
+  cancelarOrdenesAntiguasSucursal,
+  cancelarTodasOrdenesActivasSucursal,
+  contarOrdenesActivasSucursal,
   type EstadoOrden,
   type EstadoDelivery,
 } from "@/lib/services/ordenes";
@@ -21,39 +24,115 @@ import type { ActionResult } from "@/types";
 export async function cambiarEstadoOrdenAction(
   ordenId: string,
   estado: EstadoOrden,
-): Promise<{ error?: string }> {
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const [
+    { data: rolNombre },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!["administrador", "cajero", "mesero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos para cambiar estado de orden" };
+  }
+
   try {
+    // Si se marca como entregada, necesitamos el mesa_id para liberar la mesa
+    let mesaId: string | null = null;
+    if (estado === "entregada") {
+      const { data: orden } = await supabase
+        .from("ordenes")
+        .select("mesa_id")
+        .eq("id", ordenId)
+        .maybeSingle();
+      mesaId = orden?.mesa_id ?? null;
+    }
+
     await actualizarEstadoOrden(ordenId, estado);
+
+    if (estado === "entregada" && mesaId) {
+      await liberarMesaSiCorresponde(mesaId);
+    }
+
     revalidatePath("/ordenes");
-    return {};
+    return { data: null, error: null };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Error desconocido" };
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error desconocido",
+    };
   }
 }
 
 export async function cancelarOrdenAction(
   ordenId: string,
   motivo: string,
-): Promise<{ error?: string }> {
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const [
+    { data: rolNombre },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos para cancelar órdenes" };
+  }
+
   try {
     await cancelarOrdenConMotivo(ordenId, motivo);
     revalidatePath("/ordenes");
-    return {};
+    return { data: null, error: null };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Error al cancelar" };
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error al cancelar",
+    };
   }
 }
 
 export async function cambiarEstadoDeliveryAction(
   ordenId: string,
   deliveryStatus: EstadoDelivery,
-): Promise<{ error?: string }> {
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const [
+    { data: rolNombre },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!["administrador", "cajero", "repartidor"].includes(rolNombre ?? "")) {
+    return {
+      data: null,
+      error: "Sin permisos para actualizar estado de delivery",
+    };
+  }
+
   try {
     await actualizarEstadoDelivery(ordenId, deliveryStatus);
     revalidatePath("/ordenes");
-    return {};
+    return { data: null, error: null };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Error desconocido" };
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error desconocido",
+    };
   }
 }
 
@@ -103,13 +182,13 @@ export async function cobrarOrdenAction(
   // Modo simple → cobra desde en_preparacion (salta el estado "lista")
   // Modo cocina_independiente → requiere estado "lista"
   const estadosCobrables =
-    config.modelo_negocio === "simple"
+    (config?.modelo_negocio ?? "simple") === "simple"
       ? ["en_preparacion", "lista"]
       : ["lista"];
 
   if (!estadosCobrables.includes(orden.estado)) {
     const mensaje =
-      config.modelo_negocio === "simple"
+      (config?.modelo_negocio ?? "simple") === "simple"
         ? "La orden debe estar en preparación para cobrar"
         : "La orden debe estar en estado 'lista' para cobrar";
     return { data: null, error: mensaje };
@@ -223,7 +302,7 @@ export async function cobrarMesaAction(
     getSesionActivaPorSucursal(sucursalId).catch(() => null),
   ]);
   const estadosCobrablesMesa =
-    config.modelo_negocio === "simple"
+    (config?.modelo_negocio ?? "simple") === "simple"
       ? (["en_preparacion", "lista"] as const)
       : (["lista"] as const);
 
@@ -326,6 +405,129 @@ export async function cobrarMesaAction(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Error al cobrar mesa",
+    };
+  }
+}
+
+/**
+ * Cancela todas las órdenes activas de días anteriores al de hoy (Lima UTC-5)
+ * en la sucursal del usuario autenticado. Se ejecuta al abrir caja.
+ */
+export async function cancelarOrdenesAntiguas(): Promise<
+  ActionResult<{ canceladas: number }>
+> {
+  const supabase = await createClient();
+
+  const [
+    { data: rolNombre },
+    { data: sucursalId },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!sucursalId) return { data: null, error: "Sin sucursal asignada" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos" };
+  }
+
+  try {
+    const canceladas = await cancelarOrdenesAntiguasSucursal(sucursalId);
+    if (canceladas > 0) revalidatePath("/ordenes");
+    return { data: { canceladas }, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error al cancelar órdenes antiguas",
+    };
+  }
+}
+
+/**
+ * Cancela TODAS las órdenes activas de la sucursal del usuario autenticado
+ * y libera sus mesas. Se llama al cerrar la sesión de caja para dejar
+ * un estado limpio al inicio del próximo turno.
+ */
+export async function cancelarOrdenesAlCerrarCaja(): Promise<
+  ActionResult<{ canceladas: number }>
+> {
+  const supabase = await createClient();
+
+  const [
+    { data: rolNombre },
+    { data: sucursalId },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!sucursalId) return { data: null, error: "Sin sucursal asignada" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos" };
+  }
+
+  try {
+    const canceladas = await cancelarTodasOrdenesActivasSucursal(sucursalId);
+    if (canceladas > 0) revalidatePath("/ordenes");
+    return { data: { canceladas }, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error al cancelar órdenes al cerrar caja",
+    };
+  }
+}
+
+/**
+ * Retorna el número de órdenes activas de la sucursal del usuario autenticado.
+ * Se llama al abrir el dialog de cierre de caja para mostrar advertencia preventiva.
+ */
+export async function contarOrdenesActivasAction(): Promise<
+  ActionResult<{ count: number }>
+> {
+  const supabase = await createClient();
+
+  const [
+    { data: rolNombre },
+    { data: sucursalId },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!sucursalId) return { data: null, error: "Sin sucursal asignada" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos" };
+  }
+
+  try {
+    const count = await contarOrdenesActivasSucursal(sucursalId);
+    return { data: { count }, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error al contar órdenes",
     };
   }
 }

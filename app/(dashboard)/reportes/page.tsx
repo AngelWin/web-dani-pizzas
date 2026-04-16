@@ -33,21 +33,11 @@ import { getReporteCompleto } from "@/lib/services/reportes";
 import { getVentasSinSesion } from "@/lib/services/caja-sesiones";
 import { VentasSinSesion } from "@/components/reportes/ventas-sin-sesion";
 import type { Database } from "@/types/database";
+import { getHoyLima, getDiasAtrasLima } from "@/lib/utils/fecha";
 
 export const dynamic = "force-dynamic";
 
 type Sucursal = Database["public"]["Tables"]["sucursales"]["Row"];
-
-function getHoyLima(): string {
-  const now = new Date(Date.now() - 5 * 60 * 60 * 1000);
-  return now.toISOString().split("T")[0];
-}
-
-function hace7DiasLima(): string {
-  const now = new Date(Date.now() - 5 * 60 * 60 * 1000);
-  now.setDate(now.getDate() - 6);
-  return now.toISOString().split("T")[0];
-}
 
 export default async function ReportesPage({
   searchParams,
@@ -58,7 +48,7 @@ export default async function ReportesPage({
   const supabase = await createClient();
 
   const hoy = getHoyLima();
-  const hace7 = hace7DiasLima();
+  const hace7 = getDiasAtrasLima(6);
 
   const [{ data: rolNombre }, { data: sucursalIdPerfil }] = await Promise.all([
     supabase.rpc("get_user_role"),

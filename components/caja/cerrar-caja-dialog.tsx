@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,8 +23,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { InputNumerico } from "@/components/ui/input-numerico";
 import { cerrarSesionAction } from "@/actions/caja-sesiones";
+import {
+  cancelarOrdenesAlCerrarCaja,
+  contarOrdenesActivasAction,
+} from "@/app/(dashboard)/ordenes/actions";
 import { useCurrency } from "@/hooks/use-currency";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const schema = z.object({
@@ -52,7 +56,19 @@ export function CerrarCajaDialog({
   onSuccess,
 }: Props) {
   const [loading, setLoading] = useState(false);
+  const [ordenesActivas, setOrdenesActivas] = useState<number | null>(null);
   const { formatCurrency, simbolo } = useCurrency();
+
+  // Contar órdenes activas al abrir el dialog para mostrar advertencia preventiva
+  useEffect(() => {
+    if (!open) {
+      setOrdenesActivas(null);
+      return;
+    }
+    contarOrdenesActivasAction().then((result) => {
+      setOrdenesActivas(result.error ? 0 : (result.data?.count ?? 0));
+    });
+  }, [open]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -80,6 +96,15 @@ export function CerrarCajaDialog({
       }
 
       toast.success("Caja cerrada correctamente");
+
+      // Cancelar órdenes activas pendientes y liberar sus mesas
+      const limpieza = await cancelarOrdenesAlCerrarCaja();
+      if (!limpieza.error && (limpieza.data?.canceladas ?? 0) > 0) {
+        toast.info(
+          `Se cancelaron ${limpieza.data!.canceladas} orden${limpieza.data!.canceladas === 1 ? "" : "es"} activas y se liberaron sus mesas.`,
+        );
+      }
+
       form.reset();
       onSuccess();
     } finally {
@@ -93,6 +118,22 @@ export function CerrarCajaDialog({
         <DialogHeader>
           <DialogTitle>Cerrar caja</DialogTitle>
         </DialogHeader>
+
+        {/* Advertencia si hay órdenes activas pendientes */}
+        {ordenesActivas !== null && ordenesActivas > 0 && (
+          <div className="rounded-xl bg-warning/10 border border-warning/30 p-3 text-sm flex items-start gap-2 text-warning">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>
+              Hay{" "}
+              <strong>
+                {ordenesActivas} orden{ordenesActivas === 1 ? "" : "es"} activa
+                {ordenesActivas === 1 ? "" : "s"}
+              </strong>{" "}
+              sin cobrar. Al cerrar la caja se cancelarán automáticamente y sus
+              mesas quedarán libres.
+            </span>
+          </div>
+        )}
 
         <div className="rounded-xl bg-muted/50 p-3 text-sm space-y-1 mb-2">
           <div className="flex justify-between text-muted-foreground">

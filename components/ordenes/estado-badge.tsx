@@ -8,27 +8,27 @@ const ESTADO_ORDEN_CONFIG: Record<
 > = {
   borrador: {
     label: "Borrador",
-    className: "bg-gray-100 text-gray-700 border-gray-200",
+    className: "bg-muted text-muted-foreground border-border",
   },
   confirmada: {
     label: "Confirmada",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    className: "bg-info/10 text-info border-info/30",
   },
   en_preparacion: {
     label: "En preparación",
-    className: "bg-amber-100 text-amber-700 border-amber-200",
+    className: "bg-warning/10 text-warning border-warning/30",
   },
   lista: {
     label: "Lista",
-    className: "bg-green-100 text-green-700 border-green-200",
+    className: "bg-success/10 text-success border-success/30",
   },
   entregada: {
     label: "Entregada",
-    className: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    className: "bg-success/15 text-success border-success/40",
   },
   cancelada: {
     label: "Cancelada",
-    className: "bg-red-100 text-red-700 border-red-200",
+    className: "bg-destructive/10 text-destructive border-destructive/30",
   },
 };
 
@@ -38,15 +38,15 @@ const ESTADO_DELIVERY_CONFIG: Record<
 > = {
   pendiente: {
     label: "Pendiente envío",
-    className: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    className: "bg-warning/10 text-warning border-warning/30",
   },
   en_camino: {
     label: "En camino",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    className: "bg-info/10 text-info border-info/30",
   },
   entregado: {
     label: "Entregado",
-    className: "bg-green-100 text-green-700 border-green-200",
+    className: "bg-success/10 text-success border-success/30",
   },
 };
 

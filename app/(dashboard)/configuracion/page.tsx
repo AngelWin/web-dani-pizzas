@@ -36,7 +36,7 @@ export default async function ConfiguracionPage() {
             afecta los datos almacenados.
           </p>
         </div>
-        <ModeloNegocioForm modeloActual={config.modelo_negocio} />
+        <ModeloNegocioForm modeloActual={config?.modelo_negocio ?? "simple"} />
       </section>
 
       <Separator />

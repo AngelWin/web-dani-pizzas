@@ -53,7 +53,7 @@ type Props = {
   orden: OrdenConItems;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  haySesionActiva: boolean;
+  haySesionActiva: boolean | null; // null = admin sin sucursal seleccionada
 };
 
 type Fase = "formulario" | "confirmacion";
@@ -132,7 +132,15 @@ export function CobroDialog({
             </DialogHeader>
 
             {/* Warning sin sesión activa */}
-            {!haySesionActiva && (
+            {haySesionActiva === null && (
+              <div className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  Selecciona una sucursal para verificar si hay caja abierta.
+                </span>
+              </div>
+            )}
+            {haySesionActiva === false && (
               <div className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>

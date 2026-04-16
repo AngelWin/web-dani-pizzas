@@ -96,7 +96,7 @@ type Props = {
   minFecha: string | null; // YYYY-MM-DD (7 días atrás) — null = sin restricción (admin)
   niveles?: NivelMembresia[];
   mesaFiltro?: string; // UUID de mesa si se filtran por mesa
-  haySesionActiva: boolean;
+  haySesionActiva: boolean | null; // null = admin sin sucursal seleccionada
 };
 
 export function ListaOrdenes({
@@ -123,15 +123,27 @@ export function ListaOrdenes({
   const tabs = getTabs(modeloNegocio);
 
   // Cuenta de mesa: total acumulado de órdenes activas
+  const ordenesActivasMesa = mesaFiltro
+    ? ordenes.filter((o) => !["entregada", "cancelada"].includes(o.estado))
+        .length
+    : 0;
   const totalMesa = mesaFiltro
     ? ordenes
         .filter((o) => !["entregada", "cancelada"].includes(o.estado))
         .reduce((acc, o) => acc + o.total, 0)
     : 0;
-  const ordenesActivasMesa = mesaFiltro
-    ? ordenes.filter((o) => !["entregada", "cancelada"].includes(o.estado))
-        .length
-    : 0;
+
+  // "Cobrar mesa" solo si hay al menos una orden cobrable
+  // Y ninguna en "confirmada" (todas deben haber pasado a preparación)
+  const estadosCobrables =
+    modeloNegocio === "simple" ? ["en_preparacion", "lista"] : ["lista"];
+  const hayConfirmadasEnMesa = mesaFiltro
+    ? ordenes.some((o) => o.estado === "confirmada")
+    : false;
+  const hayCobrablesEnMesa = mesaFiltro
+    ? !hayConfirmadasEnMesa &&
+      ordenes.some((o) => estadosCobrables.includes(o.estado))
+    : false;
   const mesaReferencia = mesaFiltro
     ? ordenes.find((o) => o.mesa_referencia)?.mesa_referencia
     : null;
@@ -183,7 +195,7 @@ export function ListaOrdenes({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {ordenesActivasMesa > 0 && (
+            {hayCobrablesEnMesa && (
               <Button
                 size="sm"
                 className="h-8 gap-1.5 text-xs"
@@ -232,7 +244,7 @@ export function ListaOrdenes({
             {...(minFecha ? { min: minFecha } : {})}
             max={hoy}
             onChange={handleFechaChange}
-            className="h-9 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-11 rounded-xl border border-border bg-card px-3 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
           {!esHoy && (
             <Button

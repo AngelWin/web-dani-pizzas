@@ -7,20 +7,10 @@ import { getNivelesMembresia } from "@/lib/services/membresias";
 import { getSucursales } from "@/lib/services/sucursales";
 import { getSesionActivaPorSucursal } from "@/lib/services/caja-sesiones";
 import { FiltroSucursalOrdenes } from "@/components/ordenes/filtro-sucursal-ordenes";
+import { RealtimeRefresh } from "@/components/shared/realtime-refresh";
+import { getHoyLima, getDiasAtrasLima } from "@/lib/utils/fecha";
 
 export const dynamic = "force-dynamic";
-
-function getHoyLima(): string {
-  // Lima UTC-5
-  const now = new Date(Date.now() - 5 * 60 * 60 * 1000);
-  return now.toISOString().split("T")[0];
-}
-
-function getMinFechaLima(): string {
-  const hoy = new Date(Date.now() - 5 * 60 * 60 * 1000);
-  hoy.setDate(hoy.getDate() - 7);
-  return hoy.toISOString().split("T")[0];
-}
 
 export default async function OrdenesPage({
   searchParams,
@@ -39,7 +29,7 @@ export default async function OrdenesPage({
   ]);
 
   const esAdmin = rolNombre === "administrador";
-  const minFecha = esAdmin ? null : getMinFechaLima();
+  const minFecha = esAdmin ? null : getDiasAtrasLima(7);
 
   // Admin puede filtrar por sucursal; no-admin usa su sucursal fija
   const sucursalId = esAdmin ? (params.sucursal ?? null) : sucursalIdPerfil;
@@ -65,6 +55,7 @@ export default async function OrdenesPage({
 
   return (
     <div className="space-y-6">
+      <RealtimeRefresh tablas={[{ tabla: "ordenes", sucursalId }]} />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <PageHeader
           title="Órdenes"
@@ -80,13 +71,13 @@ export default async function OrdenesPage({
       <ListaOrdenes
         ordenes={ordenes}
         rol={rolNombre}
-        modeloNegocio={config.modelo_negocio}
+        modeloNegocio={config?.modelo_negocio ?? "simple"}
         fechaFiltro={fechaFiltro}
         hoy={hoy}
         minFecha={minFecha}
         niveles={niveles}
         mesaFiltro={mesaId}
-        haySesionActiva={sesionActiva !== null}
+        haySesionActiva={sucursalId === null ? null : sesionActiva !== null}
       />
     </div>
   );

@@ -10,7 +10,11 @@ import {
   countAdmins,
   getRolNombreById,
 } from "@/lib/services/usuarios";
-import { upsertRepartidorDetalles } from "@/lib/services/repartidor-detalles";
+import {
+  getRepartidorDetalles,
+  upsertRepartidorDetalles,
+} from "@/lib/services/repartidor-detalles";
+import type { RepartidorDetalles } from "@/lib/services/repartidor-detalles";
 import {
   crearUsuarioSchema,
   actualizarUsuarioSchema,
@@ -147,6 +151,23 @@ export async function actualizarNombreAction(
     return {
       data: null,
       error: e instanceof Error ? e.message : "Error al actualizar nombre",
+    };
+  }
+}
+
+export async function getRepartidorDetallesAction(
+  profileId: string,
+): Promise<ActionResult<RepartidorDetalles | null>> {
+  try {
+    const data = await getRepartidorDetalles(profileId);
+    return { data, error: null };
+  } catch (e) {
+    return {
+      data: null,
+      error:
+        e instanceof Error
+          ? e.message
+          : "Error al obtener detalles de repartidor",
     };
   }
 }

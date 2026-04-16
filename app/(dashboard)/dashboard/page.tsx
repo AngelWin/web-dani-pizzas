@@ -15,6 +15,7 @@ const GraficoVentasTipo = nextDynamic(
 );
 import { PedidosRecientes } from "@/components/dashboard/pedidos-recientes";
 import { FiltroSucursalDashboard } from "@/components/dashboard/filtro-sucursal-dashboard";
+import { RealtimeRefresh } from "@/components/shared/realtime-refresh";
 import {
   getStatsYDesglose,
   getPedidosRecientes,
@@ -96,6 +97,12 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
+      <RealtimeRefresh
+        tablas={[
+          { tabla: "ordenes", sucursalId },
+          { tabla: "ventas", sucursalId },
+        ]}
+      />
       <PageHeader title="Dashboard" description={descripcion}>
         {isAdmin && (
           <Suspense
