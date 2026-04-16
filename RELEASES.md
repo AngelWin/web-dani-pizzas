@@ -1651,6 +1651,72 @@ Garantiza maximo 1 sesion abierta por sucursal a nivel de DB.
 
 ---
 
+## Release 24: Redondeo de Vuelto al Décimo
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5c (Cobro)
+**Objetivo:** Redondear el vuelto al múltiplo de S/. 0.10 más cercano (hacia abajo) para evitar dar céntimos que ya no circulan en Perú.
+
+### Contexto del negocio:
+- El vuelto de S/. 9.41 es impráctico porque el céntimo no circula
+- El estándar en negocios peruanos es redondear a décimas (S/. 9.40)
+- El redondeo debe afectar el **total registrado de la venta**, no solo el display, para que cuadre la caja
+- Ejemplo: total S/. 80.59, recibe S/. 90 → vuelto redondeado S/. 9.40 → total registrado S/. 80.60 (diferencia de S/. 0.01 absorbida por el negocio)
+
+### Decisiones de diseño pendientes:
+- ¿Se redondea siempre o solo cuando el cajero lo activa?
+- ¿Se registra el ajuste como campo separado en `ventas` (ej: `ajuste_redondeo`)? → necesario para auditoría
+- ¿Aplica solo a efectivo o a todos los métodos? → lógicamente solo efectivo
+
+### Impacto estimado:
+- `lib/services/ventas.ts` → ajustar cálculo de total al insertar venta con efectivo
+- `components/ordenes/cobro-dialog.tsx` → mostrar vuelto redondeado + nota de ajuste
+- `components/ordenes/lista-ordenes.tsx` (cobrar mesa) → igual
+- Posible campo `ajuste_redondeo numeric(4,2)` en tabla `ventas`
+
+---
+
+## Release 25: Gestión de Mesas Bloqueadas
+
+**Estado:** [ ] Pendiente
+**Dependencia:** Release 5b (Mesas) + Release 23 (Sesiones de caja)
+**Objetivo:** Evitar que mesas queden bloqueadas indefinidamente por órdenes antiguas sin cobrar (ej: órdenes de prueba, cortes de luz, olvidos), y dar herramientas para liberarlas de forma controlada.
+
+### Contexto del negocio:
+- Una mesa queda en estado `ocupada` cuando se crea una orden en local
+- Se libera automáticamente cuando la última orden activa de esa mesa es cobrada o cancelada
+- Si una orden queda atascada (nunca cobrada, nunca cancelada), la mesa permanece bloqueada indefinidamente
+- Casos reales: órdenes de prueba en fase de desarrollo, corte de sesión del cajero, error del sistema
+
+### Soluciones propuestas (dos mecanismos complementarios):
+
+**Mecanismo 1 — Liberación manual por admin/cajero:**
+- Botón "Liberar mesa" en la vista de mesas o en la cuenta de mesa
+- Cancela en lote todas las órdenes activas de esa mesa (con motivo "Liberación administrativa")
+- Solo visible para `administrador` y `cajero`
+- Muestra confirmación con lista de órdenes que se cancelarán
+
+**Mecanismo 2 — Liberación automática al cierre de caja:**
+- Al cerrar la sesión de caja, verificar si quedan mesas ocupadas con órdenes de esa sesión
+- Si todas las órdenes de una mesa son anteriores a la sesión que se cierra → liberar mesa automáticamente (cancelar órdenes atascadas)
+- Mostrar al cajero un resumen: "Se liberaron X mesas con órdenes sin cobrar"
+
+**Mecanismo 3 (opcional a futuro) — Auto-liberación por inactividad:**
+- Órdenes en estado cobrable por más de N horas (configurable, ej: 24h) → auto-cancelar y liberar mesa
+- Requiere job programado o trigger en DB
+
+### Solución inmediata (sin esperar el release):
+Cancelar manualmente las órdenes atascadas desde `/ordenes` usando el botón "Cancelar" → esto dispara `liberarMesaSiCorresponde` automáticamente.
+
+### Archivos a crear/modificar:
+- `lib/services/mesas.ts` → función `liberarMesaForzado(mesaId, motivo)` que cancela órdenes activas en lote
+- `actions/mesas.ts` → `liberarMesaForzadoAction` con permisos cajero/admin
+- `components/mesas/boton-liberar-mesa.tsx` → dialog de confirmación
+- `app/(dashboard)/caja/caja-client.tsx` → al cerrar caja, ejecutar limpieza de mesas con órdenes colgadas
+- `lib/services/caja-sesiones.ts` → `cerrarSesion()` puede invocar limpieza opcional
+
+---
+
 ## Sub-Agentes del Proyecto
 
 | Agente | Responsabilidad | Directorios |
