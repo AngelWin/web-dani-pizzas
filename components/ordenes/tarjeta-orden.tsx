@@ -122,7 +122,7 @@ export function TarjetaOrden({
               <EstadoDeliveryBadge estado={orden.delivery_status} />
             )}
             {orden.entrega_programada_at && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 <CalendarClock className="h-3 w-3" />
                 {formatEntregaProgramada(orden.entrega_programada_at)}
               </span>
@@ -287,12 +287,12 @@ export function TarjetaOrden({
               {formatCurrency(orden.total)}
             </span>
             {orden.descuento > 0 && (
-              <span className="text-[11px] text-success">
+              <span className="text-xs text-success">
                 desc. -{formatCurrency(orden.descuento)}
               </span>
             )}
             {esDelivery && orden.delivery_fee > 0 && (
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 inc. delivery {formatCurrency(orden.delivery_fee)}
               </span>
             )}

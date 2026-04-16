@@ -33,7 +33,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-card px-4">
+    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-6" />
 
@@ -81,7 +81,7 @@ export function AppHeader() {
               <span className="sr-only">Menú de usuario</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-48 sm:w-56">
             <DropdownMenuLabel>
               <div className="flex items-center gap-3">
                 <Image

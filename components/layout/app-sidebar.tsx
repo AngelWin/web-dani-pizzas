@@ -51,7 +51,9 @@ export function AppSidebar() {
             className="rounded-lg"
           />
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-primary">DANI PIZZAS</span>
+            <span className="text-base sm:text-lg font-bold text-primary">
+              DANI PIZZAS
+            </span>
             <span className="text-xs text-muted-foreground">
               Panel de Administración
             </span>

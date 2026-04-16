@@ -2448,7 +2448,7 @@ Actualizar imports en `dashboard/resumen-ventas.tsx`, `caja/sesion-activa.tsx` y
 
 ## Release 36: Refinamientos de Layout, Tipografía y UX General
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Ninguna (transversal, riesgo mínimo)
 **Prioridad:** 🟡 Sugerencia / ⚪ Nit
 **Objetivo:** Corregir una serie de detalles menores de layout, tipografía y UX detectados en auditoría: padding del header sin breakpoint, ancho fijo del dropdown, posición del toaster en móvil, `tabular-nums` en stats cards, exceso de texto `text-xs` en tarjeta de orden, logo sin tipografía escalable, y agregar skeletons de carga donde falten.
@@ -2540,12 +2540,12 @@ El componente `Skeleton` existe en `components/ui/skeleton.tsx` pero las seccion
 - `app/(dashboard)/dashboard/loading.tsx` (nuevo)
 
 ### Commits esperados:
-- [ ] Agregar `md:px-6` al header y `w-48 sm:w-56` al dropdown
-- [ ] Cambiar posición del Toaster para mejor UX en móvil
-- [ ] Agregar `tabular-nums` a valores numéricos en stats cards
-- [ ] Subir metadatos de `tarjeta-orden.tsx` de `text-[11px]`/`text-xs` a `text-xs`/`text-sm`
-- [ ] Escalar logo del sidebar con `text-base sm:text-lg`
-- [ ] Crear `app/(dashboard)/dashboard/loading.tsx` con skeleton de stats cards
+- [x] Agregar `md:px-6` al header y `w-48 sm:w-56` al dropdown
+- [x] Cambiar posición del Toaster para mejor UX en móvil
+- [x] Agregar `tabular-nums` a valores numéricos en stats cards
+- [x] Subir metadatos de `tarjeta-orden.tsx` de `text-[11px]` a `text-xs`
+- [x] Escalar logo del sidebar con `text-base sm:text-lg`
+- [x] `app/(dashboard)/dashboard/loading.tsx` ya existía con skeletons completos
 - [ ] Agregar skeletons al menos en lista de órdenes
 
 ### Criterio de éxito:
