@@ -51,11 +51,13 @@ export function SesionActiva({ resumen, onCerrar }: Props) {
   return (
     <div className="space-y-4">
       {/* Estado de sesión */}
-      <div className="rounded-xl border bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800 p-4">
+      <div className="rounded-xl border bg-success/5 border-success/20 p-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <Badge className="bg-green-500 text-white">Caja abierta</Badge>
+              <Badge className="bg-success text-success-foreground">
+                Caja abierta
+              </Badge>
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
                 {formatDuracion(sesion.abierta_at)}

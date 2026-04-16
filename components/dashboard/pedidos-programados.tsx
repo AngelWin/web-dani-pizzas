@@ -49,9 +49,9 @@ export function PedidosProgramados({
   return (
     <div className="rounded-xl border shadow-[0_4px_12px_rgba(0,0,0,0.08)] bg-card">
       <div className="flex items-center gap-2 border-b px-4 py-3">
-        <CalendarClock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+        <CalendarClock className="h-4 w-4 text-primary" />
         <h3 className="font-semibold text-sm">Pedidos programados próximos</h3>
-        <span className="ml-auto rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+        <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
           {pedidos.length}
         </span>
       </div>
@@ -76,7 +76,7 @@ export function PedidosProgramados({
               </span>
             </div>
             <div className="flex flex-col items-end gap-0.5 shrink-0">
-              <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 flex items-center gap-1">
+              <span className="text-xs font-semibold text-primary flex items-center gap-1">
                 <CalendarClock className="h-3 w-3" />
                 {formatFechaEntrega(pedido.entrega_programada_at)}
               </span>

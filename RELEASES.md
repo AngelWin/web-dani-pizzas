@@ -2263,7 +2263,7 @@ Afecta líneas: ~540, ~633, ~674, ~717, ~743, ~759
 
 ## Release 34: Design Tokens — Colores Hardcodeados a Variables Semánticas
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Ninguna (transversal)
 **Prioridad:** 🟠 Importante
 **Objetivo:** Reemplazar los 43+ usos de colores utilitarios Tailwind hardcodeados (`bg-green-100`, `text-blue-700`) por los tokens semánticos del design system (`bg-success/10`, `text-info`). Esto garantiza que al cambiar la paleta del negocio todos los estados de color actualicen automáticamente.
@@ -2324,12 +2324,12 @@ const ESTADO_ORDEN_CONFIG = {
 - `components/dashboard/pedidos-programados.tsx`
 
 ### Commits esperados:
-- [ ] Eliminar `--color-primary-dark: #c62828` de `globals.css`
-- [ ] Reemplazar colores en `estado-badge.tsx` con tokens semánticos
-- [ ] Reemplazar colores en `resumen-ventas.tsx` y `pedidos-recientes.tsx`
-- [ ] Reemplazar colores en `sesion-activa.tsx` y `tarjeta-orden.tsx`
-- [ ] Reemplazar colores en `tabla-cierres-caja.tsx` y `pedidos-programados.tsx`
-- [ ] Verificar que dark mode sigue funcionando correctamente en todos los componentes
+- [x] Eliminar `--color-primary-dark: #c62828` de `globals.css`
+- [x] Reemplazar colores en `estado-badge.tsx` con tokens semánticos
+- [x] Reemplazar colores en `resumen-ventas.tsx` y `pedidos-recientes.tsx`
+- [x] Reemplazar colores en `sesion-activa.tsx` y `tarjeta-orden.tsx`
+- [x] Reemplazar colores en `tabla-cierres-caja.tsx` y `pedidos-programados.tsx`
+- [x] Verificar que dark mode sigue funcionando correctamente en todos los componentes
 
 ### Criterio de éxito:
 - Ningún componente usa `bg-[color]-[shade]` o `text-[color]-[shade]` para estados semánticos (solo para decorativos justificados)

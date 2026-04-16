@@ -73,12 +73,12 @@ import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { NivelMembresia } from "@/lib/services/membresias";
 
 const TIPO_PEDIDO_CONFIG = {
-  local: { label: "Local", icon: UtensilsCrossed, color: "text-blue-600" },
-  delivery: { label: "Delivery", icon: Bike, color: "text-orange-600" },
+  local: { label: "Local", icon: UtensilsCrossed, color: "text-info" },
+  delivery: { label: "Delivery", icon: Bike, color: "text-warning" },
   para_recojo: {
     label: "Recojo",
     icon: ShoppingBag,
-    color: "text-purple-600",
+    color: "text-primary",
   },
 };
 
@@ -176,7 +176,7 @@ export function TarjetaOrden({
               <EstadoDeliveryBadge estado={orden.delivery_status} />
             )}
             {orden.entrega_programada_at && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                 <CalendarClock className="h-3 w-3" />
                 {formatEntregaProgramada(orden.entrega_programada_at)}
               </span>
@@ -341,7 +341,7 @@ export function TarjetaOrden({
               {formatCurrency(orden.total)}
             </span>
             {orden.descuento > 0 && (
-              <span className="text-[11px] text-green-600 dark:text-green-400">
+              <span className="text-[11px] text-success">
                 desc. -{formatCurrency(orden.descuento)}
               </span>
             )}

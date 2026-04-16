@@ -77,7 +77,7 @@ function FilaSesion({
       {/* Estado */}
       <div className="shrink-0">
         {estaAbierta ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
             <Vault className="h-3 w-3" />
             Abierta
           </span>
@@ -138,10 +138,10 @@ function FilaSesion({
                 className={cn(
                   "flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold tabular-nums",
                   cuadra
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    ? "bg-success/10 text-success"
                     : sobrante
-                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                      ? "bg-info/10 text-info"
+                      : "bg-destructive/10 text-destructive",
                 )}
               >
                 {cuadra ? (
