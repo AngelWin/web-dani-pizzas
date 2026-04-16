@@ -185,7 +185,7 @@ export function FormularioPromocionDialog({
         sucursales_ids: promocion.sucursales_ids,
         medidas_ids: promocion.medidas_ids,
         tipos_pedido: promocion.tipos_pedido as
-          | ("local" | "delivery" | "para_llevar")[]
+          | ("local" | "delivery" | "para_recojo")[]
           | null,
         permite_modificaciones: promocion.permite_modificaciones ?? true,
         nivel_membresia_id: promocion.nivel_membresia_id ?? null,
@@ -1226,7 +1226,7 @@ export function FormularioPromocionDialog({
                   [
                     { value: "local", label: "En local" },
                     { value: "delivery", label: "Delivery" },
-                    { value: "para_llevar", label: "Recojo" },
+                    { value: "para_recojo", label: "Recojo" },
                   ] as const
                 ).map((tp) => {
                   const tiposPedido = form.watch("tipos_pedido") ?? [];

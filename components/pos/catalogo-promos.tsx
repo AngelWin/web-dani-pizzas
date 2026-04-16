@@ -34,7 +34,7 @@ function TipoPedidoBadges({ tipos }: { tipos: string[] | null }) {
   const labels: Record<string, string> = {
     local: "Local",
     delivery: "Delivery",
-    para_llevar: "Recojo",
+    para_recojo: "Recojo",
   };
   return (
     <>

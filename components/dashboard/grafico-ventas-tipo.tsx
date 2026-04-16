@@ -21,7 +21,7 @@ type GraficoVentasTipoProps = {
 
 const COLORES_TIPO: Record<string, string> = {
   en_local: "#2196F3",
-  para_llevar: "#FF7043",
+  para_recojo: "#FF7043",
   delivery: "#E53935",
 };
 

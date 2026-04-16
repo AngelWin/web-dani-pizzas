@@ -25,7 +25,7 @@ const TIPO_PEDIDO_COLOR: Record<
   "default" | "secondary" | "destructive"
 > = {
   local: "secondary",
-  para_llevar: "default",
+  para_recojo: "default",
   delivery: "destructive",
 };
 

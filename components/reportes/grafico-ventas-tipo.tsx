@@ -22,7 +22,7 @@ type Props = {
 
 const COLORES: Record<string, string> = {
   local: "#2196F3",
-  para_llevar: "#FF7043",
+  para_recojo: "#FF7043",
   delivery: "#E53935",
 };
 

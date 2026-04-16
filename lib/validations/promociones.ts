@@ -50,7 +50,7 @@ export const promocionSchema = z
     medidas_ids: z.array(z.string().uuid()).optional().default([]),
     // Tipo de pedido aplicable
     tipos_pedido: z
-      .array(z.enum(["local", "delivery", "para_llevar"]))
+      .array(z.enum(["local", "delivery", "para_recojo"]))
       .nullable()
       .optional()
       .default(null),

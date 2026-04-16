@@ -294,7 +294,7 @@ export function FormularioPedidoDialog({
   // Tipos de pedido permitidos: intersección de restricciones de todas las promos activas en el carrito
   // (combos en promoItems + promo del dropdown)
   const tiposPedidoPermitidos = useMemo<string[]>(() => {
-    const TODOS = ["local", "delivery", "para_llevar"];
+    const TODOS = ["local", "delivery", "para_recojo"];
     // Restricciones de combos en el carrito
     const restriccionesCombo = carrito.promoItems
       .map(
@@ -322,7 +322,7 @@ export function FormularioPedidoDialog({
       const tp = tiposPedidoPermitidos[0] as
         | "local"
         | "delivery"
-        | "para_llevar";
+        | "para_recojo";
       if (form.getValues("tipo_pedido") !== tp) {
         form.setValue("tipo_pedido", tp);
       }
@@ -537,9 +537,9 @@ export function FormularioPedidoDialog({
                         </SelectItem>
                       )}
                       {tiposPedidoPermitidos.includes(
-                        TIPO_PEDIDO.RECOJO,
+                        TIPO_PEDIDO.PARA_RECOJO,
                       ) && (
-                        <SelectItem value={TIPO_PEDIDO.RECOJO}>
+                        <SelectItem value={TIPO_PEDIDO.PARA_RECOJO}>
                           Recojo
                         </SelectItem>
                       )}

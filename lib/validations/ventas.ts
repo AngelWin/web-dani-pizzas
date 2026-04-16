@@ -37,7 +37,7 @@ export type PagoFormValues = z.infer<typeof pagoSchema>;
 
 export const tipoPedidoSchema = z.object({
   tipo_pedido: z.enum(
-    [TIPO_PEDIDO.EN_LOCAL, TIPO_PEDIDO.RECOJO, TIPO_PEDIDO.DELIVERY],
+    [TIPO_PEDIDO.EN_LOCAL, TIPO_PEDIDO.PARA_RECOJO, TIPO_PEDIDO.DELIVERY],
     { required_error: "Selecciona un tipo de pedido" },
   ),
   mesa_referencia: z.string().max(50).optional(),
@@ -94,7 +94,7 @@ export type DeliveryFormValues = z.infer<typeof deliverySchema>;
 export const crearVentaSchema = z.object({
   tipo_pedido: z.enum([
     TIPO_PEDIDO.EN_LOCAL,
-    TIPO_PEDIDO.RECOJO,
+    TIPO_PEDIDO.PARA_RECOJO,
     TIPO_PEDIDO.DELIVERY,
   ]),
   metodo_pago: z.enum([

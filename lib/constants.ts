@@ -12,7 +12,7 @@ export const DEFAULT_USER_IMAGE = "/images/default-user-image.png";
 
 export const TIPO_PEDIDO = {
   EN_LOCAL: "local",
-  RECOJO: "para_llevar",
+  PARA_RECOJO: "para_recojo",
   DELIVERY: "delivery",
 } as const;
 
@@ -20,7 +20,7 @@ export type TipoPedido = (typeof TIPO_PEDIDO)[keyof typeof TIPO_PEDIDO];
 
 export const TIPO_PEDIDO_LABELS: Record<TipoPedido, string> = {
   local: "En local",
-  para_llevar: "Recojo",
+  para_recojo: "Recojo",
   delivery: "Delivery",
 };
 
