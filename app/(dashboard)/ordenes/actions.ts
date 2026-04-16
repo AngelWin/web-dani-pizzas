@@ -6,6 +6,7 @@ import {
   actualizarEstadoOrden,
   actualizarEstadoDelivery,
   cancelarOrdenConMotivo,
+  cancelarOrdenesAntiguasSucursal,
   type EstadoOrden,
   type EstadoDelivery,
 } from "@/lib/services/ordenes";
@@ -39,7 +40,23 @@ export async function cambiarEstadoOrdenAction(
   }
 
   try {
+    // Si se marca como entregada, necesitamos el mesa_id para liberar la mesa
+    let mesaId: string | null = null;
+    if (estado === "entregada") {
+      const { data: orden } = await supabase
+        .from("ordenes")
+        .select("mesa_id")
+        .eq("id", ordenId)
+        .maybeSingle();
+      mesaId = orden?.mesa_id ?? null;
+    }
+
     await actualizarEstadoOrden(ordenId, estado);
+
+    if (estado === "entregada" && mesaId) {
+      await liberarMesaSiCorresponde(mesaId);
+    }
+
     revalidatePath("/ordenes");
     return { data: null, error: null };
   } catch (err) {
@@ -386,6 +403,48 @@ export async function cobrarMesaAction(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Error al cobrar mesa",
+    };
+  }
+}
+
+/**
+ * Cancela todas las órdenes activas de días anteriores al de hoy (Lima UTC-5)
+ * en la sucursal del usuario autenticado. Se ejecuta al abrir caja.
+ */
+export async function cancelarOrdenesAntiguas(): Promise<
+  ActionResult<{ canceladas: number }>
+> {
+  const supabase = await createClient();
+
+  const [
+    { data: rolNombre },
+    { data: sucursalId },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!sucursalId) return { data: null, error: "Sin sucursal asignada" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos" };
+  }
+
+  try {
+    const canceladas = await cancelarOrdenesAntiguasSucursal(sucursalId);
+    if (canceladas > 0) revalidatePath("/ordenes");
+    return { data: { canceladas }, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error al cancelar órdenes antiguas",
     };
   }
 }

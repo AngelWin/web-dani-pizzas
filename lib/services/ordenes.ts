@@ -3,6 +3,7 @@ import {
   updateEstadoMesa,
   liberarMesaSiCorresponde,
 } from "@/lib/services/mesas";
+import { getHoyLima } from "@/lib/utils/fecha";
 import type { Database } from "@/types/database";
 
 export type Orden = Database["public"]["Tables"]["ordenes"]["Row"];
@@ -342,4 +343,49 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
   }
 
   return orden;
+}
+
+/**
+ * Cancela todas las órdenes activas (no entregadas, no canceladas) de una sucursal
+ * cuya fecha de creación sea anterior al día de hoy en Lima (UTC-5).
+ * Libera las mesas asociadas si corresponde.
+ * Retorna la cantidad de órdenes canceladas.
+ */
+export async function cancelarOrdenesAntiguasSucursal(
+  sucursalId: string,
+): Promise<number> {
+  const supabase = await createClient();
+
+  // Medianoche Lima de hoy = inicio del día actual en UTC-5
+  const hoy = getHoyLima();
+  const inicioDiaHoy = `${hoy}T00:00:00-05:00`;
+
+  const { data: ordenes, error: queryError } = await supabase
+    .from("ordenes")
+    .select("id, mesa_id")
+    .eq("sucursal_id", sucursalId)
+    .not("estado", "in", '("entregada","cancelada")')
+    .lt("created_at", inicioDiaHoy);
+
+  if (queryError) throw new Error(queryError.message);
+  if (!ordenes || ordenes.length === 0) return 0;
+
+  const ordenIds = ordenes.map((o) => o.id);
+
+  const { error: cancelError } = await supabase
+    .from("ordenes")
+    .update({ estado: "cancelada", updated_at: new Date().toISOString() })
+    .in("id", ordenIds);
+
+  if (cancelError) throw new Error(cancelError.message);
+
+  // Liberar mesas únicas que tenían órdenes canceladas
+  const mesaIds = [
+    ...new Set(
+      ordenes.filter((o) => o.mesa_id).map((o) => o.mesa_id as string),
+    ),
+  ];
+  await Promise.all(mesaIds.map((mesaId) => liberarMesaSiCorresponde(mesaId)));
+
+  return ordenes.length;
 }

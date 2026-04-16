@@ -2591,6 +2591,56 @@ En un restaurante es normal que una mesa haga varios pedidos durante el turno: p
 
 ---
 
+## Release 38: Liberación Automática de Mesas al Abrir Caja + Fix Liberación al Entregar
+
+**Estado:** [x] Completado
+**Dependencia:** Release 15 (Mesas), Release 23 (Sesiones de Caja), Release 37 (Multi-Orden Mesa)
+**Prioridad:** 🔴 CRÍTICO — mesas bloqueadas indefinidamente entre turnos
+
+### Contexto del problema:
+Al cerrar el turno del día, las mesas pueden quedarse en estado `ocupada` si alguna orden no fue cobrada ni cancelada (orden de prueba, corte de sesión, error del cajero). Al día siguiente, esas mesas aparecen bloqueadas en el POS aunque físicamente estén libres. El único mecanismo anterior era cancelarlas manualmente desde `/ordenes`.
+
+Adicionalmente se detectó un bug: `cambiarEstadoOrdenAction` (cambio de estado manual desde la UI de órdenes) no llamaba a `liberarMesaSiCorresponde` cuando el estado destino era `"entregada"`, a diferencia de `cobrarOrdenAction` y `cancelarOrdenConMotivo` que sí lo hacían.
+
+### Solución implementada:
+
+**Bug fix:** `cambiarEstadoOrdenAction` ahora obtiene el `mesa_id` de la orden y llama `liberarMesaSiCorresponde` cuando el nuevo estado es `"entregada"`.
+
+**Auto-cancelación al abrir caja:** Al abrir la sesión de caja del día, se ejecuta automáticamente `cancelarOrdenesAntiguasSucursal(sucursalId)` que:
+1. Busca órdenes activas (no entregadas, no canceladas) creadas antes de la medianoche Lima del día actual
+2. Las cancela en lote
+3. Llama `liberarMesaSiCorresponde` en cada mesa afectada
+4. Muestra un toast informativo si hubo órdenes canceladas
+
+### Regla de liberación de mesas (confirmada):
+- La mesa se libera solo cuando **todas** sus órdenes activas (`confirmada`, `en_preparacion`, `lista`) desaparecen
+- Si hay 2 órdenes en la mesa y se cancela 1, la mesa **no** se libera
+- La mesa se libera al cobrar o cancelar la **última** orden activa
+
+### Archivos nuevos:
+- Ninguno
+
+### Archivos modificados:
+- `lib/services/ordenes.ts` — nueva función `cancelarOrdenesAntiguasSucursal(sucursalId)`
+- `app/(dashboard)/ordenes/actions.ts` — fix en `cambiarEstadoOrdenAction` + nueva action `cancelarOrdenesAntiguas()`
+- `components/caja/abrir-caja-dialog.tsx` — llamada a limpieza post-apertura con toast informativo
+
+### Commits esperados:
+- [x] Fix: `cambiarEstadoOrdenAction` libera mesa cuando estado = "entregada"
+- [x] Servicio: `cancelarOrdenesAntiguasSucursal(sucursalId)` en `lib/services/ordenes.ts`
+- [x] Action: `cancelarOrdenesAntiguas()` con auth + rol en `app/(dashboard)/ordenes/actions.ts`
+- [x] UI: `abrir-caja-dialog.tsx` ejecuta limpieza y muestra toast si hubo cancelaciones
+
+### Criterio de éxito:
+- Al abrir caja, si hay órdenes de días anteriores activas, se cancelan automáticamente
+- Las mesas de esas órdenes se liberan (vuelven a "libre")
+- Si no hay órdenes antiguas, la apertura de caja es transparente (sin toast extra)
+- Marcar una orden como "entregada" manualmente desde `/ordenes` libera la mesa correctamente
+- Si hay 2 órdenes en una mesa y se entrega 1, la mesa no se libera hasta que se entregue la 2da
+- Build pasa sin errores
+
+---
+
 ## Sub-Agentes del Proyecto
 
 | Agente | Responsabilidad | Directorios |
