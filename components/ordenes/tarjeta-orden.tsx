@@ -81,7 +81,7 @@ type Props = {
   rol: string | null;
   modeloNegocio: ModeloNegocio;
   niveles?: NivelMembresia[];
-  haySesionActiva: boolean;
+  haySesionActiva: boolean | null;
 };
 
 export function TarjetaOrden({

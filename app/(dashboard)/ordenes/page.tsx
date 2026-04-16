@@ -47,10 +47,8 @@ export default async function OrdenesPage({
       getConfiguracionNegocio(),
       getNivelesMembresia(),
       esAdmin ? getSucursales() : Promise.resolve([]),
-      // Siempre usar la sucursal propia del usuario (no el filtro de sucursal)
-      // para verificar si hay caja abierta al cobrar
-      sucursalIdPerfil
-        ? getSesionActivaPorSucursal(sucursalIdPerfil).catch(() => null)
+      sucursalId
+        ? getSesionActivaPorSucursal(sucursalId).catch(() => null)
         : Promise.resolve(null),
     ]);
 
@@ -77,7 +75,7 @@ export default async function OrdenesPage({
         minFecha={minFecha}
         niveles={niveles}
         mesaFiltro={mesaId}
-        haySesionActiva={sesionActiva !== null}
+        haySesionActiva={sucursalId === null ? null : sesionActiva !== null}
       />
     </div>
   );

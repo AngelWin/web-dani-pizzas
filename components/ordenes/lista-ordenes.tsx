@@ -96,7 +96,7 @@ type Props = {
   minFecha: string | null; // YYYY-MM-DD (7 días atrás) — null = sin restricción (admin)
   niveles?: NivelMembresia[];
   mesaFiltro?: string; // UUID de mesa si se filtran por mesa
-  haySesionActiva: boolean;
+  haySesionActiva: boolean | null; // null = admin sin sucursal seleccionada
 };
 
 export function ListaOrdenes({

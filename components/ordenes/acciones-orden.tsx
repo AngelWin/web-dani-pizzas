@@ -66,7 +66,7 @@ type Props = {
   puedeCobrar: boolean;
   modeloNegocio: ModeloNegocio;
   niveles?: NivelMembresia[];
-  haySesionActiva: boolean;
+  haySesionActiva: boolean | null;
 };
 
 export function AccionesOrden({
