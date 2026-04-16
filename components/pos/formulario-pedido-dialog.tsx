@@ -315,17 +315,14 @@ export function FormularioPedidoDialog({
     return TODOS.filter((t) => todasRestricciones.every((r) => r.includes(t)));
   }, [carrito.promoItems, promociones, promocionSeleccionada]);
 
-  // Sincronizar promoción seleccionada → form (descuento)
-  // Si solo queda 1 tipo permitido, auto-seleccionar
+  // Si el tipo de pedido actual no está entre los permitidos, auto-seleccionar el primero disponible
   useEffect(() => {
-    if (tiposPedidoPermitidos.length === 1) {
-      const tp = tiposPedidoPermitidos[0] as
-        | "local"
-        | "delivery"
-        | "para_recojo";
-      if (form.getValues("tipo_pedido") !== tp) {
-        form.setValue("tipo_pedido", tp);
-      }
+    const current = form.getValues("tipo_pedido");
+    if (!tiposPedidoPermitidos.includes(current)) {
+      form.setValue(
+        "tipo_pedido",
+        tiposPedidoPermitidos[0] as "local" | "delivery" | "para_recojo",
+      );
     }
   }, [tiposPedidoPermitidos, form]);
 
