@@ -328,7 +328,10 @@ export function ListaOrdenes({
               <div className="space-y-2">
                 <label className="text-sm font-medium">Método de pago</label>
                 <Select
-                  onValueChange={setMetodoPagoMesa}
+                  onValueChange={(v) => {
+                    setMetodoPagoMesa(v);
+                    setMontoRecibidoMesa(null);
+                  }}
                   value={metodoPagoMesa}
                 >
                   <SelectTrigger className="h-11">
@@ -385,7 +388,7 @@ export function ListaOrdenes({
                   startTransitionMesa(async () => {
                     const result = await cobrarMesaAction(mesaFiltro, {
                       metodo_pago: metodoPagoMesa,
-                      monto_recibido: montoRecibidoMesa,
+                      monto_recibido: montoRecibidoMesa ?? undefined,
                       descuento_membresia: 0,
                     });
                     if (result.error) {
