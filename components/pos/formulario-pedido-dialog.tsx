@@ -291,20 +291,45 @@ export function FormularioPedidoDialog({
     }
   }, [tipoPedido, deliveryMethod, deliveryServicios, form]);
 
-  // Sincronizar promoción seleccionada → form (descuento)
-  // Si la promo restringe a 1 solo tipo de pedido, auto-seleccionar
-  useEffect(() => {
-    if (!promocionSeleccionada) return;
-    const tp = promocionSeleccionada.tipos_pedido;
-    if (tp && tp.length === 1 && form.getValues("tipo_pedido") !== tp[0]) {
-      form.setValue(
-        "tipo_pedido",
-        tp[0] as "local" | "delivery" | "para_llevar",
-      );
-    }
-  }, [promocionSeleccionada, form]);
+  // Tipos de pedido permitidos: intersección de restricciones de todas las promos activas en el carrito
+  // (combos en promoItems + promo del dropdown)
+  const tiposPedidoPermitidos = useMemo<string[]>(() => {
+    const TODOS = ["local", "delivery", "para_llevar"];
+    // Restricciones de combos en el carrito
+    const restriccionesCombo = carrito.promoItems
+      .map(
+        (pi) =>
+          promociones.find((p) => p.id === pi.promocion_id)?.tipos_pedido ??
+          null,
+      )
+      .filter((tp): tp is string[] => Array.isArray(tp) && tp.length > 0);
+    // Restricción de promo del dropdown
+    const restriccionDropdown =
+      promocionSeleccionada?.tipos_pedido &&
+      promocionSeleccionada.tipos_pedido.length > 0
+        ? [promocionSeleccionada.tipos_pedido]
+        : [];
+    const todasRestricciones = [...restriccionesCombo, ...restriccionDropdown];
+    if (todasRestricciones.length === 0) return TODOS;
+    // Intersección: solo los tipos que cumplen TODAS las promos
+    return TODOS.filter((t) => todasRestricciones.every((r) => r.includes(t)));
+  }, [carrito.promoItems, promociones, promocionSeleccionada]);
 
-  const tipoPedidoBloqueado = promocionSeleccionada?.tipos_pedido?.length === 1;
+  // Sincronizar promoción seleccionada → form (descuento)
+  // Si solo queda 1 tipo permitido, auto-seleccionar
+  useEffect(() => {
+    if (tiposPedidoPermitidos.length === 1) {
+      const tp = tiposPedidoPermitidos[0] as
+        | "local"
+        | "delivery"
+        | "para_llevar";
+      if (form.getValues("tipo_pedido") !== tp) {
+        form.setValue("tipo_pedido", tp);
+      }
+    }
+  }, [tiposPedidoPermitidos, form]);
+
+  const tipoPedidoBloqueado = tiposPedidoPermitidos.length === 1;
 
   // Items del carrito en formato para cálculo de descuento
   const itemsParaDescuento: ItemCarrito[] = carrito.items.map((i) => ({
@@ -506,23 +531,32 @@ export function FormularioPedidoDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={TIPO_PEDIDO.EN_LOCAL}>
-                        En local
-                      </SelectItem>
-                      <SelectItem value={TIPO_PEDIDO.PARA_LLEVAR}>
-                        Recojo
-                      </SelectItem>
-                      {!esMesero && (
-                        <SelectItem value={TIPO_PEDIDO.DELIVERY}>
-                          Delivery
+                      {tiposPedidoPermitidos.includes(TIPO_PEDIDO.EN_LOCAL) && (
+                        <SelectItem value={TIPO_PEDIDO.EN_LOCAL}>
+                          En local
                         </SelectItem>
                       )}
+                      {tiposPedidoPermitidos.includes(
+                        TIPO_PEDIDO.PARA_LLEVAR,
+                      ) && (
+                        <SelectItem value={TIPO_PEDIDO.PARA_LLEVAR}>
+                          Recojo
+                        </SelectItem>
+                      )}
+                      {!esMesero &&
+                        tiposPedidoPermitidos.includes(
+                          TIPO_PEDIDO.DELIVERY,
+                        ) && (
+                          <SelectItem value={TIPO_PEDIDO.DELIVERY}>
+                            Delivery
+                          </SelectItem>
+                        )}
                     </SelectContent>
                   </Select>
-                  {tipoPedidoBloqueado && (
+                  {tiposPedidoPermitidos.length < 3 && (
                     <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                      La promoción seleccionada solo aplica para este tipo de
-                      pedido
+                      Una promoción en el carrito limita los tipos de pedido
+                      disponibles
                     </p>
                   )}
                   <FormMessage />
