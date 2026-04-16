@@ -449,11 +449,24 @@ export function ComboBuilderDialog({
                   <span>Precio combo</span>
                   <span className="text-primary">
                     {formatCurrency(
-                      (promo.precio_combo ?? 0) +
-                        productosConfig.reduce(
+                      (() => {
+                        const totalExtras = productosConfig.reduce(
                           (acc, p) => acc + p.precio_extras,
                           0,
-                        ),
+                        );
+                        const precioBase = promo.precio_dinamico
+                          ? (() => {
+                              const anclaIdx = pasosCombo.findIndex(
+                                (p) => p.es_ancla,
+                              );
+                              return (
+                                productosConfig[anclaIdx >= 0 ? anclaIdx : 0]
+                                  ?.precio_unitario ?? 0
+                              );
+                            })()
+                          : (promo.precio_combo ?? 0);
+                        return precioBase + totalExtras;
+                      })(),
                     )}
                   </span>
                 </div>
