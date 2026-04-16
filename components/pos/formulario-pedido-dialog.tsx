@@ -315,8 +315,10 @@ export function FormularioPedidoDialog({
     return TODOS.filter((t) => todasRestricciones.every((r) => r.includes(t)));
   }, [carrito.promoItems, promociones, promocionSeleccionada]);
 
-  // Si el tipo de pedido actual no está entre los permitidos, auto-seleccionar el primero disponible
+  // Si el tipo de pedido actual no está entre los permitidos, auto-seleccionar el primero disponible.
+  // Depende de `open` para que también corra después del form.reset() al abrir el dialog.
   useEffect(() => {
+    if (!open) return;
     const current = form.getValues("tipo_pedido");
     if (!tiposPedidoPermitidos.includes(current)) {
       form.setValue(
@@ -324,7 +326,7 @@ export function FormularioPedidoDialog({
         tiposPedidoPermitidos[0] as "local" | "delivery" | "para_recojo",
       );
     }
-  }, [tiposPedidoPermitidos, form]);
+  }, [tiposPedidoPermitidos, form, open]);
 
   const tipoPedidoBloqueado = tiposPedidoPermitidos.length === 1;
 
