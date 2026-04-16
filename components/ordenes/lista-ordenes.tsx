@@ -10,6 +10,7 @@ import {
   Armchair,
   X,
   Banknote,
+  Printer,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,14 +28,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { InputNumerico } from "@/components/ui/input-numerico";
+import dynamic from "next/dynamic";
 import { useCurrency } from "@/hooks/use-currency";
 import { cobrarMesaAction } from "@/app/(dashboard)/ordenes/actions";
+import { buildTicketMesa } from "@/lib/printing/ticket-builder";
 import { METODO_PAGO } from "@/lib/constants";
 import { BotonLiberarMesa } from "@/components/mesas/boton-liberar-mesa";
 import { TarjetaOrden } from "./tarjeta-orden";
 import type { OrdenConItems, FiltroEstadoOrden } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { NivelMembresia } from "@/lib/services/membresias";
+
+const PrintPreviewDialog = dynamic(
+  () =>
+    import("@/components/printing/print-preview-dialog").then(
+      (mod) => mod.PrintPreviewDialog,
+    ),
+  { ssr: false },
+);
 
 type EstadoTab = FiltroEstadoOrden | "programados";
 
@@ -119,6 +130,7 @@ export function ListaOrdenes({
     null,
   );
   const [isPendingMesa, startTransitionMesa] = useTransition();
+  const [printMesaOpen, setPrintMesaOpen] = useState(false);
 
   const tabs = getTabs(modeloNegocio);
 
@@ -195,6 +207,17 @@ export function ListaOrdenes({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {ordenes.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setPrintMesaOpen(true)}
+              >
+                <Printer className="h-3.5 w-3.5" />
+                Imprimir cuenta
+              </Button>
+            )}
             {hayCobrablesEnMesa && (
               <Button
                 size="sm"
@@ -431,6 +454,26 @@ export function ListaOrdenes({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Dialog de impresión cuenta mesa */}
+      {mesaFiltro && printMesaOpen && (
+        <PrintPreviewDialog
+          lineasTicket={buildTicketMesa(
+            mesaReferencia ?? "Mesa",
+            // Si hay activas, imprimir solo activas; si no (post-cobro), imprimir entregadas
+            ordenesActivasMesa > 0
+              ? ordenes.filter(
+                  (o) => !["entregada", "cancelada"].includes(o.estado),
+                )
+              : ordenes.filter((o) => o.estado !== "cancelada"),
+            ordenes[0]?.sucursal?.nombre ?? "",
+            formatCurrency,
+          )}
+          open={printMesaOpen}
+          onOpenChange={setPrintMesaOpen}
+          titulo="Cuenta de mesa"
+        />
       )}
     </div>
   );

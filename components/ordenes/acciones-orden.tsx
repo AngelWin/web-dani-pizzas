@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
 import {
   cambiarEstadoOrdenAction,
@@ -20,12 +20,29 @@ const CancelarOrdenDialog = dynamic(
     import("./cancelar-orden-dialog").then((mod) => mod.CancelarOrdenDialog),
   { ssr: false },
 );
+
+const PrintPreviewDialog = dynamic(
+  () =>
+    import("@/components/printing/print-preview-dialog").then(
+      (mod) => mod.PrintPreviewDialog,
+    ),
+  { ssr: false },
+);
+
+const ComandaDialog = dynamic(
+  () =>
+    import("@/components/printing/comanda-dialog").then(
+      (mod) => mod.ComandaDialog,
+    ),
+  { ssr: false },
+);
 import type {
   EstadoOrden,
   EstadoDelivery,
   OrdenConItems,
 } from "@/lib/services/ordenes";
 import { useCurrency } from "@/hooks/use-currency";
+import { buildTicketOrden } from "@/lib/printing/ticket-builder";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { NivelMembresia } from "@/lib/services/membresias";
 
@@ -81,7 +98,9 @@ export function AccionesOrden({
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [cobrarOpen, setCobrarOpen] = useState(false);
   const [cancelarOpen, setCancelarOpen] = useState(false);
-  const { simbolo } = useCurrency();
+  const [printOpen, setPrintOpen] = useState(false);
+  const [comandaOpen, setComandaOpen] = useState(false);
+  const { simbolo, formatCurrency } = useCurrency();
 
   const ordenId = orden.id;
   const deliveryStatus = orden.delivery_status;
@@ -116,6 +135,10 @@ export function AccionesOrden({
         toast.error("Error al cambiar estado", { description: result.error });
       } else {
         toast.success(`Orden → ${ESTADO_LABEL[siguienteEstado]}`);
+        // Al pasar a "en_preparación", ofrecer imprimir comanda de cocina
+        if (siguienteEstado === "en_preparacion") {
+          setComandaOpen(true);
+        }
       }
       setLoadingAction(null);
     });
@@ -140,13 +163,50 @@ export function AccionesOrden({
     });
   }
 
+  const sucursalNombre = orden.sucursal?.nombre ?? "";
+
+  const lineasTicket = useMemo(
+    () => buildTicketOrden(orden, sucursalNombre, formatCurrency),
+    [orden, sucursalNombre, formatCurrency],
+  );
+
   if (esFinalizado) {
-    return <span className="text-xs text-muted-foreground">Sin acciones</span>;
+    return (
+      <>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 rounded-lg text-xs"
+          onClick={() => setPrintOpen(true)}
+        >
+          <Printer className="mr-1 h-3 w-3" />
+          Imprimir
+        </Button>
+        {printOpen && (
+          <PrintPreviewDialog
+            lineasTicket={lineasTicket}
+            open={printOpen}
+            onOpenChange={setPrintOpen}
+          />
+        )}
+      </>
+    );
   }
 
   return (
     <>
       <div className="flex flex-wrap items-center gap-1.5">
+        {/* Imprimir — visible en todos los estados */}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 rounded-lg text-xs"
+          onClick={() => setPrintOpen(true)}
+        >
+          <Printer className="mr-1 h-3 w-3" />
+          Imprimir
+        </Button>
+
         {/* Cancelar — visible directamente */}
         {puedeCancelar && (
           <Button
@@ -221,6 +281,25 @@ export function AccionesOrden({
         open={cancelarOpen}
         onOpenChange={setCancelarOpen}
       />
+
+      {/* Dialog de preview de impresión */}
+      {printOpen && (
+        <PrintPreviewDialog
+          lineasTicket={lineasTicket}
+          open={printOpen}
+          onOpenChange={setPrintOpen}
+        />
+      )}
+
+      {/* Dialog de comanda de cocina (post cambio a en_preparación) */}
+      {comandaOpen && (
+        <ComandaDialog
+          orden={orden}
+          sucursalNombre={sucursalNombre}
+          open={comandaOpen}
+          onClose={() => setComandaOpen(false)}
+        />
+      )}
     </>
   );
 }

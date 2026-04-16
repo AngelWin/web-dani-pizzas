@@ -45,6 +45,8 @@ R33 (Touch-Friendly Controls) -> post-R32
 R34 (Design Tokens) [transversal]
 R35 (Atomic Design) [transversal]
 R36 (Refinamientos Layout) [transversal, bajo riesgo]
+
+R5b/R5c (Ordenes/Cobro) + R15 (Mesas) + R20 (Cuenta Mesa) -> R40 (Impresión Térmica Bluetooth)
 ```
 
 ## Checklist Pre-Commit (Aplica a TODOS los releases)
@@ -2738,6 +2740,96 @@ Usar **Supabase Realtime (postgres_changes)** con un hook genérico `use-realtim
 - La versión `v1.0.0` se muestra en el footer del login
 - La versión `v1.0.0` se muestra al final del sidebar
 - CHANGELOG.md existe en la raíz del proyecto
+- Build pasa sin errores
+
+---
+
+## Release 40: Impresión Térmica Bluetooth — BIENEX 80mm
+
+**Estado:** [ ] Pendiente
+**Dependencias:** R5b/R5c (Ordenes/Cobro) + R15 (Mesas) + R20 (Cuenta de Mesa)
+**Objetivo:** Imprimir tickets en impresora térmica BIENEX 80mm vía Bluetooth desde Chrome/Edge. Incluye preview visual del ticket, impresión por orden individual e impresión agrupada por mesa. Compatibilidad con Web Bluetooth API y manejo de errores para navegadores sin soporte.
+
+### Fase 1: Infraestructura ESC/POS + Bluetooth
+
+- [ ] Crear `lib/printing/escpos-commands.ts` — comandos ESC/POS: INIT, CUT, FEED, ALIGN, BOLD, DOUBLE_SIZE, NORMAL_SIZE, textToBytes (Latin-1 para ñ/tildes), concatBytes, lineaDosColumnas, lineaSeparador
+- [ ] Crear `lib/printing/ticket-builder.ts` — tipo `LineaTicket` (imagen, titulo, subtitulo, separador, info, item con detalles, total_linea, texto_centrado, espacio) + funciones `buildTicketOrden()` y `buildTicketMesa()`
+- [ ] Encabezado del ticket: logo `public/images/logo-dani-pizzas.png` centrado + nombre de sucursal debajo
+- [ ] Items del ticket con mismo detalle que la orden: sabores, extras, acompañante, notas_item
+- [ ] Crear `lib/printing/ticket-to-escpos.ts` — convierte `LineaTicket[]` a `Uint8Array` para la impresora, incluyendo logo como bitmap ESC/POS
+- [ ] Crear `lib/printing/printer-storage.ts` — config de impresora en localStorage por sucursal (deviceName, autoImprimir)
+- [ ] Crear `hooks/use-printer.ts` — hook Bluetooth: estados (desconectado, conectando, conectado, imprimiendo, error, no_soportado), conectar/desconectar/imprimir, chunks de 512 bytes, reconexión automática (3 reintentos con backoff 1s), detección de soporte del navegador
+- [ ] Crear `components/providers/printer-provider.tsx` — Context Provider global con `usePrinterContext()`, montar en layout del dashboard
+
+### Fase 2: Indicador de estado + Preview
+
+- [ ] Crear `components/printing/printer-status-indicator.tsx` — icono Printer de lucide-react: verde "Conectada" + nombre dispositivo, ámbar "Desconectada", rojo "Error", gris "Navegador no compatible" (Firefox/Safari) con tooltip "Usa Chrome o Edge"
+- [ ] Integrar indicador en header/sidebar del dashboard
+- [ ] Crear `components/printing/ticket-preview.tsx` — renderiza `LineaTicket[]` como HTML: font-mono, simula papel 80mm (ancho 302px), logo como `<img>`, items con detalles indentados
+- [ ] Crear `components/printing/print-preview-dialog.tsx` — Dialog con: PrinterStatusIndicator, ScrollArea con TicketPreview, botón "Conectar impresora" (si desconectada) + botón "Imprimir" (deshabilitado si no hay impresora conectada)
+
+### Fase 3: Integración en Órdenes y POS
+
+- [ ] Modificar `components/ordenes/acciones-orden.tsx` — agregar botón Imprimir (icono Printer) visible en TODOS los estados (incluido entregada/cancelada para reimprimir), abre PrintPreviewDialog con `buildTicketOrden(orden, ...)`
+- [ ] Modificar `components/pos/orden-confirmada-dialog.tsx` — agregar botón "Imprimir ticket" junto a "Nuevo pedido", usa datos de la orden para el ticket
+- [ ] Modificar `components/ordenes/cobro-dialog.tsx` — agregar botón "Imprimir comprobante" en fase confirmación junto a "Cerrar", ticket incluye método de pago y vuelto
+
+### Fase 4: Impresión por mesa (grupo de órdenes)
+
+- [ ] Modificar `components/ordenes/lista-ordenes.tsx` — cuando `mesaFiltro` activo, agregar botón "Imprimir cuenta mesa" en header, usa `buildTicketMesa()` con órdenes activas de la mesa
+- [ ] Botón "Imprimir cuenta" visible también cuando las órdenes ya fueron cobradas (estado entregada), para reimprimir post-cobro
+- [ ] Ticket de mesa: logo + "CUENTA MESA X" + cada orden con separador, número, items y subtotal + total general
+
+### Fase 5: Comandas de cocina
+
+- [ ] Crear `buildTicketComanda()` en `ticket-builder.ts` — ticket para cocina SIN precios: número de orden grande, tipo pedido, mesa, sucursal, hora, cliente, items con sabores/extras/acompañante/notas, dirección si delivery
+- [ ] Crear `components/printing/comanda-dialog.tsx` — dialog que aparece al cambiar estado de "confirmada" → "en_preparación", con preview de comanda y botones "Omitir" / "Imprimir comanda"
+- [ ] Integrar en `acciones-orden.tsx` — al hacer click en "→ En preparación" y el cambio es exitoso, abrir ComandaDialog automáticamente
+- [ ] Primero se cambia el estado (no bloquea el flujo), después se ofrece imprimir la comanda
+- [ ] Si no hay impresora conectada, mostrar botón para conectar dentro del dialog
+
+### Fase 6: Compatibilidad de navegadores y manejo de errores
+
+- [ ] Chrome/Edge: flujo completo de Bluetooth (conectar, emparejar, imprimir)
+- [ ] Firefox: `navigator.bluetooth` no existe → estado `"no_soportado"` → indicador gris + tooltip
+- [ ] Safari: detección en runtime al fallar `requestDevice()` → toast "Safari no soporta Bluetooth. Usa Chrome o Edge"
+- [ ] Chrome iOS (usa WebKit): mismo manejo que Safari
+- [ ] Opera/Brave (Chromium): funciona igual que Chrome
+- [ ] Capturar `NotFoundError` (usuario canceló selector) → toast informativo
+- [ ] Capturar `SecurityError` (HTTP sin HTTPS) → toast "Se requiere HTTPS para Bluetooth"
+- [ ] Capturar `NetworkError` (dispositivo fuera de rango) → toast "Impresora no encontrada. Verifica que esté encendida y cerca"
+- [ ] Capturar desconexión GATT → indicador cambia a ámbar + reconexión automática
+- [ ] UI degradada: preview siempre funciona (HTML puro), solo botón "Imprimir" se deshabilita con mensaje explicativo
+
+### Archivos a crear:
+- `lib/printing/escpos-commands.ts` — comandos ESC/POS en TypeScript puro
+- `lib/printing/ticket-builder.ts` — genera `LineaTicket[]` desde OrdenConItems y grupo de mesa
+- `lib/printing/ticket-to-escpos.ts` — convierte LineaTicket[] → Uint8Array
+- `lib/printing/printer-storage.ts` — config localStorage por sucursal
+- `hooks/use-printer.ts` — hook Web Bluetooth API
+- `components/providers/printer-provider.tsx` — Context Provider global
+- `components/printing/print-preview-dialog.tsx` — Dialog preview + imprimir
+- `components/printing/ticket-preview.tsx` — renderizado HTML del ticket
+- `components/printing/printer-status-indicator.tsx` — indicador verde/ámbar/gris
+- `components/printing/comanda-dialog.tsx` — dialog de comanda de cocina post cambio a "en_preparación"
+
+### Archivos a modificar:
+- `app/(dashboard)/layout.tsx` — envolver con PrinterProvider
+- `components/ordenes/acciones-orden.tsx` — botón Imprimir en cada orden
+- `components/ordenes/lista-ordenes.tsx` — botón "Imprimir cuenta mesa"
+- `components/pos/orden-confirmada-dialog.tsx` — botón "Imprimir ticket"
+- `components/ordenes/cobro-dialog.tsx` — botón "Imprimir comprobante"
+
+### Criterio de éxito:
+- Indicador ámbar "Desconectada" visible en dashboard → click → conectar Bluetooth → indicador verde "Conectada" con nombre del dispositivo
+- Preview de orden muestra logo DANI PIZZAS + sucursal + todos los detalles (sabores, extras, acompañante, notas)
+- Sin impresora conectada → botón "Imprimir" deshabilitado, muestra "Conectar impresora"
+- Con BIENEX conectada → imprimir ticket → formato correcto 80mm, tildes/ñ, logo, corte de papel
+- Crear orden en POS → OrdenConfirmadaDialog → "Imprimir ticket" funciona
+- Cobrar orden → fase confirmación → "Imprimir comprobante" con método pago y vuelto
+- Filtrar por mesa en /ordenes → "Imprimir cuenta mesa" → preview agrupado con subtotales por orden y total general
+- En Firefox/Safari → indicador gris "Navegador no compatible" → preview funciona → imprimir deshabilitado con tooltip
+- Multi-sucursal: cambiar sucursal → config de impresora independiente por sucursal
 - Build pasa sin errores
 
 ---

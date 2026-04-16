@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import {
   Dialog,
   DialogContent,
@@ -8,14 +10,24 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Printer } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
+import { buildTicketOrdenResumen } from "@/lib/printing/ticket-builder";
 import type { Orden } from "@/lib/services/ordenes";
+
+const PrintPreviewDialog = dynamic(
+  () =>
+    import("@/components/printing/print-preview-dialog").then(
+      (mod) => mod.PrintPreviewDialog,
+    ),
+  { ssr: false },
+);
 
 type Props = {
   orden: Orden | null;
   open: boolean;
   onNuevoPedido: () => void;
+  sucursalNombre?: string;
 };
 
 import { TIPO_PEDIDO_LABELS } from "@/lib/constants";
@@ -29,8 +41,23 @@ const TIPO_PEDIDO_COLOR: Record<
   delivery: "destructive",
 };
 
-export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
+export function OrdenConfirmadaDialog({
+  orden,
+  open,
+  onNuevoPedido,
+  sucursalNombre = "",
+}: Props) {
   const { formatCurrency } = useCurrency();
+  const [printOpen, setPrintOpen] = useState(false);
+
+  const lineasTicket = useMemo(
+    () =>
+      orden
+        ? buildTicketOrdenResumen(orden, sucursalNombre, formatCurrency)
+        : [],
+    [orden, sucursalNombre, formatCurrency],
+  );
+
   if (!orden) return null;
 
   const esDelivery = orden.tipo_pedido === "delivery";
@@ -119,9 +146,30 @@ export function OrdenConfirmadaDialog({ orden, open, onNuevoPedido }: Props) {
           </p>
         </div>
 
-        <Button className="w-full h-12 text-base" onClick={onNuevoPedido}>
-          Nuevo pedido
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="h-12 flex-1 rounded-xl"
+            onClick={() => setPrintOpen(true)}
+          >
+            <Printer className="mr-1.5 h-4 w-4" />
+            Imprimir
+          </Button>
+          <Button
+            className="h-12 flex-1 rounded-xl text-base"
+            onClick={onNuevoPedido}
+          >
+            Nuevo pedido
+          </Button>
+        </div>
+
+        {printOpen && (
+          <PrintPreviewDialog
+            lineasTicket={lineasTicket}
+            open={printOpen}
+            onOpenChange={setPrintOpen}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

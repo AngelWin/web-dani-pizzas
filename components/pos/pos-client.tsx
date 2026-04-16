@@ -285,6 +285,9 @@ export function PosClient({
         orden={ordenConfirmada}
         open={ordenConfirmada !== null}
         onNuevoPedido={handleNuevoPedido}
+        sucursalNombre={
+          sucursales.find((s) => s.id === sucursalId)?.nombre ?? ""
+        }
       />
 
       {/* Dialog de combo builder */}

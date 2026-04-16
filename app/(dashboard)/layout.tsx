@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { CurrencyProvider } from "@/components/providers/currency-provider";
+import { PrinterProvider } from "@/components/providers/printer-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -57,15 +58,17 @@ export default async function DashboardLayout({
         initialSucursal={sucursal}
         initialRoleName={roleName}
       >
-        <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar version={version} />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <AppHeader />
-              <main className="flex-1 p-4 md:p-6">{children}</main>
-            </div>
-          </SidebarProvider>
-        </TooltipProvider>
+        <PrinterProvider sucursalId={profile?.sucursal_id ?? "default"}>
+          <TooltipProvider>
+            <SidebarProvider>
+              <AppSidebar version={version} />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <AppHeader />
+                <main className="flex-1 p-4 md:p-6">{children}</main>
+              </div>
+            </SidebarProvider>
+          </TooltipProvider>
+        </PrinterProvider>
       </AuthProvider>
     </CurrencyProvider>
   );
