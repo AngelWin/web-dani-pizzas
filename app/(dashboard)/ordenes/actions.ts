@@ -227,15 +227,32 @@ export async function cobrarMesaAction(
       ? (["en_preparacion", "lista"] as const)
       : (["lista"] as const);
 
+  // Filtrar órdenes de las últimas 36 horas para no arrastrar órdenes de días
+  // anteriores que puedan quedar atascadas en estado cobrable
+  const hace36h = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString();
+
   const { data: ordenesMesa, error: queryError } = await supabase
     .from("ordenes")
     .select("*, orden_items(*)")
     .eq("mesa_id", mesaId)
-    .in("estado", estadosCobrablesMesa);
+    .in("estado", estadosCobrablesMesa)
+    .gte("created_at", hace36h);
 
   if (queryError) return { data: null, error: queryError.message };
   if (!ordenesMesa || ordenesMesa.length === 0)
     return { data: null, error: "No hay órdenes cobrables en esta mesa" };
+
+  const totalOrdenesMesa = ordenesMesa.reduce((acc, o) => acc + o.total, 0);
+
+  if (
+    parsed.data.metodo_pago === "efectivo" &&
+    (parsed.data.monto_recibido ?? 0) < totalOrdenesMesa
+  ) {
+    return {
+      data: null,
+      error: `El monto recibido es menor al total de la mesa (${totalOrdenesMesa.toFixed(2)})`,
+    };
+  }
 
   let cobradas = 0;
   let totalCobrado = 0;
@@ -243,18 +260,6 @@ export async function cobrarMesaAction(
   try {
     for (const orden of ordenesMesa) {
       const totalOrden = orden.total;
-
-      if (
-        parsed.data.metodo_pago === "efectivo" &&
-        cobradas === 0 &&
-        (parsed.data.monto_recibido ?? 0) <
-          ordenesMesa.reduce((acc, o) => acc + o.total, 0)
-      ) {
-        return {
-          data: null,
-          error: "El monto recibido es menor al total de la mesa",
-        };
-      }
 
       await cobrarOrden({
         orden_id: orden.id,
