@@ -521,7 +521,7 @@ export function FormularioPedidoDialog({
                   <FormLabel>Tipo de pedido</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                     disabled={tipoPedidoBloqueado}
                   >
                     <FormControl>
