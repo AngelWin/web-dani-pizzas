@@ -8,6 +8,7 @@ import {
   cancelarOrdenConMotivo,
   cancelarOrdenesAntiguasSucursal,
   cancelarTodasOrdenesActivasSucursal,
+  contarOrdenesActivasSucursal,
   type EstadoOrden,
   type EstadoDelivery,
 } from "@/lib/services/ordenes";
@@ -489,6 +490,44 @@ export async function cancelarOrdenesAlCerrarCaja(): Promise<
         err instanceof Error
           ? err.message
           : "Error al cancelar órdenes al cerrar caja",
+    };
+  }
+}
+
+/**
+ * Retorna el número de órdenes activas de la sucursal del usuario autenticado.
+ * Se llama al abrir el dialog de cierre de caja para mostrar advertencia preventiva.
+ */
+export async function contarOrdenesActivasAction(): Promise<
+  ActionResult<{ count: number }>
+> {
+  const supabase = await createClient();
+
+  const [
+    { data: rolNombre },
+    { data: sucursalId },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!sucursalId) return { data: null, error: "Sin sucursal asignada" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos" };
+  }
+
+  try {
+    const count = await contarOrdenesActivasSucursal(sucursalId);
+    return { data: { count }, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Error al contar órdenes",
     };
   }
 }

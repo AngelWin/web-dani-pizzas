@@ -2639,12 +2639,15 @@ El botón "Cobrar mesa" se mostraba si había cualquier orden activa, incluyendo
 **Problema 2 — Auto-cancel en lugar equivocado:**
 El auto-cancel en `abrir-caja-dialog` era incorrecto porque un mesero puede crear órdenes antes de que el cajero abra la caja. Esas órdenes activas serían canceladas por error. Se movió el cleanup al `cerrar-caja-dialog`: al **cerrar caja** se cancelan TODAS las órdenes activas de la sucursal (no solo las de días anteriores) para dejar un estado limpio al inicio del próximo turno.
 
+**Problema 3 — Sin advertencia previa al cerrar caja con órdenes activas:**
+Al abrir el dialog de cierre, se consulta automáticamente el número de órdenes activas. Si hay alguna, se muestra un banner ámbar antes del formulario: *"Hay X órdenes activas sin cobrar. Al cerrar la caja se cancelarán automáticamente y sus mesas quedarán libres."* El cajero puede decidir si va a procesarlas primero o cierra de todas formas.
+
 Archivos adicionales modificados en R38.1:
 - `components/ordenes/lista-ordenes.tsx` — botón "Cobrar mesa" condicionado a `hayCobrablesEnMesa`
-- `lib/services/ordenes.ts` — nueva función `cancelarTodasOrdenesActivasSucursal()`
-- `app/(dashboard)/ordenes/actions.ts` — nueva action `cancelarOrdenesAlCerrarCaja()`
+- `lib/services/ordenes.ts` — funciones `cancelarTodasOrdenesActivasSucursal()` y `contarOrdenesActivasSucursal()`
+- `app/(dashboard)/ordenes/actions.ts` — actions `cancelarOrdenesAlCerrarCaja()` y `contarOrdenesActivasAction()`
 - `components/caja/abrir-caja-dialog.tsx` — quitado el cleanup de apertura
-- `components/caja/cerrar-caja-dialog.tsx` — agregado cleanup al cerrar con toast informativo
+- `components/caja/cerrar-caja-dialog.tsx` — advertencia preventiva de órdenes activas + cleanup al cerrar con toast informativo
 
 ### Criterio de éxito:
 - "Cobrar mesa" solo aparece si hay órdenes en `en_preparacion` o `lista`

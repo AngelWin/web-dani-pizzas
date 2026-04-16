@@ -346,6 +346,25 @@ export async function crearOrden(data: CrearOrdenData): Promise<Orden> {
 }
 
 /**
+ * Retorna el número de órdenes activas (no entregadas, no canceladas) de una sucursal.
+ * Usado para mostrar advertencia antes de cerrar la sesión de caja.
+ */
+export async function contarOrdenesActivasSucursal(
+  sucursalId: string,
+): Promise<number> {
+  const supabase = await createClient();
+
+  const { count, error } = await supabase
+    .from("ordenes")
+    .select("id", { count: "exact", head: true })
+    .eq("sucursal_id", sucursalId)
+    .not("estado", "in", '("entregada","cancelada")');
+
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+/**
  * Cancela TODAS las órdenes activas (no entregadas, no canceladas) de una sucursal,
  * sin importar la fecha. Libera las mesas asociadas si corresponde.
  * Se ejecuta al cerrar la sesión de caja para limpiar el estado al final del turno.
