@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { InputNumerico } from "@/components/ui/input-numerico";
 import { cerrarSesionAction } from "@/actions/caja-sesiones";
+import { cancelarOrdenesAlCerrarCaja } from "@/app/(dashboard)/ordenes/actions";
 import { useCurrency } from "@/hooks/use-currency";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -80,6 +81,15 @@ export function CerrarCajaDialog({
       }
 
       toast.success("Caja cerrada correctamente");
+
+      // Cancelar órdenes activas pendientes y liberar sus mesas
+      const limpieza = await cancelarOrdenesAlCerrarCaja();
+      if (!limpieza.error && (limpieza.data?.canceladas ?? 0) > 0) {
+        toast.info(
+          `Se cancelaron ${limpieza.data!.canceladas} orden${limpieza.data!.canceladas === 1 ? "" : "es"} activas y se liberaron sus mesas.`,
+        );
+      }
+
       form.reset();
       onSuccess();
     } finally {

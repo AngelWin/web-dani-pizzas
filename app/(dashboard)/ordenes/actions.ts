@@ -7,6 +7,7 @@ import {
   actualizarEstadoDelivery,
   cancelarOrdenConMotivo,
   cancelarOrdenesAntiguasSucursal,
+  cancelarTodasOrdenesActivasSucursal,
   type EstadoOrden,
   type EstadoDelivery,
 } from "@/lib/services/ordenes";
@@ -445,6 +446,49 @@ export async function cancelarOrdenesAntiguas(): Promise<
         err instanceof Error
           ? err.message
           : "Error al cancelar órdenes antiguas",
+    };
+  }
+}
+
+/**
+ * Cancela TODAS las órdenes activas de la sucursal del usuario autenticado
+ * y libera sus mesas. Se llama al cerrar la sesión de caja para dejar
+ * un estado limpio al inicio del próximo turno.
+ */
+export async function cancelarOrdenesAlCerrarCaja(): Promise<
+  ActionResult<{ canceladas: number }>
+> {
+  const supabase = await createClient();
+
+  const [
+    { data: rolNombre },
+    { data: sucursalId },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.rpc("get_user_role"),
+    supabase.rpc("get_user_sucursal"),
+    supabase.auth.getUser(),
+  ]);
+
+  if (!user) return { data: null, error: "No autenticado" };
+  if (!sucursalId) return { data: null, error: "Sin sucursal asignada" };
+  if (!["administrador", "cajero"].includes(rolNombre ?? "")) {
+    return { data: null, error: "Sin permisos" };
+  }
+
+  try {
+    const canceladas = await cancelarTodasOrdenesActivasSucursal(sucursalId);
+    if (canceladas > 0) revalidatePath("/ordenes");
+    return { data: { canceladas }, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error al cancelar órdenes al cerrar caja",
     };
   }
 }

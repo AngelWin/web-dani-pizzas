@@ -123,15 +123,22 @@ export function ListaOrdenes({
   const tabs = getTabs(modeloNegocio);
 
   // Cuenta de mesa: total acumulado de órdenes activas
+  const ordenesActivasMesa = mesaFiltro
+    ? ordenes.filter((o) => !["entregada", "cancelada"].includes(o.estado))
+        .length
+    : 0;
   const totalMesa = mesaFiltro
     ? ordenes
         .filter((o) => !["entregada", "cancelada"].includes(o.estado))
         .reduce((acc, o) => acc + o.total, 0)
     : 0;
-  const ordenesActivasMesa = mesaFiltro
-    ? ordenes.filter((o) => !["entregada", "cancelada"].includes(o.estado))
-        .length
-    : 0;
+
+  // "Cobrar mesa" solo si hay al menos una orden en estado cobrable
+  const estadosCobrables =
+    modeloNegocio === "simple" ? ["en_preparacion", "lista"] : ["lista"];
+  const hayCobrablesEnMesa = mesaFiltro
+    ? ordenes.some((o) => estadosCobrables.includes(o.estado))
+    : false;
   const mesaReferencia = mesaFiltro
     ? ordenes.find((o) => o.mesa_referencia)?.mesa_referencia
     : null;
@@ -183,7 +190,7 @@ export function ListaOrdenes({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {ordenesActivasMesa > 0 && (
+            {hayCobrablesEnMesa && (
               <Button
                 size="sm"
                 className="h-8 gap-1.5 text-xs"

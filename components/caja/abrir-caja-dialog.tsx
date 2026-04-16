@@ -23,7 +23,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { InputNumerico } from "@/components/ui/input-numerico";
 import { abrirSesionAction } from "@/actions/caja-sesiones";
-import { cancelarOrdenesAntiguas } from "@/app/(dashboard)/ordenes/actions";
 import { useCurrency } from "@/hooks/use-currency";
 import { Vault } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -68,15 +67,6 @@ export function AbrirCajaDialog({ open, sucursalId, onSuccess }: Props) {
       }
 
       toast.success("Caja abierta correctamente");
-
-      // Cancelar órdenes de días anteriores para liberar mesas atascadas
-      const limpieza = await cancelarOrdenesAntiguas();
-      if (!limpieza.error && (limpieza.data?.canceladas ?? 0) > 0) {
-        toast.info(
-          `Se cancelaron ${limpieza.data!.canceladas} orden${limpieza.data!.canceladas === 1 ? "" : "es"} de días anteriores y se liberaron sus mesas.`,
-        );
-      }
-
       form.reset();
       onSuccess();
     } finally {

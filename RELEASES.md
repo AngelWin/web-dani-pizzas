@@ -2631,10 +2631,26 @@ Adicionalmente se detectó un bug: `cambiarEstadoOrdenAction` (cambio de estado 
 - [x] Action: `cancelarOrdenesAntiguas()` con auth + rol en `app/(dashboard)/ordenes/actions.ts`
 - [x] UI: `abrir-caja-dialog.tsx` ejecuta limpieza y muestra toast si hubo cancelaciones
 
+### Correcciones post-implementación (R38.1):
+
+**Problema 1 — "Cobrar mesa" aparecía con órdenes no cobrables:**
+El botón "Cobrar mesa" se mostraba si había cualquier orden activa, incluyendo `confirmada`. Se corrigió: el botón solo aparece cuando hay al menos una orden en estado cobrable (`en_preparacion` o `lista` en modelo simple; solo `lista` en cocina independiente).
+
+**Problema 2 — Auto-cancel en lugar equivocado:**
+El auto-cancel en `abrir-caja-dialog` era incorrecto porque un mesero puede crear órdenes antes de que el cajero abra la caja. Esas órdenes activas serían canceladas por error. Se movió el cleanup al `cerrar-caja-dialog`: al **cerrar caja** se cancelan TODAS las órdenes activas de la sucursal (no solo las de días anteriores) para dejar un estado limpio al inicio del próximo turno.
+
+Archivos adicionales modificados en R38.1:
+- `components/ordenes/lista-ordenes.tsx` — botón "Cobrar mesa" condicionado a `hayCobrablesEnMesa`
+- `lib/services/ordenes.ts` — nueva función `cancelarTodasOrdenesActivasSucursal()`
+- `app/(dashboard)/ordenes/actions.ts` — nueva action `cancelarOrdenesAlCerrarCaja()`
+- `components/caja/abrir-caja-dialog.tsx` — quitado el cleanup de apertura
+- `components/caja/cerrar-caja-dialog.tsx` — agregado cleanup al cerrar con toast informativo
+
 ### Criterio de éxito:
-- Al abrir caja, si hay órdenes de días anteriores activas, se cancelan automáticamente
-- Las mesas de esas órdenes se liberan (vuelven a "libre")
-- Si no hay órdenes antiguas, la apertura de caja es transparente (sin toast extra)
+- "Cobrar mesa" solo aparece si hay órdenes en `en_preparacion` o `lista`
+- Abrir caja NO cancela nada (órdenes del mesero están a salvo)
+- Al cerrar caja, las órdenes activas pendientes se cancelan y sus mesas se liberan
+- Toast informativo si se cancelaron órdenes al cerrar
 - Marcar una orden como "entregada" manualmente desde `/ordenes` libera la mesa correctamente
 - Si hay 2 órdenes en una mesa y se entrega 1, la mesa no se libera hasta que se entregue la 2da
 - Build pasa sin errores
