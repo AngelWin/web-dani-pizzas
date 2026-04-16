@@ -95,9 +95,9 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
                 </div>
                 <button
                   onClick={() => carrito.eliminarItem(item.key)}
-                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                  className="text-muted-foreground hover:text-destructive transition-colors h-10 w-10 flex items-center justify-center rounded-lg shrink-0"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex items-center justify-between">
@@ -106,25 +106,25 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
                   <Button
                     size="icon"
                     variant="outline"
-                    className="h-7 w-7"
+                    className="h-10 w-10"
                     onClick={() =>
                       carrito.cambiarCantidad(item.key, item.cantidad - 1)
                     }
                   >
-                    <Minus className="h-3 w-3" />
+                    <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="w-6 text-center text-sm font-medium">
+                  <span className="w-7 text-center text-sm font-medium">
                     {item.cantidad}
                   </span>
                   <Button
                     size="icon"
                     variant="outline"
-                    className="h-7 w-7"
+                    className="h-10 w-10"
                     onClick={() =>
                       carrito.cambiarCantidad(item.key, item.cantidad + 1)
                     }
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
                 {item.descuento_unitario > 0 ? (
@@ -162,9 +162,9 @@ export function Carrito({ carrito, deliveryFee = 0, onConfirmar }: Props) {
               </div>
               <button
                 onClick={() => carrito.eliminarPromo(promo.key)}
-                className="text-muted-foreground hover:text-destructive transition-colors p-1 shrink-0"
+                className="text-muted-foreground hover:text-destructive transition-colors h-10 w-10 flex items-center justify-center rounded-lg shrink-0"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
 

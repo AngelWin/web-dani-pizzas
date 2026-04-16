@@ -2128,7 +2128,7 @@ Presentes en `reportes.ts`, `ordenes.ts`, `clientes.ts`, `ventas.ts`. Indican di
 
 ## Release 32: UI Crítico — Touch Targets del Carrito y Tablas sin Scroll
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Release 5a (POS), Release 4 (Productos), Release 11 (Usuarios)
 **Prioridad:** 🔴 CRÍTICO — afecta operación diaria en dispositivo táctil
 **Objetivo:** Corregir los dos problemas críticos de usabilidad detectados en auditoría: los botones del carrito son demasiado pequeños para operar con los dedos (28px vs mínimo 44px), y las tablas de productos/usuarios no tienen scroll horizontal en móvil.
@@ -2174,10 +2174,10 @@ Presentes en `reportes.ts`, `ordenes.ts`, `clientes.ts`, `ventas.ts`. Indican di
 - `components/usuarios/usuarios-tabla.tsx` — wrapper con overflow-x-auto
 
 ### Commits esperados:
-- [ ] Aumentar botones +/- del carrito a `h-10 w-10` (de `h-7 w-7`)
-- [ ] Aumentar botón eliminar item del carrito a `h-10 w-10` (de `p-1`)
-- [ ] Agregar `overflow-x-auto` + `min-w-[640px]` en tabla de productos
-- [ ] Agregar `overflow-x-auto` + `min-w-[640px]` en tabla de usuarios
+- [x] Aumentar botones +/- del carrito a `h-10 w-10` (de `h-7 w-7`)
+- [x] Aumentar botón eliminar item del carrito a `h-10 w-10` (de `p-1`)
+- [x] Agregar `overflow-x-auto` + `min-w-[640px]` en tabla de productos
+- [x] Agregar `overflow-x-auto` + `min-w-[640px]` en tabla de usuarios
 
 ### Criterio de éxito:
 - En tablet (768px), los botones del carrito se pueden tocar sin error en el primer intento

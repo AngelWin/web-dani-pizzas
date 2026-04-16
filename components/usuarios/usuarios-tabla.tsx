@@ -113,8 +113,8 @@ export function UsuariosTabla({
       </div>
 
       {/* Tabla */}
-      <div className="rounded-xl border border-border shadow-[0_4px_12px_rgba(0,0,0,0.08)] overflow-hidden">
-        <Table>
+      <div className="rounded-xl border border-border shadow-[0_4px_12px_rgba(0,0,0,0.08)] overflow-x-auto">
+        <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>

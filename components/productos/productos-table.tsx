@@ -141,8 +141,8 @@ export function ProductosTable({
 
   return (
     <>
-      <div className="rounded-xl border">
-        <Table>
+      <div className="rounded-xl border overflow-x-auto">
+        <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
