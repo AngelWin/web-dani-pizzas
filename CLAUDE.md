@@ -124,6 +124,74 @@ Usar `lucide-react` para todos los iconos.
 - Formularios con `react-hook-form` + `zod` para validación
 - Todos los textos de UI en español
 
+## Estrategia de Despliegue: Git + Supabase
+
+### Ambientes
+
+| Git Branch | Supabase | Vercel | Uso |
+|------------|----------|--------|-----|
+| `develop` | DB-DANI-PIZZAS-QA (`vqezmbpyajoapybykhue`) | Preview | Desarrollo y pruebas |
+| `main` | DB-DANI-PIZZAS (`tdmpzdssbxewbuosldof`) | Production | Producción real |
+
+### Regla de oro
+
+> **Nunca aplicar una migración directamente a PROD sin haberla probado antes en QA.**
+
+Todo cambio de base de datos viaja primero a QA. PROD solo recibe lo que ya fue validado.
+
+### Flujo completo de un PR develop → main
+
+Cuando el usuario pide hacer un PR de `develop` a `main`, seguir este proceso **siempre**:
+
+#### 1. Comparar migraciones pendientes
+
+Usar `mcp__supabase__list_migrations` en ambas bases y determinar qué migraciones están en QA pero no en PROD:
+
+```
+QA migrations  → [A, B, C, D, E]
+PROD migrations→ [A, B, C]
+Pendientes     → [D, E]  ← aplicar a PROD
+```
+
+#### 2. Aplicar migraciones pendientes a PROD
+
+Usar `mcp__supabase__apply_migration` con `project_id: tdmpzdssbxewbuosldof` para cada migración pendiente, en el mismo orden en que aparecen en QA.
+
+#### 3. Verificar que PROD quedó sincronizado
+
+Volver a comparar las listas — deben tener los mismos nombres de migración al final.
+
+#### 4. Crear el PR en GitHub
+
+```bash
+git push origin develop
+gh pr create --base main --head develop \
+  --title "..." \
+  --body "..."
+```
+
+#### Checklist de PR (siempre verificar antes de crear)
+
+- [ ] `npm run build` pasa sin errores en `develop`
+- [ ] Migraciones pendientes aplicadas a PROD
+- [ ] Listas de migraciones QA y PROD sincronizadas
+- [ ] CHANGELOG.md actualizado con la nueva versión
+- [ ] RELEASES.md con tareas marcadas como `[x]`
+
+### Convención para nombrar migraciones
+
+Usar nombres descriptivos con prefijo de release cuando aplique:
+
+```
+r39_realtime_replica_identity       ← feature de un release
+fix_rls_mesas_cajero_update         ← corrección de bug
+add_columna_xxx_a_tabla_yyy         ← cambio estructural
+```
+
+### Lo que NO usar
+
+**Supabase Branching nativo** requiere plan Pro (~$25/mes por branch). Esta estrategia manual es equivalente y gratuita.
+
 ## Variables de Entorno
 
 Ver `.env.example` en la raíz del proyecto.
