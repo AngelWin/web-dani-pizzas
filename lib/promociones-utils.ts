@@ -3,6 +3,7 @@
 import type { TipoPromocion } from "@/lib/constants";
 
 export type PromocionBase = {
+  id?: string;
   nombre?: string;
   activa: boolean | null;
   fecha_inicio: string;

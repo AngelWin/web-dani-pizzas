@@ -43,6 +43,7 @@ export type ItemCarrito = {
   // Descuento automático por promo
   descuento_unitario: number; // descuento por unidad (solo sobre precio_base)
   precio_con_promo: number | null; // precio_base - descuento (null si no hay promo)
+  promo_id: string | null; // id de la promo aplicada
   promo_nombre: string | null; // nombre de la promo aplicada
   promo_etiqueta: string | null; // ej: "-10%", "PROMO"
   // Solo para pizzas con sabores:
@@ -163,6 +164,7 @@ export function useCarrito() {
             subtotal: precioEfectivo,
             descuento_unitario: descuentoUnitario,
             precio_con_promo: precioConPromo,
+            promo_id: promoDetectada?.promo.id ?? null,
             promo_nombre: promoDetectada?.promo.nombre ?? null,
             promo_etiqueta: promoDetectada?.etiqueta ?? null,
           },
@@ -239,6 +241,7 @@ export function useCarrito() {
           subtotal: precioEfectivo,
           descuento_unitario: descuentoUnitario,
           precio_con_promo: precioBaseConPromo,
+          promo_id: promoDetectada?.promo.id ?? null,
           promo_nombre: promoDetectada?.promo.nombre ?? null,
           promo_etiqueta: promoDetectada?.etiqueta ?? null,
           sabores: saboresConProporcion,

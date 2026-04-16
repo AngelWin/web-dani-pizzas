@@ -292,7 +292,7 @@ export function FormularioPedidoDialog({
   }, [tipoPedido, deliveryMethod, deliveryServicios, form]);
 
   // Tipos de pedido permitidos: intersección de restricciones de todas las promos activas en el carrito
-  // (combos en promoItems + promo del dropdown)
+  // (combos en promoItems + items con descuento automático + promo del dropdown)
   const tiposPedidoPermitidos = useMemo<string[]>(() => {
     const TODOS = ["local", "delivery", "para_recojo"];
     // Restricciones de combos en el carrito
@@ -303,17 +303,29 @@ export function FormularioPedidoDialog({
           null,
       )
       .filter((tp): tp is string[] => Array.isArray(tp) && tp.length > 0);
+    // Restricciones de items con descuento automático (descuento_porcentaje / descuento_fijo)
+    const restriccionesAuto = carrito.items
+      .filter((i) => i.promo_id !== null)
+      .map(
+        (i) =>
+          promociones.find((p) => p.id === i.promo_id)?.tipos_pedido ?? null,
+      )
+      .filter((tp): tp is string[] => Array.isArray(tp) && tp.length > 0);
     // Restricción de promo del dropdown
     const restriccionDropdown =
       promocionSeleccionada?.tipos_pedido &&
       promocionSeleccionada.tipos_pedido.length > 0
         ? [promocionSeleccionada.tipos_pedido]
         : [];
-    const todasRestricciones = [...restriccionesCombo, ...restriccionDropdown];
+    const todasRestricciones = [
+      ...restriccionesCombo,
+      ...restriccionesAuto,
+      ...restriccionDropdown,
+    ];
     if (todasRestricciones.length === 0) return TODOS;
     // Intersección: solo los tipos que cumplen TODAS las promos
     return TODOS.filter((t) => todasRestricciones.every((r) => r.includes(t)));
-  }, [carrito.promoItems, promociones, promocionSeleccionada]);
+  }, [carrito.promoItems, carrito.items, promociones, promocionSeleccionada]);
 
   // Si el tipo de pedido actual no está entre los permitidos, auto-seleccionar el primero disponible.
   // Depende de `open` para que también corra después del form.reset() al abrir el dialog.
