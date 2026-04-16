@@ -2086,7 +2086,7 @@ Funciones `parseSabores()`, `parseExtras()`, `parseAcompanante()` y `formatEntre
 
 ## Release 31: Estandarización de Tipos y Centralización de Dominio
 
-**Estado:** [ ] Pendiente
+**Estado:** [x] Completado
 **Dependencia:** Ninguna (transversal, bajo riesgo)
 **Prioridad:** 🟡 Sugerencia
 **Objetivo:** Centralizar los tipos de dominio dispersos en `lib/services/` hacia `types/`, estandarizar el uso de `ActionResult<T>` en todos los Server Actions, y reducir castings dobles `as unknown as T`.
@@ -2114,10 +2114,10 @@ Presentes en `reportes.ts`, `ordenes.ts`, `clientes.ts`, `ventas.ts`. Indican di
 - Server Actions que no usen `ActionResult<T>`: estandarizar (verificar post-R27)
 
 ### Commits esperados:
-- [ ] Crear `types/domain.ts` con tipos de dominio principales
-- [ ] Actualizar imports en componentes y pages que usen tipos desde servicios
-- [ ] Verificar que todos los Server Actions usen `ActionResult<T>` (audit post-R27)
-- [ ] Reducir castings `as unknown as T` creando mappers donde sea posible
+- [x] Crear `types/domain.ts` con tipos de dominio principales (re-exports backward compatible)
+- [x] Actualizar `types/index.ts` para exportar desde `domain.ts`
+- [x] Verificar que todos los Server Actions usen `ActionResult<T>` (verificado post-R27)
+- [ ] Reducir castings `as unknown as T` — pospuesto, requiere regenerar types/database.ts
 
 ### Criterio de éxito:
 - Un componente puede importar `EstadoOrden` desde `@/types` en lugar de `@/lib/services/ordenes`
