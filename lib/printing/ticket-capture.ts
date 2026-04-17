@@ -2,8 +2,8 @@
  * Captura el contenido HTML del ticket preview como imagen PNG y lo descarga.
  * Nombre descriptivo: Ticket-{sucursal}-Orden{numero}-{fecha}.png
  *
- * Temporalmente expande los contenedores padres (ScrollArea, Dialog)
- * para capturar el ticket completo sin cortes, y luego los restaura.
+ * El elemento a capturar debe estar en un contenedor sin restricciones de overflow
+ * (ej: posición fija fuera del viewport). Esto garantiza captura completa sin recortes.
  */
 
 import { toPng } from "html-to-image";
@@ -35,49 +35,6 @@ function getFechaCompacta(): string {
   return `${dia}${mes}${anio}-${hora}${min}`;
 }
 
-/**
- * Busca contenedores padres que puedan recortar el elemento
- * (ScrollArea viewport, elementos con overflow hidden/auto/scroll)
- * y los expande temporalmente. Retorna función para restaurar.
- */
-function expandirPadres(elemento: HTMLElement): () => void {
-  const restaurar: Array<{
-    el: HTMLElement;
-    overflow: string;
-    maxHeight: string;
-    height: string;
-  }> = [];
-
-  let parent = elemento.parentElement;
-  while (parent && parent !== document.body) {
-    const computed = getComputedStyle(parent);
-    if (
-      computed.overflow !== "visible" ||
-      computed.overflowX !== "visible" ||
-      computed.overflowY !== "visible"
-    ) {
-      restaurar.push({
-        el: parent,
-        overflow: parent.style.overflow,
-        maxHeight: parent.style.maxHeight,
-        height: parent.style.height,
-      });
-      parent.style.overflow = "visible";
-      parent.style.maxHeight = "none";
-      parent.style.height = "auto";
-    }
-    parent = parent.parentElement;
-  }
-
-  return () => {
-    for (const item of restaurar) {
-      item.el.style.overflow = item.overflow;
-      item.el.style.maxHeight = item.maxHeight;
-      item.el.style.height = item.height;
-    }
-  };
-}
-
 export async function descargarTicketComoImagen({
   elemento,
   sucursal,
@@ -88,25 +45,22 @@ export async function descargarTicketComoImagen({
   const fecha = getFechaCompacta();
   const nombreArchivo = `Ticket-${sucursalSlug}-${referenciaSlug}-${fecha}.png`;
 
-  // Expandir contenedores padres temporalmente
-  const restaurar = expandirPadres(elemento);
+  // Esperar dos frames para que el navegador termine de renderizar
+  await new Promise((r) => requestAnimationFrame(r));
+  await new Promise((r) => requestAnimationFrame(r));
 
-  try {
-    // Esperar un frame para que el navegador re-renderice
-    await new Promise((r) => requestAnimationFrame(r));
+  // Usar scrollWidth/scrollHeight para capturar el contenido completo
+  // aunque el contenedor visible sea más pequeño
+  const dataUrl = await toPng(elemento, {
+    backgroundColor: "#ffffff",
+    pixelRatio: 2,
+    cacheBust: true,
+    width: elemento.scrollWidth,
+    height: elemento.scrollHeight,
+  });
 
-    const dataUrl = await toPng(elemento, {
-      backgroundColor: "#ffffff",
-      pixelRatio: 2,
-      cacheBust: true,
-    });
-
-    const link = document.createElement("a");
-    link.download = nombreArchivo;
-    link.href = dataUrl;
-    link.click();
-  } finally {
-    // Restaurar estilos originales
-    restaurar();
-  }
+  const link = document.createElement("a");
+  link.download = nombreArchivo;
+  link.href = dataUrl;
+  link.click();
 }

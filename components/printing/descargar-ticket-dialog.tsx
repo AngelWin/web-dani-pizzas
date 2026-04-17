@@ -32,15 +32,20 @@ export function DescargarTicketDialog({
   titulo = "Descargar ticket",
 }: Props) {
   const [descargando, setDescargando] = useState(false);
-  const ticketRef = useRef<HTMLDivElement>(null);
+  /**
+   * captureRef apunta a un TicketPreview oculto fuera del viewport,
+   * sin ningún padre que restrinja overflow. Esto garantiza que
+   * html-to-image captura el ticket completo sin recortes.
+   */
+  const captureRef = useRef<HTMLDivElement>(null);
 
   async function handleDescargar() {
-    if (!ticketRef.current) return;
+    if (!captureRef.current) return;
 
     setDescargando(true);
     try {
       await descargarTicketComoImagen({
-        elemento: ticketRef.current,
+        elemento: captureRef.current,
         sucursal: sucursalNombre,
         referencia,
       });
@@ -53,30 +58,53 @@ export function DescargarTicketDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-base">{titulo}</DialogTitle>
-        </DialogHeader>
+    <>
+      {/*
+       * Elemento oculto fuera del viewport para captura limpia.
+       * - position: fixed + left: -9999px → fuera de la pantalla
+       * - width: 302px explícito → ancho del papel térmico 80mm
+       * - Sin ningún padre con overflow hidden → captura sin recortes
+       * - React lo renderiza normalmente → Next/Image carga correctamente
+       */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: -9999,
+          top: 0,
+          width: 302,
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+      >
+        <TicketPreview ref={captureRef} lineas={lineasTicket} />
+      </div>
 
-        {/* Ticket SIN ScrollArea — se renderiza completo */}
-        <div className="py-1">
-          <TicketPreview ref={ticketRef} lineas={lineasTicket} />
-        </div>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-sm rounded-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base">{titulo}</DialogTitle>
+          </DialogHeader>
 
-        <Button
-          className="h-12 w-full rounded-xl"
-          onClick={handleDescargar}
-          disabled={descargando}
-        >
-          {descargando ? (
-            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="mr-1.5 h-4 w-4" />
-          )}
-          Descargar imagen
-        </Button>
-      </DialogContent>
-    </Dialog>
+          {/* Ticket de visualización — dentro del dialog con scroll */}
+          <div className="py-1">
+            <TicketPreview lineas={lineasTicket} />
+          </div>
+
+          <Button
+            className="h-12 w-full rounded-xl"
+            onClick={handleDescargar}
+            disabled={descargando}
+          >
+            {descargando ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-1.5 h-4 w-4" />
+            )}
+            Descargar imagen
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
