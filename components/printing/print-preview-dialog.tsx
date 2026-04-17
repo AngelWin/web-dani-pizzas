@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,12 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bluetooth, Download, Loader2, Printer } from "lucide-react";
+import { Bluetooth, Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { usePrinterContext } from "@/components/providers/printer-provider";
 import { TicketPreview } from "./ticket-preview";
 import { ticketToEscpos } from "@/lib/printing/ticket-to-escpos";
-import { descargarTicketComoImagen } from "@/lib/printing/ticket-capture";
 import type { LineaTicket } from "@/lib/printing/ticket-builder";
 
 type Props = {
@@ -22,10 +21,6 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   titulo?: string;
-  /** Nombre de sucursal para el nombre del archivo descargado */
-  sucursalNombre?: string;
-  /** Referencia para el nombre del archivo (ej: "Orden042", "Mesa4") */
-  referencia?: string;
 };
 
 export function PrintPreviewDialog({
@@ -33,13 +28,9 @@ export function PrintPreviewDialog({
   open,
   onOpenChange,
   titulo = "Vista previa del ticket",
-  sucursalNombre = "",
-  referencia = "",
 }: Props) {
   const { estado, nombreDispositivo, conectar, imprimir } = usePrinterContext();
   const [imprimiendo, setImprimiendo] = useState(false);
-  const [descargando, setDescargando] = useState(false);
-  const ticketRef = useRef<HTMLDivElement>(null);
 
   const estaConectado = estado === "conectado";
   const noSoportado = estado === "no_soportado";
@@ -71,30 +62,11 @@ export function PrintPreviewDialog({
     }
   }
 
-  async function handleDescargar() {
-    if (!ticketRef.current) return;
-
-    setDescargando(true);
-    try {
-      await descargarTicketComoImagen({
-        elemento: ticketRef.current,
-        sucursal: sucursalNombre,
-        referencia: referencia,
-      });
-      toast.success("Imagen descargada");
-    } catch {
-      toast.error("Error al descargar la imagen");
-    } finally {
-      setDescargando(false);
-    }
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-base">{titulo}</DialogTitle>
-          {/* Estado de la impresora inline */}
           <div className="flex items-center gap-1.5 pt-1 text-xs">
             <Printer className="h-3.5 w-3.5" />
             {noSoportado ? (
@@ -115,28 +87,11 @@ export function PrintPreviewDialog({
           </div>
         </DialogHeader>
 
-        {/* Preview del ticket */}
         <ScrollArea className="max-h-[55vh]">
-          <TicketPreview ref={ticketRef} lineas={lineasTicket} />
+          <TicketPreview lineas={lineasTicket} />
         </ScrollArea>
 
-        {/* Acciones */}
         <div className="flex gap-2 pt-1">
-          {/* Descargar imagen */}
-          <Button
-            variant="outline"
-            className="h-12 rounded-xl"
-            onClick={handleDescargar}
-            disabled={descargando}
-            title="Descargar como imagen"
-          >
-            {descargando ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-          </Button>
-
           {!estaConectado && !noSoportado && (
             <Button
               variant="outline"

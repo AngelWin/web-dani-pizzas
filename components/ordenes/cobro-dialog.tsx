@@ -437,8 +437,6 @@ export function CobroDialog({
                 open={printOpen}
                 onOpenChange={setPrintOpen}
                 titulo="Comprobante de cobro"
-                sucursalNombre={orden.sucursal?.nombre ?? ""}
-                referencia={`Orden${orden.numero_orden}`}
               />
             )}
           </>

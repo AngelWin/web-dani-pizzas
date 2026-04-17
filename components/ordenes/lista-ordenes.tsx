@@ -10,6 +10,7 @@ import {
   Armchair,
   X,
   Banknote,
+  Download,
   Printer,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,14 @@ const PrintPreviewDialog = dynamic(
   () =>
     import("@/components/printing/print-preview-dialog").then(
       (mod) => mod.PrintPreviewDialog,
+    ),
+  { ssr: false },
+);
+
+const DescargarTicketDialog = dynamic(
+  () =>
+    import("@/components/printing/descargar-ticket-dialog").then(
+      (mod) => mod.DescargarTicketDialog,
     ),
   { ssr: false },
 );
@@ -135,6 +144,7 @@ export function ListaOrdenes({
   );
   const [isPendingMesa, startTransitionMesa] = useTransition();
   const [printMesaOpen, setPrintMesaOpen] = useState(false);
+  const [descargarMesaOpen, setDescargarMesaOpen] = useState(false);
 
   const tabs = getTabs(modeloNegocio);
 
@@ -220,6 +230,17 @@ export function ListaOrdenes({
               >
                 <Printer className="h-3.5 w-3.5" />
                 Imprimir cuenta
+              </Button>
+            )}
+            {ordenes.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setDescargarMesaOpen(true)}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Descargar cuenta
               </Button>
             )}
             {hayCobrablesEnMesa && (
@@ -490,7 +511,6 @@ export function ListaOrdenes({
         <PrintPreviewDialog
           lineasTicket={buildTicketMesa(
             mesaReferencia ?? "Mesa",
-            // Si hay activas, imprimir solo activas; si no (post-cobro), imprimir entregadas
             ordenesActivasMesa > 0
               ? ordenes.filter(
                   (o) => !["entregada", "cancelada"].includes(o.estado),
@@ -502,8 +522,27 @@ export function ListaOrdenes({
           open={printMesaOpen}
           onOpenChange={setPrintMesaOpen}
           titulo="Cuenta de mesa"
+        />
+      )}
+
+      {/* Dialog de descarga cuenta mesa */}
+      {mesaFiltro && descargarMesaOpen && (
+        <DescargarTicketDialog
+          lineasTicket={buildTicketMesa(
+            mesaReferencia ?? "Mesa",
+            ordenesActivasMesa > 0
+              ? ordenes.filter(
+                  (o) => !["entregada", "cancelada"].includes(o.estado),
+                )
+              : ordenes.filter((o) => o.estado !== "cancelada"),
+            ordenes[0]?.sucursal?.nombre ?? "",
+            formatCurrency,
+          )}
+          open={descargarMesaOpen}
+          onOpenChange={setDescargarMesaOpen}
           sucursalNombre={ordenes[0]?.sucursal?.nombre ?? ""}
           referencia={mesaReferencia ?? "Mesa"}
+          titulo="Descargar cuenta de mesa"
         />
       )}
     </div>

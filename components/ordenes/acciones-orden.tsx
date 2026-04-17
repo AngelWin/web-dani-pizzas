@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Printer } from "lucide-react";
+import { Download, Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
 import {
   cambiarEstadoOrdenAction,
@@ -33,6 +33,14 @@ const ComandaDialog = dynamic(
   () =>
     import("@/components/printing/comanda-dialog").then(
       (mod) => mod.ComandaDialog,
+    ),
+  { ssr: false },
+);
+
+const DescargarTicketDialog = dynamic(
+  () =>
+    import("@/components/printing/descargar-ticket-dialog").then(
+      (mod) => mod.DescargarTicketDialog,
     ),
   { ssr: false },
 );
@@ -99,6 +107,7 @@ export function AccionesOrden({
   const [cobrarOpen, setCobrarOpen] = useState(false);
   const [cancelarOpen, setCancelarOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  const [descargarOpen, setDescargarOpen] = useState(false);
   const [comandaOpen, setComandaOpen] = useState(false);
   const { simbolo, formatCurrency } = useCurrency();
 
@@ -173,20 +182,38 @@ export function AccionesOrden({
   if (esFinalizado) {
     return (
       <>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 rounded-lg text-xs"
-          onClick={() => setPrintOpen(true)}
-        >
-          <Printer className="mr-1 h-3 w-3" />
-          Imprimir
-        </Button>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 rounded-lg text-xs"
+            onClick={() => setPrintOpen(true)}
+          >
+            <Printer className="mr-1 h-3 w-3" />
+            Imprimir
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 rounded-lg text-xs"
+            onClick={() => setDescargarOpen(true)}
+          >
+            <Download className="mr-1 h-3 w-3" />
+            Descargar
+          </Button>
+        </div>
         {printOpen && (
           <PrintPreviewDialog
             lineasTicket={lineasTicket}
             open={printOpen}
             onOpenChange={setPrintOpen}
+          />
+        )}
+        {descargarOpen && (
+          <DescargarTicketDialog
+            lineasTicket={lineasTicket}
+            open={descargarOpen}
+            onOpenChange={setDescargarOpen}
             sucursalNombre={sucursalNombre}
             referencia={`Orden${orden.numero_orden}`}
           />
@@ -207,6 +234,17 @@ export function AccionesOrden({
         >
           <Printer className="mr-1 h-3 w-3" />
           Imprimir
+        </Button>
+
+        {/* Descargar imagen */}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 rounded-lg text-xs"
+          onClick={() => setDescargarOpen(true)}
+        >
+          <Download className="mr-1 h-3 w-3" />
+          Descargar
         </Button>
 
         {/* Cancelar — visible directamente */}
@@ -290,6 +328,15 @@ export function AccionesOrden({
           lineasTicket={lineasTicket}
           open={printOpen}
           onOpenChange={setPrintOpen}
+        />
+      )}
+
+      {/* Dialog de descarga de imagen */}
+      {descargarOpen && (
+        <DescargarTicketDialog
+          lineasTicket={lineasTicket}
+          open={descargarOpen}
+          onOpenChange={setDescargarOpen}
           sucursalNombre={sucursalNombre}
           referencia={`Orden${orden.numero_orden}`}
         />
