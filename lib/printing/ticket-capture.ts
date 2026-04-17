@@ -2,8 +2,8 @@
  * Captura el contenido HTML del ticket preview como imagen PNG y lo descarga.
  * Nombre descriptivo: Ticket-{sucursal}-Orden{numero}-{fecha}.png
  *
- * Clona el elemento fuera del viewport para evitar restricciones de
- * ScrollArea, Dialog u otros contenedores padres que recorten el contenido.
+ * Temporalmente expande los contenedores padres (ScrollArea, Dialog)
+ * para capturar el ticket completo sin cortes, y luego los restaura.
  */
 
 import { toPng } from "html-to-image";
@@ -20,8 +20,8 @@ type DescargarTicketParams = {
 function sanitizarNombre(texto: string): string {
   return texto
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // quitar tildes
-    .replace(/[^a-zA-Z0-9]/g, "") // solo alfanumérico
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]/g, "")
     .trim();
 }
 
@@ -35,6 +35,49 @@ function getFechaCompacta(): string {
   return `${dia}${mes}${anio}-${hora}${min}`;
 }
 
+/**
+ * Busca contenedores padres que puedan recortar el elemento
+ * (ScrollArea viewport, elementos con overflow hidden/auto/scroll)
+ * y los expande temporalmente. Retorna función para restaurar.
+ */
+function expandirPadres(elemento: HTMLElement): () => void {
+  const restaurar: Array<{
+    el: HTMLElement;
+    overflow: string;
+    maxHeight: string;
+    height: string;
+  }> = [];
+
+  let parent = elemento.parentElement;
+  while (parent && parent !== document.body) {
+    const computed = getComputedStyle(parent);
+    if (
+      computed.overflow !== "visible" ||
+      computed.overflowX !== "visible" ||
+      computed.overflowY !== "visible"
+    ) {
+      restaurar.push({
+        el: parent,
+        overflow: parent.style.overflow,
+        maxHeight: parent.style.maxHeight,
+        height: parent.style.height,
+      });
+      parent.style.overflow = "visible";
+      parent.style.maxHeight = "none";
+      parent.style.height = "auto";
+    }
+    parent = parent.parentElement;
+  }
+
+  return () => {
+    for (const item of restaurar) {
+      item.el.style.overflow = item.overflow;
+      item.el.style.maxHeight = item.maxHeight;
+      item.el.style.height = item.height;
+    }
+  };
+}
+
 export async function descargarTicketComoImagen({
   elemento,
   sucursal,
@@ -45,28 +88,17 @@ export async function descargarTicketComoImagen({
   const fecha = getFechaCompacta();
   const nombreArchivo = `Ticket-${sucursalSlug}-${referenciaSlug}-${fecha}.png`;
 
-  // Clonar el elemento y colocarlo fuera del viewport, sin restricciones
-  // de contenedores padres (Dialog, ScrollArea, etc.)
-  const clon = elemento.cloneNode(true) as HTMLElement;
-  clon.style.position = "fixed";
-  clon.style.left = "-9999px";
-  clon.style.top = "0";
-  clon.style.zIndex = "-1";
-  clon.style.width = "302px";
-  clon.style.maxHeight = "none";
-  clon.style.overflow = "visible";
-  clon.style.margin = "0";
-  document.body.appendChild(clon);
+  // Expandir contenedores padres temporalmente
+  const restaurar = expandirPadres(elemento);
 
   try {
-    // Esperar un frame para que el navegador renderice el clon
+    // Esperar un frame para que el navegador re-renderice
     await new Promise((r) => requestAnimationFrame(r));
 
-    const dataUrl = await toPng(clon, {
+    const dataUrl = await toPng(elemento, {
       backgroundColor: "#ffffff",
       pixelRatio: 2,
-      width: 302,
-      height: clon.scrollHeight,
+      cacheBust: true,
     });
 
     const link = document.createElement("a");
@@ -74,6 +106,7 @@ export async function descargarTicketComoImagen({
     link.href = dataUrl;
     link.click();
   } finally {
-    document.body.removeChild(clon);
+    // Restaurar estilos originales
+    restaurar();
   }
 }
