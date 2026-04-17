@@ -43,9 +43,16 @@ export async function descargarTicketComoImagen({
 
   const nombreArchivo = `Ticket-${sucursalSlug}-${referenciaSlug}-${fecha}.png`;
 
+  // Capturar con el tamaño real del contenido (no el visible en scroll)
   const dataUrl = await toPng(elemento, {
     backgroundColor: "#ffffff",
     pixelRatio: 2, // Mayor resolución para que se vea nítido en WhatsApp
+    width: elemento.scrollWidth,
+    height: elemento.scrollHeight,
+    style: {
+      overflow: "visible",
+      maxHeight: "none",
+    },
   });
 
   // Crear link de descarga y disparar

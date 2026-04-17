@@ -19,7 +19,7 @@ export const TicketPreview = forwardRef<HTMLDivElement, Props>(
     return (
       <div
         ref={ref}
-        className="mx-auto w-[302px] overflow-hidden rounded-lg border bg-white px-3 py-4 font-mono text-[11px] leading-tight text-black shadow-inner dark:border-neutral-300"
+        className="mx-auto w-[302px] rounded-lg border bg-white px-3 py-4 font-mono text-[11px] leading-tight text-black shadow-inner dark:border-neutral-300"
       >
         {lineas.map((linea, i) => (
           <TicketLinea key={i} linea={linea} />
