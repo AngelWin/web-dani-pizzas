@@ -19,7 +19,7 @@ export const TicketPreview = forwardRef<HTMLDivElement, Props>(
     return (
       <div
         ref={ref}
-        className="mx-auto w-[302px] rounded-lg border bg-white p-4 font-mono text-[11px] leading-tight text-black shadow-inner dark:border-neutral-300"
+        className="mx-auto w-[302px] overflow-hidden rounded-lg border bg-white px-3 py-4 font-mono text-[11px] leading-tight text-black shadow-inner dark:border-neutral-300"
       >
         {lineas.map((linea, i) => (
           <TicketLinea key={i} linea={linea} />
@@ -39,7 +39,7 @@ function TicketLinea({ linea }: { linea: LineaTicket }) {
             alt="Logo DANI PIZZAS"
             width={linea.ancho ?? 200}
             height={linea.alto ?? 80}
-            className="h-auto max-w-[180px]"
+            className="h-auto max-w-[160px]"
             priority
           />
         </div>
@@ -56,17 +56,11 @@ function TicketLinea({ linea }: { linea: LineaTicket }) {
       return <p className="text-center leading-snug">{linea.texto}</p>;
 
     case "separador":
-      return (
-        <p className="my-0.5 select-none text-center text-neutral-400">
-          {"─".repeat(44)}
-        </p>
-      );
+      return <div className="my-1 border-t border-dashed border-neutral-400" />;
 
     case "separador_doble":
       return (
-        <p className="my-0.5 select-none text-center text-neutral-500">
-          {"═".repeat(44)}
-        </p>
+        <div className="my-1 border-t-2 border-double border-neutral-500" />
       );
 
     case "info":
@@ -74,21 +68,21 @@ function TicketLinea({ linea }: { linea: LineaTicket }) {
         return <p className="leading-snug">{linea.etiqueta}</p>;
       }
       return (
-        <div className="flex justify-between leading-snug">
-          <span>{linea.etiqueta}</span>
-          <span>{linea.valor}</span>
+        <div className="flex justify-between gap-2 leading-snug">
+          <span className="min-w-0 shrink truncate">{linea.etiqueta}</span>
+          <span className="shrink-0">{linea.valor}</span>
         </div>
       );
 
     case "item":
       return (
         <div className="mt-0.5">
-          <div className="flex justify-between leading-snug">
-            <span>
+          <div className="flex justify-between gap-2 leading-snug">
+            <span className="min-w-0 shrink">
               {linea.cantidad}x {linea.nombre}
             </span>
             {linea.precio > 0 && (
-              <span className="shrink-0 pl-2">{linea.precio.toFixed(2)}</span>
+              <span className="shrink-0">{linea.precio.toFixed(2)}</span>
             )}
           </div>
           {linea.detalles?.map((detalle, j) => (
@@ -103,12 +97,12 @@ function TicketLinea({ linea }: { linea: LineaTicket }) {
       return (
         <div
           className={cn(
-            "flex justify-between leading-snug",
+            "flex justify-between gap-2 leading-snug",
             linea.negrita && "mt-0.5 text-xs font-bold",
           )}
         >
           <span>{linea.etiqueta}</span>
-          <span>{linea.valor}</span>
+          <span className="shrink-0">{linea.valor}</span>
         </div>
       );
 
