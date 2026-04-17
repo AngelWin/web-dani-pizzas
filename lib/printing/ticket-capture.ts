@@ -1,6 +1,9 @@
 /**
  * Captura el contenido HTML del ticket preview como imagen PNG y lo descarga.
  * Nombre descriptivo: Ticket-{sucursal}-Orden{numero}-{fecha}.png
+ *
+ * Clona el elemento fuera del viewport para evitar restricciones de
+ * ScrollArea, Dialog u otros contenedores padres que recorten el contenido.
  */
 
 import { toPng } from "html-to-image";
@@ -40,24 +43,37 @@ export async function descargarTicketComoImagen({
   const sucursalSlug = sanitizarNombre(sucursal);
   const referenciaSlug = sanitizarNombre(referencia);
   const fecha = getFechaCompacta();
-
   const nombreArchivo = `Ticket-${sucursalSlug}-${referenciaSlug}-${fecha}.png`;
 
-  // Capturar con el tamaño real del contenido (no el visible en scroll)
-  const dataUrl = await toPng(elemento, {
-    backgroundColor: "#ffffff",
-    pixelRatio: 2, // Mayor resolución para que se vea nítido en WhatsApp
-    width: elemento.scrollWidth,
-    height: elemento.scrollHeight,
-    style: {
-      overflow: "visible",
-      maxHeight: "none",
-    },
-  });
+  // Clonar el elemento y colocarlo fuera del viewport, sin restricciones
+  // de contenedores padres (Dialog, ScrollArea, etc.)
+  const clon = elemento.cloneNode(true) as HTMLElement;
+  clon.style.position = "fixed";
+  clon.style.left = "-9999px";
+  clon.style.top = "0";
+  clon.style.zIndex = "-1";
+  clon.style.width = "302px";
+  clon.style.maxHeight = "none";
+  clon.style.overflow = "visible";
+  clon.style.margin = "0";
+  document.body.appendChild(clon);
 
-  // Crear link de descarga y disparar
-  const link = document.createElement("a");
-  link.download = nombreArchivo;
-  link.href = dataUrl;
-  link.click();
+  try {
+    // Esperar un frame para que el navegador renderice el clon
+    await new Promise((r) => requestAnimationFrame(r));
+
+    const dataUrl = await toPng(clon, {
+      backgroundColor: "#ffffff",
+      pixelRatio: 2,
+      width: 302,
+      height: clon.scrollHeight,
+    });
+
+    const link = document.createElement("a");
+    link.download = nombreArchivo;
+    link.href = dataUrl;
+    link.click();
+  } finally {
+    document.body.removeChild(clon);
+  }
 }
