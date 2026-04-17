@@ -19,7 +19,7 @@ export const TicketPreview = forwardRef<HTMLDivElement, Props>(
     return (
       <div
         ref={ref}
-        className="mx-auto w-[302px] rounded-lg border bg-white px-3 py-4 font-mono text-[11px] leading-tight text-black shadow-inner dark:border-neutral-300"
+        className="mx-auto w-[302px] overflow-hidden break-words rounded-lg border bg-white px-3 py-4 font-mono text-[11px] leading-tight text-black shadow-inner dark:border-neutral-300"
       >
         {lineas.map((linea, i) => (
           <TicketLinea key={i} linea={linea} />
@@ -65,11 +65,11 @@ function TicketLinea({ linea }: { linea: LineaTicket }) {
 
     case "info":
       if (!linea.valor) {
-        return <p className="leading-snug">{linea.etiqueta}</p>;
+        return <p className="break-words leading-snug">{linea.etiqueta}</p>;
       }
       return (
         <div className="flex justify-between gap-2 leading-snug">
-          <span className="min-w-0 shrink truncate">{linea.etiqueta}</span>
+          <span className="min-w-0 break-words">{linea.etiqueta}</span>
           <span className="shrink-0">{linea.valor}</span>
         </div>
       );
@@ -78,15 +78,18 @@ function TicketLinea({ linea }: { linea: LineaTicket }) {
       return (
         <div className="mt-0.5">
           <div className="flex justify-between gap-2 leading-snug">
-            <span className="min-w-0 shrink">
+            <span className="min-w-0 break-words">
               {linea.cantidad}x {linea.nombre}
             </span>
             {linea.precio > 0 && (
-              <span className="shrink-0">{linea.precio.toFixed(2)}</span>
+              <span className="shrink-0 pl-1">{linea.precio.toFixed(2)}</span>
             )}
           </div>
           {linea.detalles?.map((detalle, j) => (
-            <p key={j} className="pl-3 leading-snug text-neutral-600">
+            <p
+              key={j}
+              className="break-words pl-3 leading-snug text-neutral-600"
+            >
               {detalle}
             </p>
           ))}
@@ -101,13 +104,15 @@ function TicketLinea({ linea }: { linea: LineaTicket }) {
             linea.negrita && "mt-0.5 text-xs font-bold",
           )}
         >
-          <span>{linea.etiqueta}</span>
+          <span className="min-w-0 break-words">{linea.etiqueta}</span>
           <span className="shrink-0">{linea.valor}</span>
         </div>
       );
 
     case "texto_centrado":
-      return <p className="text-center leading-snug">{linea.texto}</p>;
+      return (
+        <p className="break-words text-center leading-snug">{linea.texto}</p>
+      );
 
     case "espacio":
       return <div className="h-2" />;
