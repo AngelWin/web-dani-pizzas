@@ -46,7 +46,9 @@ import {
 import type { OrdenConItems } from "@/lib/services/ordenes";
 import type { Venta } from "@/lib/services/ventas";
 import { useCurrency } from "@/hooks/use-currency";
+import { usePrinterContext } from "@/components/providers/printer-provider";
 import { buildTicketCobro } from "@/lib/printing/ticket-builder";
+import { ticketToEscpos } from "@/lib/printing/ticket-to-escpos";
 import { METODO_PAGO } from "@/lib/constants";
 
 const PrintPreviewDialog = dynamic(
@@ -85,6 +87,8 @@ export function CobroDialog({
   const [isPending, startTransition] = useTransition();
   const [printOpen, setPrintOpen] = useState(false);
   const { simbolo, formatCurrency } = useCurrency();
+  const { estado: printerEstado, imprimir: printerImprimir } =
+    usePrinterContext();
 
   const form = useForm<CobrarOrdenFormValues>({
     resolver: zodResolver(cobrarOrdenSchema),
@@ -129,6 +133,30 @@ export function CobroDialog({
       }
       setVentaResultado(result.data!);
       setFase("confirmacion");
+
+      // Auto-imprimir si hay impresora conectada
+      if (printerEstado === "conectado") {
+        try {
+          const metodoPagoLabel = METODO_PAGO_LABELS[values.metodo_pago] ?? "";
+          const vueltoCalc =
+            values.metodo_pago === METODO_PAGO.EFECTIVO && values.monto_recibido
+              ? values.monto_recibido - totalFinal
+              : null;
+          const lineas = buildTicketCobro(
+            orden,
+            orden.sucursal?.nombre ?? "",
+            formatCurrency,
+            metodoPagoLabel,
+            vueltoCalc,
+          );
+          const datos = ticketToEscpos(lineas);
+          await printerImprimir(datos);
+          toast.success("Ticket impreso automáticamente");
+        } catch {
+          // No bloquear el flujo si falla la impresión
+          toast.info("No se pudo imprimir. Usa el botón para reintentar.");
+        }
+      }
     });
   }
 

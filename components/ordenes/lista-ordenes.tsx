@@ -30,8 +30,10 @@ import {
 import { InputNumerico } from "@/components/ui/input-numerico";
 import dynamic from "next/dynamic";
 import { useCurrency } from "@/hooks/use-currency";
+import { usePrinterContext } from "@/components/providers/printer-provider";
 import { cobrarMesaAction } from "@/app/(dashboard)/ordenes/actions";
 import { buildTicketMesa } from "@/lib/printing/ticket-builder";
+import { ticketToEscpos } from "@/lib/printing/ticket-to-escpos";
 import { METODO_PAGO } from "@/lib/constants";
 import { BotonLiberarMesa } from "@/components/mesas/boton-liberar-mesa";
 import { TarjetaOrden } from "./tarjeta-orden";
@@ -123,6 +125,8 @@ export function ListaOrdenes({
 }: Props) {
   const router = useRouter();
   const { formatCurrency } = useCurrency();
+  const { estado: printerEstado, imprimir: printerImprimir } =
+    usePrinterContext();
   const [filtro, setFiltro] = useState<EstadoTab>("activas");
   const [cobrarMesaOpen, setCobrarMesaOpen] = useState(false);
   const [metodoPagoMesa, setMetodoPagoMesa] = useState<string>("");
@@ -442,6 +446,31 @@ export function ListaOrdenes({
                     toast.success(
                       `${result.data!.cobradas} órdenes cobradas — Total: ${formatCurrency(result.data!.total)}`,
                     );
+
+                    // Auto-imprimir cuenta de mesa si hay impresora conectada
+                    if (printerEstado === "conectado") {
+                      try {
+                        const ordenesParaImprimir = ordenes.filter(
+                          (o) => !["entregada", "cancelada"].includes(o.estado),
+                        );
+                        if (ordenesParaImprimir.length > 0) {
+                          const lineas = buildTicketMesa(
+                            mesaReferencia ?? "Mesa",
+                            ordenesParaImprimir,
+                            ordenes[0]?.sucursal?.nombre ?? "",
+                            formatCurrency,
+                          );
+                          const datos = ticketToEscpos(lineas);
+                          await printerImprimir(datos);
+                          toast.success("Cuenta de mesa impresa");
+                        }
+                      } catch {
+                        toast.info(
+                          "No se pudo imprimir. Usa el botón para reintentar.",
+                        );
+                      }
+                    }
+
                     setCobrarMesaOpen(false);
                     router.refresh();
                   });
