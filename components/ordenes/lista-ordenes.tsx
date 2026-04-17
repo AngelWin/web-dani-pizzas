@@ -502,6 +502,8 @@ export function ListaOrdenes({
           open={printMesaOpen}
           onOpenChange={setPrintMesaOpen}
           titulo="Cuenta de mesa"
+          sucursalNombre={ordenes[0]?.sucursal?.nombre ?? ""}
+          referencia={mesaReferencia ?? "Mesa"}
         />
       )}
     </div>

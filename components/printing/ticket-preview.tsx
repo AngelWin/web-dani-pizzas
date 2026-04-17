@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef } from "react";
 import type { LineaTicket } from "@/lib/printing/ticket-builder";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -11,16 +12,22 @@ type Props = {
 /**
  * Renderiza LineaTicket[] como HTML simulando papel térmico 80mm.
  * Fuente monospace, fondo blanco, ancho fijo.
+ * Acepta ref para capturar el contenido como imagen.
  */
-export function TicketPreview({ lineas }: Props) {
-  return (
-    <div className="mx-auto w-[302px] rounded-lg border bg-white p-4 font-mono text-[11px] leading-tight text-black shadow-inner dark:border-neutral-300">
-      {lineas.map((linea, i) => (
-        <TicketLinea key={i} linea={linea} />
-      ))}
-    </div>
-  );
-}
+export const TicketPreview = forwardRef<HTMLDivElement, Props>(
+  function TicketPreview({ lineas }, ref) {
+    return (
+      <div
+        ref={ref}
+        className="mx-auto w-[302px] rounded-lg border bg-white p-4 font-mono text-[11px] leading-tight text-black shadow-inner dark:border-neutral-300"
+      >
+        {lineas.map((linea, i) => (
+          <TicketLinea key={i} linea={linea} />
+        ))}
+      </div>
+    );
+  },
+);
 
 function TicketLinea({ linea }: { linea: LineaTicket }) {
   switch (linea.tipo) {

@@ -187,6 +187,8 @@ export function AccionesOrden({
             lineasTicket={lineasTicket}
             open={printOpen}
             onOpenChange={setPrintOpen}
+            sucursalNombre={sucursalNombre}
+            referencia={`Orden${orden.numero_orden}`}
           />
         )}
       </>
@@ -288,6 +290,8 @@ export function AccionesOrden({
           lineasTicket={lineasTicket}
           open={printOpen}
           onOpenChange={setPrintOpen}
+          sucursalNombre={sucursalNombre}
+          referencia={`Orden${orden.numero_orden}`}
         />
       )}
 

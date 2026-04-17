@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useRef, useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,12 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bluetooth, Loader2, Printer, X } from "lucide-react";
+import { Bluetooth, Download, Loader2, Printer, X } from "lucide-react";
 import { toast } from "sonner";
 import { usePrinterContext } from "@/components/providers/printer-provider";
 import { TicketPreview } from "./ticket-preview";
 import { ticketToEscpos } from "@/lib/printing/ticket-to-escpos";
 import { buildTicketComanda } from "@/lib/printing/ticket-builder";
+import { descargarTicketComoImagen } from "@/lib/printing/ticket-capture";
 import type { OrdenConItems } from "@/lib/services/ordenes";
 
 type Props = {
@@ -27,6 +28,8 @@ type Props = {
 export function ComandaDialog({ orden, sucursalNombre, open, onClose }: Props) {
   const { estado, nombreDispositivo, conectar, imprimir } = usePrinterContext();
   const [imprimiendo, setImprimiendo] = useState(false);
+  const [descargando, setDescargando] = useState(false);
+  const ticketRef = useRef<HTMLDivElement>(null);
 
   const lineasComanda = useMemo(
     () => buildTicketComanda(orden, sucursalNombre),
@@ -41,6 +44,23 @@ export function ComandaDialog({ orden, sucursalNombre, open, onClose }: Props) {
       await conectar();
     } catch {
       toast.error("No se pudo conectar a la impresora");
+    }
+  }
+
+  async function handleDescargar() {
+    if (!ticketRef.current) return;
+    setDescargando(true);
+    try {
+      await descargarTicketComoImagen({
+        elemento: ticketRef.current,
+        sucursal: sucursalNombre,
+        referencia: `Comanda${orden.numero_orden}`,
+      });
+      toast.success("Comanda descargada");
+    } catch {
+      toast.error("Error al descargar la imagen");
+    } finally {
+      setDescargando(false);
     }
   }
 
@@ -96,18 +116,33 @@ export function ComandaDialog({ orden, sucursalNombre, open, onClose }: Props) {
 
         {/* Preview de la comanda */}
         <ScrollArea className="max-h-[40vh]">
-          <TicketPreview lineas={lineasComanda} />
+          <TicketPreview ref={ticketRef} lineas={lineasComanda} />
         </ScrollArea>
 
         {/* Acciones */}
         <div className="flex gap-2 pt-1">
           <Button
             variant="outline"
-            className="h-12 flex-1 rounded-xl"
+            className="h-12 rounded-xl"
             onClick={onClose}
+            title="Omitir"
           >
-            <X className="mr-1.5 h-4 w-4" />
-            Omitir
+            <X className="h-4 w-4" />
+          </Button>
+
+          {/* Descargar imagen */}
+          <Button
+            variant="outline"
+            className="h-12 rounded-xl"
+            onClick={handleDescargar}
+            disabled={descargando}
+            title="Descargar como imagen"
+          >
+            {descargando ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
           </Button>
 
           {!estaConectado && !noSoportado && (

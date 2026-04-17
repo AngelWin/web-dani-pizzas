@@ -168,6 +168,8 @@ export function OrdenConfirmadaDialog({
             lineasTicket={lineasTicket}
             open={printOpen}
             onOpenChange={setPrintOpen}
+            sucursalNombre={sucursalNombre}
+            referencia={`Orden${orden.numero_orden}`}
           />
         )}
       </DialogContent>

@@ -2801,6 +2801,16 @@ Usar **Supabase Realtime (postgres_changes)** con un hook genérico `use-realtim
 - [ ] Capturar desconexión GATT → indicador cambia a ámbar + reconexión automática
 - [ ] UI degradada: preview siempre funciona (HTML puro), solo botón "Imprimir" se deshabilita con mensaje explicativo
 
+### Fase 7: Descarga de ticket como imagen PNG
+
+- [ ] Instalar `html-to-image` para captura de HTML a PNG
+- [ ] Crear `lib/printing/ticket-capture.ts` — función `descargarTicketComoImagen()` que captura el preview HTML como PNG con nombre descriptivo: `Ticket-{sucursal}-{referencia}-{fechahora}.png`
+- [ ] Modificar `components/printing/ticket-preview.tsx` — usar `forwardRef` para exponer ref al div contenedor
+- [ ] Agregar botón Descargar (icono Download) en `print-preview-dialog.tsx` — descarga imagen PNG del ticket
+- [ ] Agregar botón Descargar en `comanda-dialog.tsx` — descarga imagen PNG de la comanda
+- [ ] Pasar `sucursalNombre` y `referencia` a todos los `PrintPreviewDialog` para nombres de archivo descriptivos
+- [ ] Nombres de archivo descriptivos para encontrar fácil en carpeta Descargas (ej: `Ticket-CasmaAvReina-Orden042-16042026-1432.png`)
+
 ### Archivos a crear:
 - `lib/printing/escpos-commands.ts` — comandos ESC/POS en TypeScript puro
 - `lib/printing/ticket-builder.ts` — genera `LineaTicket[]` desde OrdenConItems y grupo de mesa
@@ -2812,6 +2822,7 @@ Usar **Supabase Realtime (postgres_changes)** con un hook genérico `use-realtim
 - `components/printing/ticket-preview.tsx` — renderizado HTML del ticket
 - `components/printing/printer-status-indicator.tsx` — indicador verde/ámbar/gris
 - `components/printing/comanda-dialog.tsx` — dialog de comanda de cocina post cambio a "en_preparación"
+- `lib/printing/ticket-capture.ts` — captura del preview HTML como imagen PNG para descarga
 
 ### Archivos a modificar:
 - `app/(dashboard)/layout.tsx` — envolver con PrinterProvider
