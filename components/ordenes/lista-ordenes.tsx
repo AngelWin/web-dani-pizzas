@@ -10,6 +10,8 @@ import {
   Armchair,
   X,
   Banknote,
+  Download,
+  Printer,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,14 +29,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { InputNumerico } from "@/components/ui/input-numerico";
+import dynamic from "next/dynamic";
 import { useCurrency } from "@/hooks/use-currency";
+import { usePrinterContext } from "@/components/providers/printer-provider";
 import { cobrarMesaAction } from "@/app/(dashboard)/ordenes/actions";
+import { buildTicketMesa } from "@/lib/printing/ticket-builder";
+import { ticketToEscpos } from "@/lib/printing/ticket-to-escpos";
 import { METODO_PAGO } from "@/lib/constants";
 import { BotonLiberarMesa } from "@/components/mesas/boton-liberar-mesa";
 import { TarjetaOrden } from "./tarjeta-orden";
 import type { OrdenConItems, FiltroEstadoOrden } from "@/lib/services/ordenes";
 import type { ModeloNegocio } from "@/lib/services/configuracion";
 import type { NivelMembresia } from "@/lib/services/membresias";
+
+const PrintPreviewDialog = dynamic(
+  () =>
+    import("@/components/printing/print-preview-dialog").then(
+      (mod) => mod.PrintPreviewDialog,
+    ),
+  { ssr: false },
+);
+
+const DescargarTicketDialog = dynamic(
+  () =>
+    import("@/components/printing/descargar-ticket-dialog").then(
+      (mod) => mod.DescargarTicketDialog,
+    ),
+  { ssr: false },
+);
 
 type EstadoTab = FiltroEstadoOrden | "programados";
 
@@ -112,6 +134,8 @@ export function ListaOrdenes({
 }: Props) {
   const router = useRouter();
   const { formatCurrency } = useCurrency();
+  const { estado: printerEstado, imprimir: printerImprimir } =
+    usePrinterContext();
   const [filtro, setFiltro] = useState<EstadoTab>("activas");
   const [cobrarMesaOpen, setCobrarMesaOpen] = useState(false);
   const [metodoPagoMesa, setMetodoPagoMesa] = useState<string>("");
@@ -119,6 +143,8 @@ export function ListaOrdenes({
     null,
   );
   const [isPendingMesa, startTransitionMesa] = useTransition();
+  const [printMesaOpen, setPrintMesaOpen] = useState(false);
+  const [descargarMesaOpen, setDescargarMesaOpen] = useState(false);
 
   const tabs = getTabs(modeloNegocio);
 
@@ -195,6 +221,28 @@ export function ListaOrdenes({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {ordenes.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setPrintMesaOpen(true)}
+              >
+                <Printer className="h-3.5 w-3.5" />
+                Imprimir cuenta
+              </Button>
+            )}
+            {ordenes.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setDescargarMesaOpen(true)}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Descargar cuenta
+              </Button>
+            )}
             {hayCobrablesEnMesa && (
               <Button
                 size="sm"
@@ -419,6 +467,31 @@ export function ListaOrdenes({
                     toast.success(
                       `${result.data!.cobradas} órdenes cobradas — Total: ${formatCurrency(result.data!.total)}`,
                     );
+
+                    // Auto-imprimir cuenta de mesa si hay impresora conectada
+                    if (printerEstado === "conectado") {
+                      try {
+                        const ordenesParaImprimir = ordenes.filter(
+                          (o) => !["entregada", "cancelada"].includes(o.estado),
+                        );
+                        if (ordenesParaImprimir.length > 0) {
+                          const lineas = buildTicketMesa(
+                            mesaReferencia ?? "Mesa",
+                            ordenesParaImprimir,
+                            ordenes[0]?.sucursal?.nombre ?? "",
+                            formatCurrency,
+                          );
+                          const datos = ticketToEscpos(lineas);
+                          await printerImprimir(datos);
+                          toast.success("Cuenta de mesa impresa");
+                        }
+                      } catch {
+                        toast.info(
+                          "No se pudo imprimir. Usa el botón para reintentar.",
+                        );
+                      }
+                    }
+
                     setCobrarMesaOpen(false);
                     router.refresh();
                   });
@@ -431,6 +504,46 @@ export function ListaOrdenes({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Dialog de impresión cuenta mesa */}
+      {mesaFiltro && printMesaOpen && (
+        <PrintPreviewDialog
+          lineasTicket={buildTicketMesa(
+            mesaReferencia ?? "Mesa",
+            ordenesActivasMesa > 0
+              ? ordenes.filter(
+                  (o) => !["entregada", "cancelada"].includes(o.estado),
+                )
+              : ordenes.filter((o) => o.estado !== "cancelada"),
+            ordenes[0]?.sucursal?.nombre ?? "",
+            formatCurrency,
+          )}
+          open={printMesaOpen}
+          onOpenChange={setPrintMesaOpen}
+          titulo="Cuenta de mesa"
+        />
+      )}
+
+      {/* Dialog de descarga cuenta mesa */}
+      {mesaFiltro && descargarMesaOpen && (
+        <DescargarTicketDialog
+          lineasTicket={buildTicketMesa(
+            mesaReferencia ?? "Mesa",
+            ordenesActivasMesa > 0
+              ? ordenes.filter(
+                  (o) => !["entregada", "cancelada"].includes(o.estado),
+                )
+              : ordenes.filter((o) => o.estado !== "cancelada"),
+            ordenes[0]?.sucursal?.nombre ?? "",
+            formatCurrency,
+          )}
+          open={descargarMesaOpen}
+          onOpenChange={setDescargarMesaOpen}
+          sucursalNombre={ordenes[0]?.sucursal?.nombre ?? ""}
+          referencia={mesaReferencia ?? "Mesa"}
+          titulo="Descargar cuenta de mesa"
+        />
       )}
     </div>
   );

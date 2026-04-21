@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useMemo, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -29,7 +30,13 @@ import { Input } from "@/components/ui/input";
 import { InputNumerico } from "@/components/ui/input-numerico";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Banknote, Loader2, AlertTriangle } from "lucide-react";
+import {
+  CheckCircle,
+  Banknote,
+  Loader2,
+  AlertTriangle,
+  Printer,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cobrarOrdenAction } from "@/app/(dashboard)/ordenes/actions";
 import {
@@ -39,7 +46,18 @@ import {
 import type { OrdenConItems } from "@/lib/services/ordenes";
 import type { Venta } from "@/lib/services/ventas";
 import { useCurrency } from "@/hooks/use-currency";
+import { usePrinterContext } from "@/components/providers/printer-provider";
+import { buildTicketCobro } from "@/lib/printing/ticket-builder";
+import { ticketToEscpos } from "@/lib/printing/ticket-to-escpos";
 import { METODO_PAGO } from "@/lib/constants";
+
+const PrintPreviewDialog = dynamic(
+  () =>
+    import("@/components/printing/print-preview-dialog").then(
+      (mod) => mod.PrintPreviewDialog,
+    ),
+  { ssr: false },
+);
 
 const METODO_PAGO_LABELS: Record<string, string> = {
   efectivo: "Efectivo",
@@ -67,7 +85,10 @@ export function CobroDialog({
   const [fase, setFase] = useState<Fase>("formulario");
   const [ventaResultado, setVentaResultado] = useState<Venta | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [printOpen, setPrintOpen] = useState(false);
   const { simbolo, formatCurrency } = useCurrency();
+  const { estado: printerEstado, imprimir: printerImprimir } =
+    usePrinterContext();
 
   const form = useForm<CobrarOrdenFormValues>({
     resolver: zodResolver(cobrarOrdenSchema),
@@ -112,6 +133,30 @@ export function CobroDialog({
       }
       setVentaResultado(result.data!);
       setFase("confirmacion");
+
+      // Auto-imprimir si hay impresora conectada
+      if (printerEstado === "conectado") {
+        try {
+          const metodoPagoLabel = METODO_PAGO_LABELS[values.metodo_pago] ?? "";
+          const vueltoCalc =
+            values.metodo_pago === METODO_PAGO.EFECTIVO && values.monto_recibido
+              ? values.monto_recibido - totalFinal
+              : null;
+          const lineas = buildTicketCobro(
+            orden,
+            orden.sucursal?.nombre ?? "",
+            formatCurrency,
+            metodoPagoLabel,
+            vueltoCalc,
+          );
+          const datos = ticketToEscpos(lineas);
+          await printerImprimir(datos);
+          toast.success("Ticket impreso automáticamente");
+        } catch {
+          // No bloquear el flujo si falla la impresión
+          toast.info("No se pudo imprimir. Usa el botón para reintentar.");
+        }
+      }
     });
   }
 
@@ -366,9 +411,34 @@ export function CobroDialog({
                 )}
             </div>
 
-            <Button className="h-12 w-full rounded-xl" onClick={handleClose}>
-              Cerrar
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="h-12 flex-1 rounded-xl"
+                onClick={() => setPrintOpen(true)}
+              >
+                <Printer className="mr-1.5 h-4 w-4" />
+                Imprimir
+              </Button>
+              <Button className="h-12 flex-1 rounded-xl" onClick={handleClose}>
+                Cerrar
+              </Button>
+            </div>
+
+            {printOpen && (
+              <PrintPreviewDialog
+                lineasTicket={buildTicketCobro(
+                  orden,
+                  orden.sucursal?.nombre ?? "",
+                  formatCurrency,
+                  METODO_PAGO_LABELS[ventaResultado?.metodo_pago ?? ""] ?? "",
+                  vuelto,
+                )}
+                open={printOpen}
+                onOpenChange={setPrintOpen}
+                titulo="Comprobante de cobro"
+              />
+            )}
           </>
         )}
       </DialogContent>

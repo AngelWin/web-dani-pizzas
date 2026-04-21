@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SucursalSelector } from "@/components/shared/sucursal-selector";
+import { PrinterStatusIndicator } from "@/components/printing/printer-status-indicator";
 
 export function AppHeader() {
   const { nombreCompleto, email, role, fotoUrl } = useUser();
@@ -50,6 +51,9 @@ export function AppHeader() {
             </span>
           </div>
         )}
+
+        {/* Indicador de impresora */}
+        <PrinterStatusIndicator />
 
         {/* Toggle tema */}
         <Button
