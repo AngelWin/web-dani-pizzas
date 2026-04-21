@@ -7,6 +7,29 @@ y este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ---
 
+## [v1.1.0] - 2026-04-21
+
+### R40 — Impresión Térmica Bluetooth
+
+#### Agregado
+- Conexión Bluetooth a impresora térmica BIENEX 80mm desde Chrome/Edge (Web Bluetooth API)
+- Indicador de estado de impresora en el header del dashboard (verde/ámbar/gris)
+- Preview visual del ticket antes de imprimir (simula papel 80mm en pantalla)
+- Impresión de ticket de orden desde `/ordenes` (botón en cada orden)
+- Impresión de comanda de cocina al avanzar orden a "En preparación"
+- Impresión de ticket post-cobro con método de pago y vuelto
+- Impresión de ticket post-creación desde el POS
+- Impresión de cuenta de mesa agrupada desde `/ordenes`
+- Auto-impresión al cobrar si hay impresora conectada
+- Descarga del ticket como imagen PNG para envío por WhatsApp (botón "Descargar" en cada orden)
+- Descarga de cuenta de mesa como imagen PNG
+- Soporte de degradación elegante en Firefox/Safari: preview funciona, impresión muestra mensaje de compatibilidad
+
+#### Correcciones técnicas (durante R40)
+- Imagen descargada ya no aparece recortada — se captura desde elemento off-screen sin restricciones de overflow
+
+---
+
 ## [v1.0.1] - 2026-04-16
 
 ### Correcciones visuales + Realtime
