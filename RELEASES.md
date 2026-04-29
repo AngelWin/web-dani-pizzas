@@ -2845,6 +2845,31 @@ Usar **Supabase Realtime (postgres_changes)** con un hook genérico `use-realtim
 
 ---
 
+## Release 41: Fecha de apertura en Control de Caja
+
+**Estado:** [x] Completado
+**Dependencia:** R23 (Sesiones de Caja)
+**Objetivo:** Mostrar la fecha completa de apertura en la sesión activa de caja, no solo la hora. Cuando una caja lleva días abierta, la hora sola no es suficiente para identificar cuándo se abrió.
+
+### Contexto del negocio:
+- Las cajas pueden quedar abiertas por días sin que nadie las cierre
+- El campo `abierta_at` existe pero solo se formatea como hora (`toLocaleTimeString`)
+- El cajero/admin no puede saber en qué fecha se abrió la sesión sin cerrarla y ver el historial
+
+### Cambios esperados:
+
+**`components/caja/sesion-activa.tsx`**
+- Línea 68: reemplazar `toLocaleTimeString` por formato que incluya fecha + hora
+- Si la sesión es del día actual → mostrar solo hora (comportamiento actual)
+- Si la sesión es de un día anterior → mostrar fecha + hora (ej: "12 abr · 05:54 p. m.")
+
+### Criterio de éxito:
+- Caja abierta hoy → muestra solo hora: "05:54 p. m." (sin cambio visual)
+- Caja abierta días atrás → muestra fecha + hora: "12 abr · 05:54 p. m."
+- Build pasa sin errores
+
+---
+
 ## Sub-Agentes del Proyecto
 
 | Agente | Responsabilidad | Directorios |

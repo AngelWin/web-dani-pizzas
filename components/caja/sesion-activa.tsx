@@ -38,6 +38,25 @@ function formatDuracion(desde: string): string {
   return h > 0 ? `${h}h ${m}m` : `${m} min`;
 }
 
+function formatFechaApertura(desde: string): string {
+  const fecha = new Date(desde);
+  const hoy = new Date();
+  const hora = fecha.toLocaleTimeString("es-PE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const esHoy =
+    fecha.getFullYear() === hoy.getFullYear() &&
+    fecha.getMonth() === hoy.getMonth() &&
+    fecha.getDate() === hoy.getDate();
+  if (esHoy) return hora;
+  const fechaStr = fecha.toLocaleDateString("es-PE", {
+    day: "numeric",
+    month: "short",
+  });
+  return `${fechaStr} · ${hora}`;
+}
+
 export function SesionActiva({ resumen, onCerrar }: Props) {
   const [cerrarOpen, setCerrarOpen] = useState(false);
   const { formatCurrency } = useCurrency();
@@ -65,10 +84,7 @@ export function SesionActiva({ resumen, onCerrar }: Props) {
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               Abierta por <span className="font-medium">{nombreAbierto}</span> ·{" "}
-              {new Date(sesion.abierta_at).toLocaleTimeString("es-PE", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {formatFechaApertura(sesion.abierta_at)}
             </p>
             {sesion.notas_apertura && (
               <p className="text-xs text-muted-foreground italic mt-1">
