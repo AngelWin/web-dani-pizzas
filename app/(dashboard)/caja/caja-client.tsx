@@ -30,7 +30,7 @@ export function CajaClient({
 
   useRealtimeRefresh([
     { tabla: "caja_sesiones", sucursalId },
-    { tabla: "ventas", sucursalId },
+    { tabla: "ventas", sucursalId, campoFiltro: "sucursal_origen_id" },
   ]);
 
   function handleRefresh() {

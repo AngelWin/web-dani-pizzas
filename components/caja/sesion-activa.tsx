@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCurrency } from "@/hooks/use-currency";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +59,17 @@ function formatFechaApertura(desde: string): string {
 
 export function SesionActiva({ resumen, onCerrar }: Props) {
   const [cerrarOpen, setCerrarOpen] = useState(false);
+  const [duracion, setDuracion] = useState(() =>
+    formatDuracion(resumen.sesion.abierta_at),
+  );
   const { formatCurrency } = useCurrency();
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDuracion(formatDuracion(resumen.sesion.abierta_at));
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [resumen.sesion.abierta_at]);
 
   const { sesion } = resumen;
   const abiertaPor = sesion.abierta_por_profile;
@@ -79,7 +89,7 @@ export function SesionActiva({ resumen, onCerrar }: Props) {
               </Badge>
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
-                {formatDuracion(sesion.abierta_at)}
+                {duracion}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">

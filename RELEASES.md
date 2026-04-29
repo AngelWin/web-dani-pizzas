@@ -2845,6 +2845,35 @@ Usar **Supabase Realtime (postgres_changes)** con un hook genérico `use-realtim
 
 ---
 
+## Release 42: Realtime y temporizador en Control de Caja
+
+**Estado:** [x] Completado
+**Dependencia:** R23 (Sesiones de Caja), R41
+**Objetivo:** Corregir dos bugs en el Control de Caja: el resumen no se actualiza al cobrar una orden (realtime roto) y el temporizador de duración de la sesión no avanza automáticamente.
+
+### Diagnóstico:
+
+**Bug 1 — Realtime silencioso:**
+`CajaClient` suscribe a `ventas` usando el filtro `sucursal_id=eq.{id}`, pero la columna real en la tabla `ventas` es `sucursal_origen_id`. El filtro nunca hace match → ningún evento llega → `router.refresh()` nunca se llama al cobrar.
+
+**Bug 2 — Timer estático:**
+`formatDuracion` es una función pura que se ejecuta solo al renderizar. Sin `setInterval`, el contador "0 min / 292h 3m" queda congelado hasta que el usuario recarga manualmente.
+
+### Cambios:
+
+**`app/(dashboard)/caja/caja-client.tsx`**
+- Corregir campo filtro de `ventas`: añadir `campoFiltro: "sucursal_origen_id"`
+
+**`components/caja/sesion-activa.tsx`**
+- Convertir duración a estado reactivo con `useState` + `useEffect` + `setInterval` cada 60s
+
+### Criterio de éxito:
+- Cobrar una orden → resumen de caja se actualiza sin recargar (total ventas, efectivo, cantidad)
+- Timer avanza automáticamente cada minuto sin recargar la página
+- Build pasa sin errores
+
+---
+
 ## Release 41: Fecha de apertura en Control de Caja
 
 **Estado:** [x] Completado
